@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BWS EMA Backtester | Block Wall Street</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#08101f; --navy2:#0e1a30; --navy3:#14233f; --line:#22345a;
+  --gold:#d4a843; --gold2:#f0c966; --text:#e8ecf4; --muted:#8fa0bf;
+  --green:#3ecf8e; --red:#ef5b5b; --blue:#5aa9ff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--navy);color:var(--text);font-family:'Barlow',system-ui,sans-serif;font-size:16px}
+body{background:radial-gradient(1200px 500px at 50% -100px,#16294d 0%,var(--navy) 60%)}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+header{text-align:center;padding:18px 0 8px}
+.brand{font-family:'DM Mono',monospace;letter-spacing:.3em;font-size:12px;color:var(--gold)}
+h1{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:clamp(40px,7vw,68px);letter-spacing:.04em;margin:4px 0 0;line-height:1}
+h1 span{color:var(--gold)}
+.sub{color:var(--muted);max-width:720px;margin:10px auto 0}
+.card{background:linear-gradient(180deg,var(--navy2),var(--navy3));border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:18px}
+.card h2{font-family:'Bebas Neue',sans-serif;font-weight:400;letter-spacing:.06em;font-size:24px;margin:0 0 12px;color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+label{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-weight:600}
+input,select,textarea{width:100%;background:var(--navy);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px 11px;font-family:'DM Mono',monospace;font-size:14px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+textarea{min-height:90px;resize:vertical}
+.hide{display:none!important}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+button{font-family:'Barlow',sans-serif;font-weight:700;font-size:15px;border-radius:9px;padding:11px 20px;cursor:pointer;border:1px solid var(--gold);background:transparent;color:var(--gold);letter-spacing:.03em}
+button:hover{background:rgba(212,168,67,.12)}
+button.primary{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1305;border:none}
+button.primary:hover{filter:brightness(1.08)}
+button:disabled{opacity:.5;cursor:wait}
+#status{margin-top:12px;font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);min-height:18px}
+#status.err{color:var(--red)} #status.ok{color:var(--green)}
+.note{font-size:13px;color:var(--muted);margin-top:8px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--navy);border:1px solid var(--line);border-radius:10px;padding:12px}
+.kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;font-weight:600}
+.kpi .v{font-family:'DM Mono',monospace;font-size:20px;margin-top:4px}
+.pos{color:var(--green)} .neg{color:var(--red)} .gold{color:var(--gold)}
+.verdict{margin:0 0 14px;padding:12px 14px;border-left:3px solid var(--gold);background:rgba(212,168,67,.07);border-radius:6px}
+.sigGrid{display:grid;grid-template-columns:minmax(250px,340px) 1fr;gap:18px;align-items:center}
+@media(max-width:760px){.sigGrid{grid-template-columns:1fr}}
+.gaugeBox canvas{width:100%;height:230px;display:block}
+.cwrap{position:relative;width:100%}
+.cwrap canvas{width:100%;height:340px;display:block}
+.cwrap.small canvas{height:240px}
+.vline{position:absolute;top:10px;bottom:24px;width:1px;background:rgba(212,168,67,.55);pointer-events:none;display:none}
+.tip{position:absolute;top:8px;pointer-events:none;background:#06101f;border:1px solid var(--gold);border-radius:8px;padding:8px 10px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.5;display:none;z-index:5;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin:6px 0 10px;align-items:center}
+.legend label{display:inline-flex;align-items:center;gap:6px;margin:0;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer}
+.legend input{width:auto;padding:0}
+.sw{display:inline-block;width:14px;height:3px;border-radius:2px}
+table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:13px}
+th,td{padding:8px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:500;text-transform:uppercase;font-size:11px;letter-spacing:.07em;position:sticky;top:0;background:var(--navy2)}
+th:first-child,td:first-child{text-align:left}
+.scroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:10px}
+.buy{color:var(--gold2);font-weight:500} .sell{color:var(--blue);font-weight:500}
+.tvbox{height:540px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--navy)}
+.heat td.cell{cursor:pointer;text-align:center;border:1px solid var(--navy)}
+.heat td.cell:hover{outline:2px solid var(--gold)}
+.heat small{display:block;font-size:11px;opacity:.85}
+.disc{margin-top:26px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;line-height:1.55}
+footer{text-align:center;margin-top:22px;color:var(--muted);font-size:12px;font-family:'DM Mono',monospace;letter-spacing:.12em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">BLOCK WALL STREET</div>
+    <h1>EMA <span>BACKTESTER</span></h1>
+    <p class="sub">Enter any ticker or contract address, pick a timeframe and an EMA (20, 50, 100 or 200), set your dollars, and see what buying and selling on the signals would have done compared to just holding.</p>
+  </header>
+
+  <div class="card">
+    <h2>1 · Token &amp; Data</h2>
+    <div class="grid">
+      <div><label for="token">Ticker or contract address</label><input id="token" value="BTC" placeholder="BTC, ETH, SOL... or 0x... / Solana mint" autocomplete="off" spellcheck="false"></div>
+      <div><label for="tf">Timeframe</label>
+        <select id="tf">
+          <option value="1h">1 Hour</option><option value="4h">4 Hour</option><option value="12h">12 Hour</option>
+          <option value="1d" selected>Daily</option><option value="1w">Weekly</option><option value="1M">Monthly</option>
+        </select></div>
+      <div><label for="hist">History to load</label>
+        <select id="hist">
+          <option value="500">500 candles</option><option value="1000">1,000 candles</option>
+          <option value="2000" selected>2,000 candles</option><option value="5000">5,000 candles</option>
+        </select></div>
+      <div><label for="source">Data source</label>
+        <select id="source">
+          <option value="auto">Auto (tries each source in turn)</option>
+          <option value="binance">Binance</option><option value="bybit">Bybit</option>
+          <option value="okx">OKX</option><option value="coinbase">Coinbase</option>
+          <option value="coingecko">CoinGecko</option>
+          <option value="gecko">GeckoTerminal (DEX, any contract)</option>
+          <option value="csv">TradingView / my own CSV</option>
+        </select></div>
+      <div><label for="net">Network (contract addresses)</label>
+        <select id="net">
+          <option value="auto">Auto-detect</option><option value="eth">Ethereum</option><option value="solana">Solana</option>
+          <option value="base">Base</option><option value="bsc">BNB Chain</option><option value="arbitrum">Arbitrum</option>
+          <option value="polygon_pos">Polygon</option><option value="avax">Avalanche</option><option value="optimism">Optimism</option>
+        </select></div>
+    </div>
+    <div id="csvBox" class="hide" style="margin-top:12px">
+      <label for="csvfile">Upload a CSV (TradingView export works as is)</label>
+      <input id="csvfile" type="file" accept=".csv,.txt" style="padding:8px">
+      <label for="csv" style="margin-top:10px">...or paste it (date,close per line)</label>
+      <textarea id="csv" placeholder="2024-01-01,42000&#10;2024-01-02,43100&#10;..."></textarea>
+      <div class="note">In TradingView, open your chart, click the layout menu (top right) and choose "Export chart data". Upload that file here and pick the same timeframe label as the chart. A header row with a "close" column is detected automatically. Dates can be ISO dates or Unix timestamps.</div>
+    </div>
+    <div class="note"><b>Where the data comes from:</b> tickers try Binance, Bybit, OKX, Coinbase, then CoinGecko. Contract addresses (0x... or a Solana mint) use GeckoTerminal, which picks the deepest-liquidity pool for that token on the network you choose. TradingView has no public data feed, so use its CSV export above, or load its live chart below the results for a side-by-side look.</div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Signal</h2>
+    <div class="grid">
+      <div><label for="mode">Signal type</label>
+        <select id="mode"><option value="price">Price crosses the EMA</option><option value="cross">Fast EMA crosses Slow EMA</option></select></div>
+      <div id="emaBox"><label for="ema">EMA</label>
+        <select id="ema"><option value="20">20 EMA</option><option value="50" selected>50 EMA</option><option value="100">100 EMA</option><option value="200">200 EMA</option></select></div>
+      <div id="fastBox" class="hide"><label for="fast">Fast EMA</label>
+        <select id="fast"><option value="20" selected>20</option><option value="50">50</option><option value="100">100</option></select></div>
+      <div id="slowBox" class="hide"><label for="slow">Slow EMA</label>
+        <select id="slow"><option value="50" selected>50</option><option value="100">100</option><option value="200">200</option></select></div>
+      <div><label for="buyTrig">Buy when</label>
+        <select id="buyTrig"><option value="cross">Bullish cross happens</option><option value="every">Every candle while bullish (DCA)</option></select></div>
+      <div><label for="sellTrig">Sell when</label>
+        <select id="sellTrig"><option value="cross">Bearish cross happens</option><option value="every">Every candle while bearish</option></select></div>
+      <div><label for="prolong">Prolonged = x EMA length</label><input id="prolong" type="number" value="2" min="0.25" step="any"></div>
+      <div><label for="fresh">Fresh window (% of EMA length)</label><input id="fresh" type="number" value="25" min="1" step="any"></div>
+      <div><label for="minBuy">Backtest: buy only if strength &gt;=</label><input id="minBuy" type="number" value="0" min="0" max="100" step="1"></div>
+      <div><label for="maxSell">Backtest: sell only if strength &lt;=</label><input id="maxSell" type="number" value="100" min="0" max="100" step="1"></div>
+    </div>
+    <div class="note" id="sigNote"></div>
+    <div class="note"><b>Signal strength (0 to 100):</b> above the EMA is a buy, below is a sell. The signal is strongest on a fresh cross, and stronger still when price spent a long time on the other side first (a bear market before a cross up, a bull market before a cross down). "Prolonged" is how many EMA lengths the earlier stretch lasted, and "fresh window" is how quickly the cross fades. The last two boxes let the backtest act only on strong signals, for example buy at 85 or higher and sell at 15 or lower.</div>
+  </div>
+
+  <div class="card">
+    <h2>3 · Your Dollars</h2>
+    <div class="grid">
+      <div><label for="capital">Starting capital ($)</label><input id="capital" type="number" value="10000" min="1" step="any"></div>
+      <div><label for="buyType">Each buy invests</label>
+        <select id="buyType"><option value="pct" selected>% of available cash</option><option value="fixed">Fixed $ amount</option></select></div>
+      <div><label for="buyVal" id="buyValLbl">Buy size (%)</label><input id="buyVal" type="number" value="100" min="0.01" step="any"></div>
+      <div><label for="sellPct">Each sell exits (% of holdings)</label><input id="sellPct" type="number" value="100" min="1" max="100" step="any"></div>
+      <div><label for="fee">Fee per trade (%)</label><input id="fee" type="number" value="0.1" min="0" step="any"></div>
+    </div>
+    <div class="row">
+      <button class="primary" id="run">Run Backtest</button>
+      <button id="getsig">Get Signal</button>
+      <button id="sigscan">Signal Scan</button>
+      <button id="scan">Scan All Timeframes</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div id="results" class="hide">
+    <div class="card" id="sigCard">
+      <h2>Current Signal</h2>
+      <div class="sigGrid">
+        <div class="gaugeBox"><canvas id="cvGauge"></canvas></div>
+        <div>
+          <div class="legend" id="zleg"></div>
+          <div class="cwrap small" id="wrapIdx"><canvas id="cvIdx"></canvas><div class="vline"></div><div class="tip"></div></div>
+          <div class="note" style="margin-top:4px">Colored line = signal strength over time. Faint line = price (scaled).</div>
+        </div>
+      </div>
+      <div class="verdict" id="sigWhy" style="margin-top:14px"></div>
+      <div class="kpis" id="sigKpis"></div>
+    </div>
+    <div class="card">
+      <h2>Results</h2>
+      <div class="verdict" id="verdict"></div>
+      <div class="kpis" id="kpis"></div>
+    </div>
+
+    <div class="card">
+      <h2>Price, EMAs &amp; Trades</h2>
+      <div class="legend" id="legend"></div>
+      <div class="cwrap" id="wrapPrice"><canvas id="cvPrice"></canvas><div class="vline"></div><div class="tip"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>TradingView Chart</h2>
+      <div class="note" style="margin:0 0 10px">TradingView doesn't share its data or let other pages draw on its chart, so this is TradingView's own live chart for the same market, handy for a side-by-side look (add EMAs from its Indicators menu). Contract addresses can't be charted there, so search the token's ticker inside the widget.</div>
+      <div class="row" style="margin:0 0 10px"><button id="tvbtn">Load TradingView chart</button></div>
+      <div id="tvbox" class="tvbox hide"></div>
+    </div>
+
+    <div class="card">
+      <h2>Portfolio Value vs Buy &amp; Hold</h2>
+      <div class="legend"><span><i class="sw" style="background:var(--gold)"></i> Strategy</span><span><i class="sw" style="background:#9aa7c2"></i> Buy &amp; hold</span></div>
+      <div class="cwrap small" id="wrapEq"><canvas id="cvEq"></canvas><div class="vline"></div><div class="tip"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>Compare Strategies On This Timeframe</h2>
+      <div class="note" style="margin:0 0 10px">Same dollars and settings, different signals. Click Use to load one into the controls.</div>
+      <div class="scroll"><table id="cmp"></table></div>
+    </div>
+
+    <div class="card">
+      <h2>Trade Log</h2>
+      <div class="row" style="margin:0 0 10px"><button id="dl">Download Trades (CSV)</button></div>
+      <div class="scroll"><table id="log"></table></div>
+    </div>
+  </div>
+
+  <div id="sigScanBox" class="card hide">
+    <h2>Signal Scan</h2>
+    <div class="note" style="margin:0 0 10px">Current signal strength (0 to 100) for price vs each EMA on every timeframe. Green is buy, red is sell, and deeper color means stronger. Click a cell to open it.</div>
+    <div class="scroll" style="max-height:none"><table class="heat" id="sheat"></table></div>
+  </div>
+
+  <div id="scanBox" class="card hide">
+    <h2>Timeframe Scan</h2>
+    <div class="note" style="margin:0 0 10px">Strategy return for price-vs-EMA on every timeframe. Green means it beat buy &amp; hold, red means it lagged. Click a cell to run it.</div>
+    <div class="scroll" style="max-height:none"><table class="heat" id="heat"></table></div>
+  </div>
+
+  <div class="disc">
+    <b>Read this before you trade.</b> The signal strength score is a rule-of-thumb built from how fresh an EMA cross is and how long price stayed on the other side first. It has not been proven to predict anything, so test it with the backtest filters before leaning on it. This is an educational tool, not financial advice. Backtests use hindsight and do not predict future results. Signals execute at the close of the candle that triggered them, with no slippage, spreads or taxes. Only the fee you enter is modeled. The strategy is long-only spot: it holds the token or cash, with no leverage or shorting. EMA strategies often whipsaw in sideways markets, and past cycles may not repeat.
+  </div>
+  <footer>BLOCK WALL STREET · BLOCKWALLSTREET.BIZ</footer>
+</div>
+
+<script>
+//#CORE-START
+function ema(c,n){
+  const out=new Array(c.length).fill(null);
+  if(c.length<n) return out;
+  let s=0; for(let i=0;i<n;i++) s+=c[i];
+  let e=s/n; out[n-1]=e; const k=2/(n+1);
+  for(let i=n;i<c.length;i++){ e=c[i]*k+e*(1-k); out[i]=e; }
+  return out;
+}
+
+/* Signal strength 0-100: 0 strong sell, 50 neutral, 100 strong buy.
+   Above the line = buy side (base 60), below = sell side (base 40). The bonus grows when the
+   cross is fresh and when the opposite regime before it lasted long. */
+function scoreSeries(bull,start,L,prolong,freshPct){
+  const n=bull.length, mk=()=>new Array(n).fill(null);
+  const score=mk(), since=mk(), prev=mk(), F=mk(), D=mk(), K=mk();
+  const tau=Math.max(2,L*(freshPct/100)), span=Math.max(1,L*prolong);
+  let runStart=start, prevLen=0, known=false;
+  for(let i=start;i<n;i++){
+    if(i>start&&bull[i]!==bull[i-1]){ prevLen=i-runStart; runStart=i; known=true; }
+    const bs=i-runStart, f=known?Math.exp(-bs/tau):0, d=Math.min(1,prevLen/span);
+    const bonus=40*f*(0.35+0.65*d);
+    score[i]=bull[i]?60+bonus:40-bonus;
+    since[i]=bs; prev[i]=prevLen; F[i]=f; D[i]=d; K[i]=known;
+  }
+  return {score,since,prev,f:F,d:D,known:K};
+}
+function prep(cs,cfg){
+  const n=cs.length, c=cs.map(x=>x.c), E={};
+  [20,50,100,200].forEach(p=>E[p]=ema(c,p));
+  const bull=new Array(n).fill(null);
+  if(cfg.mode==='price'){
+    const e=E[cfg.ema];
+    for(let i=0;i<n;i++) if(e[i]!=null) bull[i]=c[i]>e[i];
+  } else {
+    const f=E[cfg.fast], s=E[cfg.slow];
+    for(let i=0;i<n;i++) if(f[i]!=null&&s[i]!=null) bull[i]=f[i]>s[i];
+  }
+  const start=bull.findIndex(v=>v!==null);
+  if(start<0||n-start<3) return null;
+  const L=cfg.mode==='price'?cfg.ema:cfg.slow;
+  const SS=scoreSeries(bull,start,L,cfg.prolong||2,cfg.freshPct||25);
+  return {n,c,E,bull,start,L,SS};
+}
+function runBT(cs,cfg){
+  const P=prep(cs,cfg); if(!P) return null;
+  const {n,c,E,bull,start,L,SS}=P;
+  const minBuy=cfg.minBuy||0, maxSell=cfg.maxSell==null?100:cfg.maxSell;
+  let cash=cfg.capital, units=0, cost=0, fees=0, bought=0, sold=0, wins=0, sells=0, inMkt=0;
+  const trades=[], eq=[], bh=[];
+  const bhUnits=cfg.capital*(1-cfg.fee)/c[start];
+  let peak=-Infinity, mdd=0, bpeak=-Infinity, bmdd=0;
+
+  for(let i=start;i<n;i++){
+    const p=c[i], b=bull[i], pb=i>start?bull[i-1]:null;
+    const buySig = (cfg.buyTrig==='cross' ? (pb===false&&b===true) : b===true) && SS.score[i]>=minBuy;
+    const sellSig = (cfg.sellTrig==='cross' ? (pb===true&&b===false) : b===false) && SS.score[i]<=maxSell;
+    if(sellSig && units>1e-12){
+      const su=units*cfg.sellPct/100, gross=su*p, fee=gross*cfg.fee, net=gross-fee;
+      const avg=cost/units, pnl=net-avg*su;
+      units-=su; cost-=avg*su; if(units<1e-12){units=0;cost=0;}
+      cash+=net; fees+=fee; sold+=gross; sells++; if(pnl>0) wins++;
+      trades.push({i,t:cs[i].t,side:'SELL',price:p,units:su,amount:gross,fee,cash,pos:units,pnl});
+    } else if(buySig && cash>0.005){
+      let amt=cfg.buyType==='fixed'?cfg.buyVal:cash*cfg.buyVal/100;
+      amt=Math.min(amt,cash);
+      if(amt>=0.01){
+        const fee=amt*cfg.fee, u=(amt-fee)/p;
+        units+=u; cost+=amt; cash-=amt; fees+=fee; bought+=amt;
+        trades.push({i,t:cs[i].t,side:'BUY',price:p,units:u,amount:amt,fee,cash,pos:units,pnl:null});
+      }
+    }
+    const v=cash+units*p, bv=bhUnits*p;
+    eq.push(v); bh.push(bv);
+    if(units>0) inMkt++;
+    if(v>peak) peak=v; mdd=Math.max(mdd,(peak-v)/peak);
+    if(bv>bpeak) bpeak=bv; bmdd=Math.max(bmdd,(bpeak-bv)/bpeak);
+  }
+  const m=n-start, final=eq[m-1], bhFinal=bh[m-1];
+  const S=a=>a.slice(start);
+  return {
+    start, t:S(cs.map(x=>x.t)), price:S(c),
+    ema:{20:S(E[20]),50:S(E[50]),100:S(E[100]),200:S(E[200])},
+    eq, bh, trades,
+    sig:{score:S(SS.score),since:S(SS.since),prev:S(SS.prev),f:S(SS.f),d:S(SS.d),known:S(SS.known),bull:S(bull),L},
+    k:{
+      capital:cfg.capital, final, ret:final/cfg.capital-1, bhFinal, bhRet:bhFinal/cfg.capital-1,
+      mdd, bmdd, nTrades:trades.length, buys:trades.length-sells, sells,
+      winRate:sells?wins/sells:null, fees, bought, sold,
+      inMkt:inMkt/m, cash, units, unitsValue:units*c[n-1], candles:m
+    }
+  };
+}
+
+const MS={'1h':3600e3,'4h':4*3600e3,'12h':12*3600e3,'1d':864e5,'1w':7*864e5,'1M':30*864e5};
+function bucketKey(t,tf){
+  if(tf==='1M'){const d=new Date(t);return d.getUTCFullYear()*12+d.getUTCMonth();}
+  if(tf==='1w') return Math.floor((t-4*864e5)/(7*864e5));
+  return Math.floor(t/MS[tf]);
+}
+function resample(points,tf){
+  const out=[]; let lastKey=null;
+  for(const [t,p] of points){
+    if(!(p>0)) continue;
+    const k=bucketKey(t,tf);
+    if(k===lastKey) out[out.length-1].c=p; else {out.push({t,c:p}); lastKey=k;}
+  }
+  out.pop(); // newest bucket is still forming
+  return out;
+}
+//#CORE-END
+
+const $=id=>document.getElementById(id);
+const cache=new Map();
+let LAST=null;
+
+/* ---------- formatting ---------- */
+function money(v){ if(v==null||!isFinite(v)) return '-'; const a=Math.abs(v); return (v<0?'-':'')+'$'+a.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function pct(v,d=1){ if(v==null||!isFinite(v)) return '-'; return (v>=0?'+':'')+(v*100).toFixed(d)+'%'; }
+function px(v){ if(v==null||!isFinite(v)) return '-'; const a=Math.abs(v); if(a>=1000) return v.toLocaleString('en-US',{maximumFractionDigits:0}); if(a>=1) return v.toFixed(2); if(a>=0.01) return v.toFixed(4); return v.toPrecision(3); }
+function units(v){ if(v>=1000) return v.toLocaleString('en-US',{maximumFractionDigits:2}); if(v>=1) return v.toFixed(4); return v.toPrecision(4); }
+function dt(t){ const s=new Date(t).toISOString(); return ($('tf').value.match(/h$/))?s.slice(0,13).replace('T',' ')+':00':s.slice(0,10); }
+function cls(v){ return v>0?'pos':v<0?'neg':''; }
+function status(msg,type){ const s=$('status'); s.textContent=msg||''; s.className=type||''; }
+
+/* ---------- data ---------- */
+//#DATA-START
+let NET={fail:0,ok:0};
+async function jget(url){
+  let r;
+  try{ r=await fetch(url,{headers:{accept:'application/json'}}); }
+  catch(e){ NET.fail++; throw new Error('could not connect'); }
+  NET.ok++;
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+const isAddr=s=>/^0x[a-fA-F0-9]{40}$/.test(s)||/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
+function isClosed(t,tf){
+  const now=Date.now();
+  if(tf==='1M'){const d=new Date(t);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,1)<=now;}
+  return t+MS[tf]<=now;
+}
+function tidy(arr,tf){
+  const m=new Map(); arr.forEach(x=>{ if(x.c>0&&isFinite(x.t)) m.set(x.t,x); });
+  return [...m.values()].sort((a,b)=>a.t-b.t).filter(x=>isClosed(x.t,tf));
+}
+const cleanSym=s=>s.toUpperCase().replace(/[^A-Z0-9]/g,'');
+
+/* Binance (newest page first, 1000 per call) */
+async function binanceCandles(q,tf,limit){
+  const raw=cleanSym(q), quotes=['USDT','USDC','FDUSD'];
+  const syms=quotes.some(x=>raw.endsWith(x)&&raw.length>x.length)?[raw]:quotes.map(x=>raw+x);
+  for(const base of ['https://data-api.binance.vision','https://api.binance.com']){
+    for(const sym of syms){
+      try{
+        let out=[],end=null;
+        while(out.length<limit){
+          const need=Math.min(1000,limit-out.length);
+          const rows=await jget(`${base}/api/v3/klines?symbol=${sym}&interval=${tf}&limit=${need}`+(end?`&endTime=${end}`:''));
+          if(!rows.length) break;
+          out=rows.map(r=>({t:r[0],c:+r[4]})).concat(out); end=rows[0][0]-1;
+          if(rows.length<need) break;
+        }
+        out=tidy(out,tf);
+        if(out.length>=30) return {candles:out,source:'Binance '+sym,label:sym,tv:'BINANCE:'+sym};
+      }catch(e){}
+    }
+  }
+  throw new Error('not listed');
+}
+
+/* Bybit spot (1000 per call, newest first) */
+async function bybitCandles(q,tf,limit){
+  const iv={'1h':'60','4h':'240','12h':'720','1d':'D','1w':'W','1M':'M'}[tf], sym=cleanSym(q)+'USDT';
+  let out=[],end=null;
+  while(out.length<limit){
+    const need=Math.min(1000,limit-out.length);
+    const j=await jget(`https://api.bybit.com/v5/market/kline?category=spot&symbol=${sym}&interval=${iv}&limit=${need}`+(end?`&end=${end}`:''));
+    if(j.retCode!==0) throw new Error(j.retMsg||'Bybit error');
+    const rows=(j.result&&j.result.list)||[]; if(!rows.length) break;
+    const part=rows.map(r=>({t:+r[0],c:+r[4]})).sort((a,b)=>a.t-b.t);
+    out=part.concat(out); end=part[0].t-1;
+    if(rows.length<need) break;
+  }
+  out=tidy(out,tf);
+  if(out.length<30) throw new Error('not enough data');
+  return {candles:out,source:'Bybit '+sym,label:sym,tv:'BYBIT:'+sym};
+}
+
+/* OKX spot (100 per call, newest first, capped at 3,000 candles) */
+async function okxCandles(q,tf,limit){
+  const bar={'1h':'1H','4h':'4H','12h':'12Hutc','1d':'1Dutc','1w':'1Wutc','1M':'1Mutc'}[tf], inst=cleanSym(q)+'-USDT';
+  const cap=Math.min(limit,3000); let out=[],after=null;
+  while(out.length<cap){
+    const j=await jget(`https://www.okx.com/api/v5/market/history-candles?instId=${inst}&bar=${bar}&limit=100`+(after?`&after=${after}`:''));
+    if(j.code!=='0') throw new Error(j.msg||'OKX error');
+    const rows=j.data||[]; if(!rows.length) break;
+    out=rows.map(r=>({t:+r[0],c:+r[4]})).concat(out); after=+rows[rows.length-1][0];
+    if(rows.length<100) break;
+  }
+  out=tidy(out,tf);
+  if(out.length<30) throw new Error('not enough data');
+  const s=cleanSym(q);
+  return {candles:out,source:'OKX '+inst,label:s+'USDT',tv:'OKX:'+s+'USDT'};
+}
+
+/* Coinbase (300 per call; 4h/12h built from hourly, weekly/monthly from daily) */
+async function coinbaseCandles(q,tf,limit){
+  const intraday=['1h','4h','12h'].includes(tf), gran=intraday?3600:86400;
+  const factor={'1h':1,'4h':4,'12h':12,'1d':1,'1w':7,'1M':30}[tf];
+  const want=Math.min(limit*factor+factor,3000), s=cleanSym(q);
+  for(const quote of ['USD','USDT','USDC']){
+    try{
+      let pts=[], endT=Math.floor(Date.now()/1000);
+      while(pts.length<want){
+        const startT=endT-300*gran;
+        const rows=await jget(`https://api.exchange.coinbase.com/products/${s}-${quote}/candles?granularity=${gran}&start=${new Date(startT*1000).toISOString()}&end=${new Date(endT*1000).toISOString()}`);
+        if(!Array.isArray(rows)||!rows.length) break;
+        pts=rows.map(r=>({t:r[0]*1000,c:+r[4]})).concat(pts); endT=startT;
+      }
+      const m=new Map(); pts.forEach(p=>m.set(p.t,p));
+      pts=[...m.values()].sort((a,b)=>a.t-b.t);
+      let out=(tf==='1h'||tf==='1d')?tidy(pts,tf):resample(pts.map(p=>[p.t,p.c]),tf);
+      if(out.length>=30) return {candles:out.slice(-limit),source:'Coinbase '+s+'-'+quote,label:s+quote,tv:'COINBASE:'+s+quote};
+    }catch(e){}
+  }
+  throw new Error('not listed');
+}
+
+/* CoinGecko fallback (free tier: ~90 days hourly, ~365 days daily) */
+async function geckoCoinCandles(q,tf){
+  const s=await jget('https://api.coingecko.com/api/v3/search?query='+encodeURIComponent(q));
+  const coins=s.coins||[];
+  const coin=coins.find(c=>c.symbol.toLowerCase()===q.toLowerCase())||coins[0];
+  if(!coin) throw new Error('not found');
+  const intraday=['1h','4h','12h'].includes(tf);
+  const m=await jget(`https://api.coingecko.com/api/v3/coins/${coin.id}/market_chart?vs_currency=usd&days=${intraday?90:365}`);
+  const c=resample(m.prices||[],tf);
+  if(c.length<30) throw new Error('not enough data');
+  return {candles:c,source:'CoinGecko '+coin.name+(intraday?' (90 days max)':' (365 days max)'),label:coin.symbol.toUpperCase(),tv:null};
+}
+
+/* GeckoTerminal: any DEX token by contract address (or symbol as a last resort) */
+const GT='https://api.geckoterminal.com/api/v2';
+async function gtFindPool(q,net){
+  const addr=isAddr(q); let list;
+  if(addr&&net&&net!=='auto'){ list=(await jget(`${GT}/networks/${net}/tokens/${q}/pools?page=1`)).data||[]; }
+  else { list=(await jget(`${GT}/search/pools?query=${encodeURIComponent(q)}&page=1`)).data||[]; }
+  const want=q.toLowerCase();
+  const info=list.map(p=>{
+    const rel=p.relationships||{}, a=p.attributes||{};
+    const baseId=((rel.base_token||{}).data||{}).id||'', quoteId=((rel.quote_token||{}).data||{}).id||'';
+    const netId=((rel.network||{}).data||{}).id||net;
+    let side=null;
+    if(addr){ if(baseId.toLowerCase().endsWith('_'+want)) side='base'; else if(quoteId.toLowerCase().endsWith('_'+want)) side='quote'; }
+    else if((a.name||'').toUpperCase().startsWith(q.toUpperCase()+' /')) side='base';
+    return {addr:a.address,name:a.name||'pool',net:netId,side,liq:+a.reserve_in_usd||0};
+  });
+  let pools=info.filter(p=>p.side);
+  if(!pools.length&&addr&&net&&net!=='auto') pools=info.map(p=>Object.assign(p,{side:'base'}));
+  pools.sort((a,b)=>b.liq-a.liq);
+  if(!pools.length) throw new Error('no DEX pool found for '+q+(addr&&net==='auto'?'. Try choosing the network.':''));
+  return pools[0];
+}
+async function gtCandles(q,tf,limit,net){
+  const pool=await gtFindPool(q,net);
+  const spec={'1h':['hour',1],'4h':['hour',4],'12h':['hour',12],'1d':['day',1],'1w':['day',1],'1M':['day',1]}[tf];
+  const factor=tf==='1w'?7:tf==='1M'?31:1, cap=Math.min(limit*factor,5000);
+  let pts=[],before=null;
+  while(pts.length<cap){
+    const j=await jget(`${GT}/networks/${pool.net}/pools/${pool.addr}/ohlcv/${spec[0]}?aggregate=${spec[1]}&limit=${Math.min(1000,cap-pts.length)}&currency=usd&token=${pool.side}`+(before?`&before_timestamp=${before}`:''));
+    const list=(((j.data||{}).attributes||{}).ohlcv_list)||[]; if(!list.length) break;
+    pts=list.map(r=>({t:r[0]*1000,c:+r[4]})).concat(pts);
+    const oldest=Math.min(...list.map(r=>r[0]));
+    if(before!==null&&oldest>=before) break; before=oldest;
+    if(list.length<Math.min(1000,cap)) break;
+  }
+  let out=(tf==='1w'||tf==='1M')?(()=>{const m=new Map();pts.forEach(p=>m.set(p.t,p));return resample([...m.values()].sort((a,b)=>a.t-b.t).map(p=>[p.t,p.c]),tf);})():tidy(pts,tf);
+  if(out.length<30) throw new Error('only '+out.length+' candles of history for this pool');
+  const liq=pool.liq>=1e6?'$'+(pool.liq/1e6).toFixed(1)+'M':'$'+Math.round(pool.liq).toLocaleString('en-US');
+  return {candles:out.slice(-limit),source:`GeckoTerminal ${pool.name} on ${pool.net} (pool liquidity ${liq})`,label:(()=>{const parts=pool.name.split(' / ');const s=pool.side==='quote'?(parts[1]||parts[0]):parts[0];return s.replace(/\s+[\d.]+%.*$/,'')||q;})(),tv:null,thin:pool.liq<25000};
+}
+//#DATA-END
+
+const SRC={
+  binance:(q,tf,l)=>binanceCandles(q,tf,l), bybit:(q,tf,l)=>bybitCandles(q,tf,l),
+  okx:(q,tf,l)=>okxCandles(q,tf,l), coinbase:(q,tf,l)=>coinbaseCandles(q,tf,l),
+  coingecko:(q,tf)=>geckoCoinCandles(q,tf), gecko:(q,tf,l)=>gtCandles(q,tf,l,$('net').value)
+};
+const SRC_NAME={binance:'Binance',bybit:'Bybit',okx:'OKX',coinbase:'Coinbase',coingecko:'CoinGecko',gecko:'GeckoTerminal'};
+
+function parseCSV(){
+  const lines=$('csv').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if(!lines.length) throw new Error('Upload or paste some CSV data first');
+  let ci=1, rows=lines;
+  const head=lines[0].split(/[,;\t]/).map(x=>x.trim().toLowerCase());
+  if(isNaN(Date.parse(head[0]))&&isNaN(+head[0])){ const k=head.indexOf('close'); ci=k>=0?k:head.length-1; rows=lines.slice(1); }
+  const out=[];
+  for(const l of rows){
+    const p=l.split(/[,;\t]/).map(x=>x.trim());
+    let t=/^\d+(\.\d+)?$/.test(p[0])?+p[0]:Date.parse(p[0]);
+    if(t<1e11) t*=1000;
+    const c=parseFloat((p[ci]||'').replace(/[$,]/g,''));
+    if(isFinite(t)&&c>0) out.push({t,c});
+  }
+  out.sort((a,b)=>a.t-b.t);
+  if(out.length<30) throw new Error('Need at least 30 valid rows (found '+out.length+')');
+  return {candles:out,source:'Your CSV',label:($('token').value.trim()||'CSV').toUpperCase(),tv:null};
+}
+
+async function getCandles(raw,tf){
+  const sel=$('source').value;
+  if(sel==='csv') return parseCSV();
+  const q=raw.trim(); if(!q) throw new Error('Enter a ticker or contract address');
+  const limit=+$('hist').value, addr=isAddr(q);
+  let order;
+  if(addr) order=['gecko'];
+  else if(sel==='auto') order=['binance','bybit','okx','coinbase','coingecko','gecko'];
+  else order=[sel];
+  const key=`${q.toLowerCase()}|${tf}|${limit}|${order.join()}|${$('net').value}`;
+  if(cache.has(key)) return cache.get(key);
+  const errs=[]; NET={fail:0,ok:0};
+  for(const s of order){
+    status(`Loading ${SRC_NAME[s]}...`);
+    try{
+      const r=await SRC[s](q,tf,limit);
+      if(r&&r.candles.length>=30){
+        if(addr&&sel!=='auto'&&sel!=='gecko') r.source+=' (contract addresses always use GeckoTerminal)';
+        if(!addr&&s==='gecko') r.source+=' (matched by symbol, so confirm it is the right token or paste the contract address)';
+        cache.set(key,r); return r;
+      }
+    }catch(e){ errs.push(SRC_NAME[s]+': '+e.message); }
+  }
+  if(NET.fail>0&&NET.ok===0) throw new Error('Your browser could not reach any data source, so no prices were loaded. This usually means the page is running inside a preview that blocks outside requests, an ad blocker or VPN is blocking the exchange sites, or you are offline. Download this file and open it directly in Chrome or Edge with extensions off, or use the CSV option.');
+  throw new Error(`Could not load ${addr?q.slice(0,10)+'...':q.toUpperCase()} on the ${$('tf').selectedOptions[0].text} timeframe. ${errs.join(' | ')}. Check the spelling, pick a different source or network, or use the CSV option.`);
+}
+
+/* ---------- config ---------- */
+function readCfg(){
+  const mode=$('mode').value;
+  const cfg={
+    mode, ema:+$('ema').value, fast:+$('fast').value, slow:+$('slow').value,
+    capital:+$('capital').value, buyType:$('buyType').value, buyVal:+$('buyVal').value,
+    sellPct:Math.min(100,Math.max(0.01,+$('sellPct').value)), fee:Math.max(0,+$('fee').value)/100,
+    buyTrig:$('buyTrig').value, sellTrig:$('sellTrig').value,
+    prolong:Math.max(.25,+$('prolong').value||2), freshPct:Math.max(1,+$('fresh').value||25),
+    minBuy:Math.min(100,Math.max(0,+$('minBuy').value||0)), maxSell:$('maxSell').value===''?100:Math.min(100,Math.max(0,+$('maxSell').value))
+  };
+  if(!(cfg.capital>0)) throw new Error('Starting capital must be above 0');
+  if(!(cfg.buyVal>0)) throw new Error('Buy size must be above 0');
+  if(mode==='cross'&&cfg.fast>=cfg.slow) throw new Error('Fast EMA must be shorter than the Slow EMA');
+  return cfg;
+}
+function stratLabel(cfg){ return cfg.mode==='price'?`Price vs ${cfg.ema} EMA`:`${cfg.fast}/${cfg.slow} EMA cross`; }
+
+/* ---------- charts ---------- */
+function drawChart(cv,t,lines,markers,log){
+  const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+  cv.width=W*dpr; cv.height=H*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const L=64,R=10,T=10,B=24,n=t.length;
+  let lo=Infinity,hi=-Infinity;
+  lines.forEach(l=>l.y.forEach(v=>{ if(v!=null&&isFinite(v)&&(!log||v>0)){lo=Math.min(lo,v);hi=Math.max(hi,v);} }));
+  if(!isFinite(lo)) return;
+  const f=v=>log?Math.log(v):v, inv=v=>log?Math.exp(v):v;
+  const a=f(lo), b=f(hi), span=(b-a)||1, pad=span*.05, y0=a-pad, ys=span+2*pad;
+  const yOf=v=>T+(H-T-B)*(1-(f(v)-y0)/ys), xOf=i=>L+(W-L-R)*(n>1?i/(n-1):0);
+  g.font='11px "DM Mono",monospace'; g.fillStyle='#8fa0bf'; g.strokeStyle='rgba(143,160,191,.16)'; g.lineWidth=1;
+  g.textAlign='right'; g.textBaseline='middle';
+  for(let k=0;k<=4;k++){
+    const v=inv(y0+ys*k/4), y=yOf(v);
+    g.beginPath(); g.moveTo(L,y); g.lineTo(W-R,y); g.stroke();
+    g.fillText(px(v),L-6,y);
+  }
+  g.textAlign='center'; g.textBaseline='top';
+  for(let k=0;k<=4;k++){
+    const i=Math.round((n-1)*k/4), x=xOf(i);
+    const s=new Date(t[i]).toISOString().slice(0,10);
+    g.fillText(s,Math.min(Math.max(x,L+30),W-R-30),H-B+7);
+  }
+  lines.forEach(l=>{
+    g.strokeStyle=l.color; g.lineWidth=l.w||1.4; g.beginPath(); let pen=false;
+    for(let i=0;i<n;i++){
+      const v=l.y[i];
+      if(v==null||!isFinite(v)||(log&&v<=0)){pen=false;continue;}
+      const x=xOf(i),y=yOf(v);
+      if(!pen){g.moveTo(x,y);pen=true;} else g.lineTo(x,y);
+    }
+    g.stroke();
+  });
+  (markers||[]).forEach(m=>{
+    const x=xOf(m.i), y=yOf(m.y);
+    if(m.buy) star(g,x,y+13,8); else moon(g,x,y-14,9);
+  });
+  cv._m={L,R,W,n};
+}
+
+
+function star(g,x,y,r){
+  g.beginPath();
+  for(let k=0;k<10;k++){ const rad=k%2?r*0.42:r, a=-Math.PI/2+k*Math.PI/5; g.lineTo(x+rad*Math.cos(a),y+rad*Math.sin(a)); }
+  g.closePath(); g.fillStyle='#f0c966'; g.fill(); g.strokeStyle='#8a6a14'; g.lineWidth=1; g.stroke();
+}
+function moon(g,x,y,r){
+  const d=r*0.9, R=Math.sqrt(d*d+r*r);
+  g.beginPath();
+  g.arc(x,y,r,-Math.PI/2,Math.PI/2,true);
+  g.arc(x+d,y,R,Math.atan2(r,-d),Math.atan2(-r,-d)+2*Math.PI,false);
+  g.closePath(); g.fillStyle='#5aa9ff'; g.fill(); g.strokeStyle='#cfe5ff'; g.lineWidth=.8; g.stroke();
+}
+
+const EMA_COL={20:'#f0c966',50:'#5aa9ff',100:'#c58bff',200:'#ff8a5b'};
+
+function renderCharts(){
+  if(!LAST) return;
+  const r=LAST.res, n=r.t.length;
+  const lines=[{y:r.price,color:'#e8ecf4',w:1.5}];
+  [20,50,100,200].forEach(p=>{ if($('sh'+p)&&$('sh'+p).checked) lines.push({y:r.ema[p],color:EMA_COL[p],w:1.3}); });
+  const markers=r.trades.map(tr=>({i:tr.i-r.start,y:tr.price,buy:tr.side==='BUY'}));
+  drawChart($('cvPrice'),r.t,lines,markers,$('logScale').checked);
+  drawChart($('cvEq'),r.t,[{y:r.bh,color:'#9aa7c2',w:1.5},{y:r.eq,color:'#d4a843',w:1.9}],[],false);
+}
+
+function hookHover(wrapId){
+  const w=$(wrapId), cv=w.querySelector('canvas'), vl=w.querySelector('.vline'), tip=w.querySelector('.tip');
+  w.addEventListener('mousemove',e=>{
+    if(!LAST||!cv._m) return;
+    const rc=cv.getBoundingClientRect(), x=e.clientX-rc.left, m=cv._m;
+    if(x<m.L||x>m.W-m.R){vl.style.display=tip.style.display='none';return;}
+    const r=LAST.res, i=Math.round((x-m.L)/(m.W-m.L-m.R)*(m.n-1));
+    vl.style.left=(m.L+(m.W-m.L-m.R)*i/(m.n-1))+'px'; vl.style.display='block';
+    let h=`<b>${dt(r.t[i])}</b><br>Price ${px(r.price[i])}`;
+    [20,50,100,200].forEach(p=>{ if($('sh'+p).checked&&r.ema[p][i]!=null) h+=`<br>${p} EMA ${px(r.ema[p][i])}`; });
+    h+=`<br>Strategy ${money(r.eq[i])}<br>Buy&amp;hold ${money(r.bh[i])}`;
+    const tr=r.trades.find(t=>t.i-r.start===i); if(tr) h+=`<br><b class="${tr.side==='BUY'?'buy':'sell'}">${tr.side==='BUY'?'★ BUY':'☾ SELL'} ${money(tr.amount)}</b>`;
+    tip.innerHTML=h; tip.style.display='block';
+    const left=m.L+(m.W-m.L-m.R)*i/(m.n-1);
+    tip.style.left=(left>m.W/2?left-tip.offsetWidth-12:left+12)+'px';
+  });
+  w.addEventListener('mouseleave',()=>{vl.style.display=tip.style.display='none';});
+}
+
+
+/* ---------- signal gauge ---------- */
+const ZONES=[[0,15,'Strong Sell','#c0392b'],[15,32,'Sell','#e2603f'],[32,50,'Weak Sell','#f0a04b'],[50,68,'Weak Buy','#c8d34a'],[68,85,'Buy','#5fcf80'],[85,100,'Strong Buy','#1fae6a']];
+function zoneOf(v){ for(const z of ZONES) if(v<=z[1]) return z; return ZONES[5]; }
+function cssv(n,fb){ try{ const v=getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return v||fb; }catch(e){ return fb; } }
+function hspan(n,tf){
+  const ms=n*MS[tf], h=ms/3600e3, d=ms/864e5;
+  if(h<48) return Math.round(h)+' hours';
+  if(d<90) return Math.round(d)+' days';
+  if(d<730) return (d/30.4).toFixed(1)+' months';
+  return (d/365).toFixed(1)+' years';
+}
+function drawGauge(cv,score){
+  const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+  cv.width=W*dpr; cv.height=H*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const cx=W/2, cy=H-72, R=Math.min(W/2-14,cy-12), th=R*0.24, rm=R-th/2;
+  g.lineCap='butt';
+  ZONES.forEach(z=>{
+    const a0=Math.PI+z[0]/100*Math.PI, a1=Math.PI+z[1]/100*Math.PI;
+    g.beginPath(); g.arc(cx,cy,rm,a0+0.01,a1-0.01); g.lineWidth=th; g.strokeStyle=z[3]; g.stroke();
+  });
+  const txt=cssv('--text','#e8ecf4'), mut=cssv('--muted','#8fa0bf'), z=zoneOf(score);
+  g.fillStyle=mut; g.font='11px "DM Mono",monospace'; g.textAlign='center';
+  g.fillText('SELL',cx-R+th/2,cy+16); g.fillText('BUY',cx+R-th/2,cy+16);
+  const ang=Math.PI+score/100*Math.PI, nl=R-th-8;
+  g.strokeStyle=txt; g.lineWidth=3; g.lineCap='round';
+  g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx+nl*Math.cos(ang),cy+nl*Math.sin(ang)); g.stroke();
+  g.beginPath(); g.arc(cx,cy,7,0,2*Math.PI); g.fillStyle=txt; g.fill();
+  g.textAlign='center'; g.fillStyle=txt; g.font='700 34px "Inter","DM Mono",sans-serif';
+  g.fillText(Math.round(score),cx,H-30);
+  g.fillStyle=z[3]; g.font='700 15px "Inter",sans-serif';
+  g.fillText(z[2].toUpperCase(),cx,H-8);
+}
+function drawIndex(cv,t,score,price){
+  const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+  cv.width=W*dpr; cv.height=H*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const L=34,R=8,T=8,B=24,n=t.length;
+  const yOf=v=>T+(H-T-B)*(1-v/100), xOf=i=>L+(W-L-R)*(n>1?i/(n-1):0);
+  ZONES.forEach(z=>{ g.fillStyle=z[3]+'24'; g.fillRect(L,yOf(z[1]),W-L-R,yOf(z[0])-yOf(z[1])); });
+  g.font='11px "DM Mono",monospace'; g.fillStyle=cssv('--muted','#8fa0bf'); g.textAlign='right'; g.textBaseline='middle';
+  [0,25,50,75,100].forEach(v=>g.fillText(v,L-5,yOf(v)));
+  g.textAlign='center'; g.textBaseline='top';
+  for(let k=0;k<=4;k++){ const i=Math.round((n-1)*k/4); g.fillText(new Date(t[i]).toISOString().slice(0,10),Math.min(Math.max(xOf(i),L+30),W-R-30),H-B+7); }
+  let lo=Infinity,hi=-Infinity; price.forEach(v=>{ if(v>0){lo=Math.min(lo,Math.log(v));hi=Math.max(hi,Math.log(v));} });
+  const ps=(hi-lo)||1;
+  g.strokeStyle='rgba(200,210,230,.5)'; g.lineWidth=1; g.beginPath();
+  for(let i=0;i<n;i++){ const y=T+(H-T-B)*(1-(Math.log(price[i])-lo)/ps), x=xOf(i); if(i) g.lineTo(x,y); else g.moveTo(x,y); }
+  g.stroke();
+  g.lineWidth=2; g.lineCap='round';
+  for(let i=1;i<n;i++){
+    g.strokeStyle=zoneOf((score[i]+score[i-1])/2)[3];
+    g.beginPath(); g.moveTo(xOf(i-1),yOf(score[i-1])); g.lineTo(xOf(i),yOf(score[i])); g.stroke();
+  }
+  cv._m={L,R,W,n};
+}
+function hookIdxHover(){
+  const w=$('wrapIdx'), cv=$('cvIdx'), vl=w.querySelector('.vline'), tip=w.querySelector('.tip');
+  w.addEventListener('mousemove',e=>{
+    if(!LAST||!cv._m) return;
+    const rc=cv.getBoundingClientRect(), x=e.clientX-rc.left, m=cv._m;
+    if(x<m.L||x>m.W-m.R){ vl.style.display=tip.style.display='none'; return; }
+    const r=LAST.res, i=Math.round((x-m.L)/(m.W-m.L-m.R)*(m.n-1)), sc=r.sig.score[i], z=zoneOf(sc);
+    const left=m.L+(m.W-m.L-m.R)*i/(m.n-1);
+    vl.style.left=left+'px'; vl.style.display='block';
+    tip.innerHTML=`<b>${dt(r.t[i])}</b><br>Price ${px(r.price[i])}<br>Strength ${sc.toFixed(0)} <b style="color:${z[3]}">${z[2]}</b>`;
+    tip.style.display='block'; tip.style.left=(left>m.W/2?left-tip.offsetWidth-12:left+12)+'px';
+  });
+  w.addEventListener('mouseleave',()=>{ vl.style.display=tip.style.display='none'; });
+}
+const ZTXT={
+  'Strong Buy':'Price just crossed above the line after a long stretch below it. This is the strongest buy setup in the model.',
+  'Buy':'Price crossed above the line fairly recently, after a decent stretch below it.',
+  'Weak Buy':'Price is above the line, but the cross is old or the dip below it was short, so the edge is smaller.',
+  'Weak Sell':'Price is below the line, but the cross is old or the run above it was short, so the warning is milder.',
+  'Sell':'Price crossed below the line fairly recently, after a decent run above it.',
+  'Strong Sell':'Price just crossed below the line after a long stretch above it. This is the strongest sell setup in the model.'
+};
+function sigLabel(cfg){ return cfg.mode==='price'?cfg.ema+' EMA':cfg.fast+'/'+cfg.slow+' EMA pair'; }
+function renderSignal(){
+  const {res:r,cfg,info}=LAST, sg=r.sig, i=r.t.length-1, s=sg.score[i], z=zoneOf(s), up=sg.bull[i], tf=info.tf;
+  drawGauge($('cvGauge'),s);
+  drawIndex($('cvIdx'),r.t,sg.score,r.price);
+  $('zleg').innerHTML=ZONES.map(q=>`<span><i class="sw" style="background:${q[3]}"></i>${q[2]} ${q[0]}-${q[1]}</span>`).join('');
+  const ref=cfg.mode==='price'?r.ema[cfg.ema][i]:r.ema[cfg.slow][i], cur=cfg.mode==='price'?r.price[i]:r.ema[cfg.fast][i];
+  const dist=cur/ref-1, known=sg.known[i], bs=sg.since[i], pv=sg.prev[i];
+  const what=cfg.mode==='price'?`Price is ${(Math.abs(dist)*100).toFixed(1)}% ${up?'above':'below'} the ${cfg.ema} EMA`:`The ${cfg.fast} EMA is ${(Math.abs(dist)*100).toFixed(1)}% ${up?'above':'below'} the ${cfg.slow} EMA`;
+  const when=known?`, ${bs===0?'crossing on the latest candle':'about '+hspan(bs,tf)+' ('+bs+' candles) after the cross'}${pv?`, and it had been ${up?'below':'above'} for ${hspan(pv,tf)} (${pv} candles) before that`:''}.`:'. No cross appears in the loaded history, so the model treats this as an older trend.';
+  $('sigWhy').innerHTML=`<b style="color:${z[3]}">${z[2]} (${s.toFixed(0)} / 100).</b> ${ZTXT[z[2]]} ${what}${when}`;
+  const k=(a,b,c)=>`<div class="kpi"><div class="k">${a}</div><div class="v" ${c?`style="color:${c}"`:''}>${b}</div></div>`;
+  $('sigKpis').innerHTML=[
+    k('Signal strength',s.toFixed(0)+' / 100',z[3]), k('Reading',z[2],z[3]),
+    k('Side',up?'Above (buy side)':'Below (sell side)'), k(cfg.mode==='price'?'Distance from EMA':'Gap between EMAs',pct(dist)),
+    k('Since the cross',known?`${bs} candles (${hspan(bs,tf)})`:'None in history'),
+    k(`Earlier time ${up?'below':'above'}`,pv?`${pv} candles (${hspan(pv,tf)})`:'-'),
+    k('Freshness',(sg.f[i]*100).toFixed(0)+'%'), k('Prolonged',(sg.d[i]*100).toFixed(0)+'%')
+  ].join('');
+}
+
+/* ---------- render ---------- */
+function kpi(k,v,c){ return `<div class="kpi"><div class="k">${k}</div><div class="v ${c||''}">${v}</div></div>`; }
+
+function renderAll(){
+  const {res:r,cfg,info}=LAST, k=r.k;
+  const beat=k.ret-k.bhRet;
+  $('verdict').innerHTML=`<b>${stratLabel(cfg)}</b> on <b>${info.label}</b> (${info.tfLabel}, ${k.candles.toLocaleString()} candles from ${dt(r.t[0])} to ${dt(r.t[r.t.length-1])}, source: ${info.source}). `+
+    `Your ${money(k.capital)} became <b class="${cls(k.ret)}">${money(k.final)} (${pct(k.ret)})</b> versus <b class="${cls(k.bhRet)}">${money(k.bhFinal)} (${pct(k.bhRet)})</b> for buy &amp; hold, so the strategy ${beat>=0?'<b class="pos">beat</b>':'<b class="neg">lagged</b>'} holding by ${(Math.abs(beat)*100).toFixed(1)} percentage points.`;
+  $('kpis').innerHTML=[
+    kpi('Starting capital',money(k.capital)),
+    kpi('Ending value',money(k.final),cls(k.ret)),
+    kpi('Profit / loss',money(k.final-k.capital),cls(k.ret)),
+    kpi('Strategy return',pct(k.ret),cls(k.ret)),
+    kpi('Buy &amp; hold return',pct(k.bhRet),cls(k.bhRet)),
+    kpi('Max drawdown',(-k.mdd*100).toFixed(1)+'%','neg'),
+    kpi('B&amp;H max drawdown',(-k.bmdd*100).toFixed(1)+'%','neg'),
+    kpi('Trades',`${k.nTrades} (${k.buys} buys / ${k.sells} sells)`),
+    kpi('Win rate (sells)',k.winRate==null?'-':(k.winRate*100).toFixed(0)+'%'),
+    kpi('Time in market',(k.inMkt*100).toFixed(0)+'%'),
+    kpi('Total bought',money(k.bought)),
+    kpi('Total sold',money(k.sold)),
+    kpi('Fees paid',money(k.fees)),
+    kpi('Cash now',money(k.cash)),
+    kpi('Holding now',`${units(k.units)} (${money(k.unitsValue)})`)
+  ].join('');
+  $('legend').innerHTML=`<span><i class="sw" style="background:#e8ecf4"></i> Price</span>`+
+    [20,50,100,200].map(p=>`<label><input type="checkbox" id="sh${p}"><i class="sw" style="background:${EMA_COL[p]}"></i>${p} EMA</label>`).join('')+
+    `<label><input type="checkbox" id="logScale"> Log scale</label>`+
+    `<span><b class="buy">★</b> Buy (gold star) &nbsp; <b class="sell">☾</b> Sell (blue moon)</span>`;
+  const used=cfg.mode==='price'?[cfg.ema]:[cfg.fast,cfg.slow];
+  used.forEach(p=>$('sh'+p).checked=true);
+  $('legend').querySelectorAll('input').forEach(i=>i.addEventListener('change',renderCharts));
+  $('results').classList.remove('hide');
+  renderSignal();
+  renderCharts();
+  renderLog();
+}
+
+function renderLog(){
+  const r=LAST.res;
+  if(!r.trades.length){ $('log').innerHTML='<tr><td>No trades were triggered with these settings.</td></tr>'; return; }
+  $('log').innerHTML='<tr><th>#</th><th>Date (UTC)</th><th>Side</th><th>Price</th><th>Units</th><th>Amount</th><th>Fee</th><th>Cash after</th><th>Position after</th><th>Realized P&amp;L</th></tr>'+
+    r.trades.map((t,j)=>`<tr><td>${j+1}</td><td>${dt(t.t)}</td><td class="${t.side==='BUY'?'buy':'sell'}">${t.side==='BUY'?'★ BUY':'☾ SELL'}</td><td>${px(t.price)}</td><td>${units(t.units)}</td><td>${money(t.amount)}</td><td>${money(t.fee)}</td><td>${money(t.cash)}</td><td>${units(t.pos)}</td><td class="${cls(t.pnl)}">${t.pnl==null?'-':money(t.pnl)}</td></tr>`).join('');
+}
+
+const CMP=[
+  {label:'Price vs 20 EMA',mode:'price',ema:20},{label:'Price vs 50 EMA',mode:'price',ema:50},
+  {label:'Price vs 100 EMA',mode:'price',ema:100},{label:'Price vs 200 EMA',mode:'price',ema:200},
+  {label:'20/50 EMA cross',mode:'cross',fast:20,slow:50},{label:'20/100 EMA cross',mode:'cross',fast:20,slow:100},
+  {label:'50/100 EMA cross',mode:'cross',fast:50,slow:100},{label:'50/200 EMA cross',mode:'cross',fast:50,slow:200},
+  {label:'100/200 EMA cross',mode:'cross',fast:100,slow:200}
+];
+function renderCompare(){
+  const {cs,cfg}=LAST;
+  let h='<tr><th>Strategy</th><th>Return</th><th>Buy &amp; hold</th><th>vs hold</th><th>Max DD</th><th>Trades</th><th></th></tr>';
+  CMP.forEach((s,j)=>{
+    const r=runBT(cs,Object.assign({},cfg,s));
+    if(!r){ h+=`<tr><td>${s.label}</td><td colspan="5" style="text-align:center;color:var(--muted)">Not enough candles for this EMA</td><td></td></tr>`; return; }
+    const k=r.k;
+    h+=`<tr><td>${s.label}</td><td class="${cls(k.ret)}">${pct(k.ret)}</td><td class="${cls(k.bhRet)}">${pct(k.bhRet)}</td><td class="${cls(k.ret-k.bhRet)}">${pct(k.ret-k.bhRet)}</td><td class="neg">${(-k.mdd*100).toFixed(1)}%</td><td>${k.nTrades}</td><td><button data-j="${j}" style="padding:4px 12px;font-size:12px">Use</button></td></tr>`;
+  });
+  $('cmp').innerHTML=h;
+  $('cmp').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    const s=CMP[+b.dataset.j]; $('mode').value=s.mode;
+    if(s.mode==='price') $('ema').value=s.ema; else {$('fast').value=s.fast;$('slow').value=s.slow;}
+    syncUI(); run();
+  }));
+}
+
+/* ---------- actions ---------- */
+async function run(toSignal){
+  const btn=$('run'); btn.disabled=true; $('scan').disabled=true; $('sigscan').disabled=true;
+  try{
+    const cfg=readCfg(), token=$('token').value.trim(), tf=$('tf').value;
+    if(!token&&$('source').value!=='csv') throw new Error('Enter a token symbol');
+    status('Loading data...');
+    const {candles,source,label,tv,thin}=await getCandles(token||'CSV',tf);
+    const res=runBT(candles,cfg);
+    if(!res) throw new Error(`Only ${candles.length} candles loaded, not enough to calculate that EMA on the ${$('tf').selectedOptions[0].text} timeframe. Try a shorter EMA, a faster timeframe or more history.`);
+    LAST={res,cfg,cs:candles,info:{token:token||'CSV',label:label||(token||'CSV').toUpperCase(),tv:tv||null,source,tfLabel:$('tf').selectedOptions[0].text,tf:$('tf').value}};
+    renderAll(); renderCompare();
+    status(`Done. ${candles.length.toLocaleString()} candles loaded from ${source}.`+(thin?' Warning: this pool has very low liquidity, so prices may be unreliable.':''),'ok');
+    (toSignal===true?$('sigCard'):$('results')).scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){ status(e.message,'err'); }
+  btn.disabled=false; $('scan').disabled=false; $('sigscan').disabled=false;
+}
+
+async function scan(){
+  $('run').disabled=true; $('scan').disabled=true; $('sigscan').disabled=true;
+  try{
+    const cfg=readCfg(), token=$('token').value.trim();
+    if(!token&&$('source').value!=='csv') throw new Error('Enter a token symbol');
+    const tfs=['1h','4h','12h','1d','1w','1M'], names={'1h':'1 Hour','4h':'4 Hour','12h':'12 Hour','1d':'Daily','1w':'Weekly','1M':'Monthly'};
+    const emas=[20,50,100,200], grid={};
+    for(const tf of tfs){
+      status(`Scanning ${names[tf]}...`);
+      grid[tf]={};
+      try{
+        const {candles}=await getCandles(token||'CSV',tf);
+        emas.forEach(p=>{ grid[tf][p]=runBT(candles,Object.assign({},cfg,{mode:'price',ema:p})); });
+      }catch(e){ emas.forEach(p=>grid[tf][p]=null); }
+    }
+    let h='<tr><th>Price vs EMA</th>'+tfs.map(t=>`<th style="text-align:center">${names[t]}</th>`).join('')+'</tr>';
+    emas.forEach(p=>{
+      h+=`<tr><td>${p} EMA</td>`;
+      tfs.forEach(tf=>{
+        const r=grid[tf][p];
+        if(!r){ h+='<td class="cell" style="color:var(--muted);cursor:default">n/a</td>'; return; }
+        const d=r.k.ret-r.k.bhRet, a=Math.min(.55,.12+Math.abs(d)*.25);
+        const bg=d>=0?`rgba(62,207,142,${a})`:`rgba(239,91,91,${a})`;
+        h+=`<td class="cell" data-tf="${tf}" data-p="${p}" style="background:${bg}">${pct(r.k.ret,0)}<small>hold ${pct(r.k.bhRet,0)}</small></td>`;
+      });
+      h+='</tr>';
+    });
+    $('heat').innerHTML=h; $('scanBox').classList.remove('hide');
+    $('heat').querySelectorAll('td.cell[data-tf]').forEach(td=>td.addEventListener('click',()=>{
+      $('tf').value=td.dataset.tf; $('mode').value='price'; $('ema').value=td.dataset.p; syncUI(); run();
+    }));
+    status('Scan complete. Click a cell to open that backtest.','ok');
+    $('scanBox').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){ status(e.message,'err'); }
+  $('run').disabled=false; $('scan').disabled=false; $('sigscan').disabled=false;
+}
+
+async function sigScan(){
+  $('run').disabled=true; $('scan').disabled=true; $('sigscan').disabled=true;
+  try{
+    const cfg=readCfg(), token=$('token').value.trim();
+    if(!token&&$('source').value!=='csv') throw new Error('Enter a ticker or contract address');
+    const tfs=['1h','4h','12h','1d','1w','1M'], names={'1h':'1 Hour','4h':'4 Hour','12h':'12 Hour','1d':'Daily','1w':'Weekly','1M':'Monthly'}, emas=[20,50,100,200], grid={};
+    for(const tf of tfs){
+      status(`Scanning ${names[tf]}...`); grid[tf]={};
+      try{
+        const {candles}=await getCandles(token||'CSV',tf);
+        emas.forEach(p=>{ const P=prep(candles,Object.assign({},cfg,{mode:'price',ema:p})); grid[tf][p]=P?P.SS.score[P.n-1]:null; });
+      }catch(e){ emas.forEach(p=>grid[tf][p]=null); }
+    }
+    let h='<tr><th>Price vs EMA</th>'+tfs.map(t=>`<th style="text-align:center">${names[t]}</th>`).join('')+'</tr>';
+    emas.forEach(p=>{
+      h+=`<tr><td>${p} EMA</td>`;
+      tfs.forEach(tf=>{
+        const v=grid[tf][p];
+        if(v==null){ h+='<td class="cell" style="color:var(--muted);cursor:default">n/a</td>'; return; }
+        const z=zoneOf(v);
+        h+=`<td class="cell" data-tf="${tf}" data-p="${p}" style="background:${z[3]}55">${Math.round(v)}<small>${z[2]}</small></td>`;
+      });
+      h+='</tr>';
+    });
+    $('sheat').innerHTML=h; $('sigScanBox').classList.remove('hide');
+    $('sheat').querySelectorAll('td.cell[data-tf]').forEach(td=>td.addEventListener('click',()=>{
+      $('tf').value=td.dataset.tf; $('mode').value='price'; $('ema').value=td.dataset.p; syncUI(); run(true);
+    }));
+    status('Signal scan complete. Click a cell to open it.','ok');
+    $('sigScanBox').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){ status(e.message,'err'); }
+  $('run').disabled=false; $('scan').disabled=false; $('sigscan').disabled=false;
+}
+
+function downloadCSV(){
+  if(!LAST) return;
+  const rows=[['#','date_utc','side','price','units','amount','fee','cash_after','position_after','realized_pnl']];
+  LAST.res.trades.forEach((t,j)=>rows.push([j+1,dt(t.t),t.side,t.price,t.units,t.amount.toFixed(2),t.fee.toFixed(2),t.cash.toFixed(2),t.pos,t.pnl==null?'':t.pnl.toFixed(2)]));
+  const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`bws-backtest-${LAST.info.label.toLowerCase().replace(/[^a-z0-9]/g,'')}-${$('tf').value}.csv`; a.click();
+}
+
+function syncUI(){
+  const price=$('mode').value==='price';
+  $('emaBox').classList.toggle('hide',!price);
+  $('fastBox').classList.toggle('hide',price); $('slowBox').classList.toggle('hide',price);
+  $('csvBox').classList.toggle('hide',$('source').value!=='csv');
+  $('buyValLbl').textContent=$('buyType').value==='pct'?'Buy size (% of cash)':'Buy size ($ per buy)';
+  $('sigNote').textContent=price
+    ? 'Bullish = closing price above the EMA. A bullish cross is the candle that closes back above it; a bearish cross is the candle that closes below it.'
+    : 'Bullish = fast EMA above slow EMA. For example 50/200 is the classic golden cross (buy) and death cross (sell).';
+}
+
+['mode','source','buyType'].forEach(id=>$(id).addEventListener('change',syncUI));
+$('run').addEventListener('click',()=>run());
+$('scan').addEventListener('click',scan);
+$('getsig').addEventListener('click',()=>run(true));
+$('sigscan').addEventListener('click',sigScan);
+hookIdxHover();
+$('dl').addEventListener('click',downloadCSV);
+$('token').addEventListener('keydown',e=>{ if(e.key==='Enter') run(); });
+window.addEventListener('resize',()=>{ renderCharts(); if(LAST) renderSignal(); });
+hookHover('wrapPrice'); hookHover('wrapEq');
+
+const TVI={'1h':'60','4h':'240','12h':'720','1d':'D','1w':'W','1M':'M'};
+function loadTV(){
+  const guess=(LAST&&LAST.info.tv)||(isAddr($('token').value.trim())?'BTCUSD':cleanSym($('token').value||'BTC')+'USD');
+  const box=$('tvbox'); box.classList.remove('hide'); box.innerHTML='';
+  const mk=()=>{ new TradingView.widget({autosize:true,symbol:guess,interval:TVI[$('tf').value],timezone:'Etc/UTC',theme:'dark',style:'1',locale:'en',enable_publishing:false,allow_symbol_change:true,container_id:'tvbox'}); };
+  if(window.TradingView) mk();
+  else { const s=document.createElement('script'); s.src='https://s3.tradingview.com/tv.js'; s.onload=mk; s.onerror=()=>{box.innerHTML='<div style="padding:20px;color:var(--muted)">TradingView could not load. Check your connection or ad blocker.</div>';}; document.head.appendChild(s); }
+}
+$('tvbtn').addEventListener('click',loadTV);
+$('csvfile').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader(); rd.onload=()=>{ $('csv').value=rd.result; status('Loaded '+f.name+'. Pick the matching timeframe and run.','ok'); }; rd.readAsText(f);
+});
+syncUI();
+</script>
+</body>
+</html>
