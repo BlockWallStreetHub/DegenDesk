@@ -780,5 +780,168 @@ window.__moon={D:function(){return D},ECL:ECL,NF:NF};
 loadAsset();
 })();
 </script>
+<!-- BWS COMPASS (shared navigator) -->
+<style id="cmpCss">
+#cmpFab{position:fixed;left:14px;bottom:14px;z-index:9000;display:flex;align-items:center;gap:8px;border:1px solid #d9b650;background:#0d1426;color:#f1d98a;border-radius:999px;padding:0 16px 0 10px;height:46px;font:700 14px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.02em;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+#cmpFab svg{width:28px;height:28px}
+#cmpFab .nw{background:#d9b650;color:#1a1405;border-radius:999px;font-size:10px;padding:3px 7px;letter-spacing:.06em;text-transform:uppercase;animation:cmpP 1.8s infinite}
+@keyframes cmpP{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){#cmpFab .nw{animation:none}}
+#cmpOv{position:fixed;inset:0;z-index:9500;display:none;background:rgba(2,5,14,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#e8ecf7}
+#cmpOv.on{display:block}
+#cmpBox{position:absolute;top:4vh;left:50%;transform:translateX(-50%);width:min(940px,96vw);max-height:92vh;display:flex;flex-direction:column;background:#0b1224;border:1px solid #d9b650;border-radius:16px;box-shadow:0 20px 80px rgba(0,0,0,.7);overflow:hidden}
+#cmpHd{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #1f2a4a}
+#cmpHd svg{width:34px;height:34px;flex:none}
+#cmpHd h2{margin:0;font-size:19px;color:#f1d98a;letter-spacing:.04em}
+#cmpHd small{display:block;color:#93a0c4;font-size:12.5px;margin-top:2px}
+#cmpX{margin-left:auto;border:1px solid #2a3760;background:#111a33;color:#e8ecf7;border-radius:10px;width:42px;height:42px;font-size:20px;cursor:pointer;flex:none}
+#cmpSrch{padding:12px 18px 0}
+#cmpQ{width:100%;box-sizing:border-box;background:#101935;border:1px solid #2a3760;border-radius:12px;color:#e8ecf7;padding:13px 14px;font-size:16px}
+#cmpQ:focus{outline:2px solid #d9b650;outline-offset:1px}
+#cmpTabs{display:flex;gap:8px;padding:12px 18px 0;flex-wrap:wrap}
+#cmpTabs button{border:1px solid #2a3760;background:#101935;color:#c3cde8;border-radius:999px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;min-height:42px}
+#cmpTabs button.on{background:#d9b650;color:#1a1405;border-color:#d9b650}
+#cmpBd{overflow:auto;padding:14px 18px 22px;-webkit-overflow-scrolling:touch}
+.cmpHere{background:#122046;border:1px solid #2a3f7a;border-radius:10px;padding:9px 12px;font-size:13.5px;color:#b9c8ee;margin-bottom:12px}
+.cmpGoal{border:1px solid #1f2a4a;background:#0f1730;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.cmpGoal>button{width:100%;text-align:left;display:flex;align-items:center;gap:12px;background:none;border:0;color:#fff;padding:14px 14px;font:600 16px/1.3 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;cursor:pointer;min-height:56px}
+.cmpGoal .ic{flex:none;width:38px;height:38px;border-radius:50%;background:#1b2750;display:grid;place-items:center;font-size:19px}
+.cmpGoal .ar{margin-left:auto;color:#d9b650;transition:transform .2s;flex:none}
+.cmpGoal.open .ar{transform:rotate(90deg)}
+.cmpGoal .ops{display:none;padding:0 14px 14px}
+.cmpGoal.open .ops{display:block}
+.cmpGoal .why{color:#93a0c4;font-size:13.5px;margin:0 0 10px}
+.cmpLn{display:block;text-decoration:none;color:inherit;border:1px solid #2a3760;background:#111b38;border-radius:12px;padding:12px 14px;margin-bottom:8px;min-height:48px}
+.cmpLn:hover,.cmpLn:focus{border-color:#d9b650;outline:none}
+.cmpLn b{color:#f1d98a;font-size:15px}
+.cmpLn span{display:block;color:#a9b5d6;font-size:13.5px;margin-top:2px}
+.cmpLn em{font-style:normal;float:right;font-size:11px;border-radius:999px;padding:2px 8px;border:1px solid #3a4a80;color:#9fb0e0;margin-left:8px}
+.cmpLn em.b{color:#7fe3a4;border-color:#2d6e4c}.cmpLn em.m{color:#f1c765;border-color:#7a6320}.cmpLn em.a{color:#ff9d8f;border-color:#7a3a33}
+.cmpLn.here{border-color:#d9b650;background:#1a2244}
+.cmpLn.done b:after{content:" ✓";color:#7fe3a4}
+.cmpGrp{margin:18px 0 8px;color:#d9b650;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.cmpGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:8px}
+.cmpGrid .cmpLn{margin:0}
+.cmpPath{counter-reset:s}
+.cmpPath .cmpLn{padding-left:52px;position:relative}
+.cmpPath .cmpLn:before{counter-increment:s;content:counter(s);position:absolute;left:12px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:#1b2750;border:1px solid #d9b650;color:#f1d98a;display:grid;place-items:center;font-weight:700;font-size:14px}
+.cmpPath .cmpLn.done:before{content:"✓";background:#1d5a3a;border-color:#7fe3a4;color:#fff}
+.cmpBar{height:8px;border-radius:99px;background:#16224a;margin:6px 0 14px;overflow:hidden}.cmpBar i{display:block;height:100%;background:linear-gradient(90deg,#d9b650,#7fe3a4);width:0;transition:width .4s}
+.cmpEmpty{color:#93a0c4;padding:18px 4px}
+.cmpLeg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:#93a0c4;margin:0 0 6px}
+@media (max-width:700px){#cmpBox{top:0;left:0;transform:none;width:100vw;max-height:100vh;height:100vh;border-radius:0;border:0}#cmpFab{height:50px}#cmpFab .t{display:none}#cmpFab{padding:0 12px 0 10px}#cmpFab .nw{display:inline}}
+</style>
+<script id="cmpJs">
+(function(){
+'use strict';
+var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
+var ITEMS=[
+ {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'16 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
+ {id:'desk',n:'Overview',h:D+'#desk',g:'Watch',lv:'b',d:'Prices, your alerts, positions, pegs and news on one screen.',kw:'home dashboard summary today prices market'},
+ {id:'news',n:'News',h:D+'#news',g:'Watch',lv:'b',d:'Headlines that could move prices, scored by how big they might be.',kw:'headlines fed cpi hack listing sec'},
+ {id:'heat',n:'Heat Map',h:D+'#heat',g:'Find',lv:'b',d:'A colour map of which coins and sectors are up or down right now.',kw:'heatmap sectors green red gainers losers'},
+ {id:'trend',n:'Trending Coins',h:D+'#trend',g:'Find',lv:'b',d:'New and fast-moving coins people are looking at today.',kw:'trending new tokens dexscreener geckoterminal'},
+ {id:'pegs',n:'Stablecoin Pegs',h:D+'#pegs',g:'Protect',lv:'b',d:'Checks whether USDT, USDC, DAI and others still trade at $1.',kw:'depeg usdt usdc dai safe stable'},
+ {id:'pf',n:'Portfolio',h:P,g:'Track',lv:'b',d:'Log what you bought and see your value, profit and loss. Set price alerts.',kw:'holdings profit loss track coingecko invest'},
+ {id:'acct',n:'Account',h:A,g:'Account',lv:'b',d:'Your sign-up info, access time, alert channels and renewal.',kw:'settings email subscription renew billing login'},
+ {id:'moon',n:'Moon Desk',h:M,g:'Test',lv:'b',d:'Moon phases, zodiac and eclipses laid behind real price charts, with a back-test.',kw:'astrology zodiac eclipse planetarium lunar full new mercury'},
+ {id:'wealth',n:'Accumulation Sim',h:D+'#wealth',g:'Test',lv:'b',d:'See how saving a little each week into BTC and ETH could grow over a year.',kw:'dca save stack feed the machine aave'},
+ {id:'risk',n:'Liquidation Manager',h:D+'#risk',g:'Protect',lv:'m',d:'Watches the health factor on your Aave loan so you can act before you are liquidated.',kw:'aave health factor liquidation instadapp loan borrow margin'},
+ {id:'ind',n:'Indicators & Alerts',h:D+'#ind',g:'Protect',lv:'m',d:'Alerts for health factor, EMA crosses, divergences and liquidations.',kw:'alerts ema rsi divergence telegram'},
+ {id:'lp',n:'LP Scout',h:L,g:'Find',lv:'m',d:'Search liquidity pools on every chain, filter by size and yield, and simulate outcomes.',kw:'liquidity pool yield apr tvl farm uniswap'},
+ {id:'rh',n:'Robinhood Chain stock LPs',h:L+'#rhstock',g:'Find',lv:'m',d:'Only the pools that hold stock tokens such as NVDA, AAPL and TSLA.',kw:'robinhood stock token tsla nvda aapl lp'},
+ {id:'sig',n:'Signal Scanner',h:D+'#sig',g:'Find',lv:'m',d:'Trade signals from moving averages and more, with a paper-trading log.',kw:'signals scanner paper trading fibonacci'},
+ {id:'bt',n:'EMA Backtester',h:D+'#bt',g:'Test',lv:'m',d:'Test buying and selling on the 20, 50, 100 or 200 EMA for any coin.',kw:'backtest ema strategy history'},
+ {id:'port',n:'Portfolio Simulator',h:D+'#port',g:'Test',lv:'m',d:'Project your holdings forward under price moves you choose.',kw:'what if scenario projection'},
+ {id:'hosted',n:'Savings Manager (full page)',h:D+'#hosted',g:'Protect',lv:'a',d:'The standalone Savings Liquidation Manager for advanced setups.',kw:'savings hosted standalone'}
+];
+var GOALS=[
+ {i:'🌱',q:'I am new. Where do I start?',w:'Take the course first. It is short and every lesson ends with something to try. Then look at the Overview.',to:['course','desk']},
+ {i:'📰',q:'What is happening in the market today?',w:'Start with the Overview for prices, then check the news and the heat map.',to:['desk','news','heat']},
+ {i:'🛡️',q:'I have a loan and do not want to be liquidated',w:'The Liquidation Manager watches your health factor. Add alerts so you hear about trouble early.',to:['risk','ind','pegs']},
+ {i:'💼',q:'Track what I own and my profit',w:'Log your buys in Portfolio. It works out your profit, loss and value over time.',to:['pf','port']},
+ {i:'🔔',q:'Get alerts on Telegram, email or my phone',w:'Set up your channels once in Account. Every alert on the desk and in Portfolio uses them.',to:['acct','pf','ind']},
+ {i:'🔎',q:'Find coins that are moving',w:'Trending shows what is new and hot. The heat map shows the big picture. Signals add a technical view.',to:['trend','heat','sig']},
+ {i:'💧',q:'Find a pool to earn trading fees (LP)',w:'LP Scout lets you filter thousands of pools, then simulate what could happen to your money.',to:['lp','rh']},
+ {i:'🧪',q:'Test an idea on past prices',w:'Back-tests show what a rule would have done before. They are lessons, not promises.',to:['bt','moon','sig']},
+ {i:'🌙',q:'See if the moon and zodiac line up with price',w:'Moon Desk draws the sky behind the chart, then checks whether any pattern beats luck.',to:['moon']},
+ {i:'📈',q:'Plan to build wealth slowly over time',w:'The accumulation sim shows weekly saving. The course explains the idea behind it.',to:['wealth','course']},
+ {i:'🪙',q:'Check if a stablecoin is safe',w:'The pegs page shows how far each stablecoin has slipped from $1.',to:['pegs']},
+ {i:'🔑',q:'Manage my access or renew',w:'Account shows your plan, time left and a renew button.',to:['acct']}
+];
+var PATH=['course','desk','pf','acct','heat','moon'];
+var LV={b:['Beginner','b'],m:['Next step','m'],a:['Advanced','a']};
+var byId={};ITEMS.forEach(function(t){byId[t.id]=t});
+var file=(location.pathname.split('/').pop()||'index.html').toLowerCase(),hash=location.hash.replace('#','');
+function here(t){var f=t.h.split('#')[0].toLowerCase(),hh=t.h.split('#')[1]||'';if(f!==file)return false;if(f===D.toLowerCase())return (hash||'desk')===hh;return !hh||hh===hash}
+var DONE={};try{DONE=JSON.parse(localStorage.getItem('dd_cmp')||'{}')}catch(e){}
+function save(){try{localStorage.setItem('dd_cmp',JSON.stringify(DONE))}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function ln(t,cls){var l=LV[t.lv];return '<a class="cmpLn '+(here(t)?'here ':'')+(DONE[t.id]?'done ':'')+(cls||'')+'" href="'+t.h+'" data-id="'+t.id+'"><em class="'+l[1]+'">'+l[0]+'</em><b>'+esc(t.n)+'</b><span>'+esc(t.d)+'</span></a>'}
+var rose='<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="#0d1426" stroke="#d9b650" stroke-width="2.5"/><circle cx="32" cy="32" r="22" fill="none" stroke="#d9b65066" stroke-width="1"/><path d="M32 6l6 20 20 6-20 6-6 20-6-20-20-6 20-6z" fill="#d9b650"/><path d="M32 6l6 20-6 6z" fill="#f6e3a0"/><circle cx="32" cy="32" r="4" fill="#0d1426" stroke="#0d1426"/><text x="32" y="5" text-anchor="middle" font-size="8" font-weight="700" fill="#f1d98a" font-family="Arial">N</text></svg>';
+var tab='goals',q='';
+function body(){
+  var h='';
+  var cur=null;for(var i=0;i<ITEMS.length;i++)if(here(ITEMS[i])){cur=ITEMS[i];break}
+  if(q){
+    var w=q.toLowerCase().split(/\s+/).filter(Boolean);
+    var hit=ITEMS.filter(function(t){var s=(t.n+' '+t.g+' '+t.d+' '+t.kw).toLowerCase();return w.every(function(x){return s.indexOf(x)>=0})});
+    var gh=GOALS.filter(function(g){var s=(g.q+' '+g.w).toLowerCase();return w.every(function(x){return s.indexOf(x)>=0})});
+    h=hit.length?'<div class="cmpGrid">'+hit.map(function(t){return ln(t)}).join('')+'</div>':'';
+    if(!hit.length&&gh.length){gh.forEach(function(g){g.to.forEach(function(id){h+=ln(byId[id])})})}
+    return h||'<div class="cmpEmpty">Nothing matches “'+esc(q)+'”. Try a simple word like <b>alerts</b>, <b>loan</b>, <b>profit</b>, <b>moon</b> or <b>pool</b>.</div>';
+  }
+  if(cur)h+='<div class="cmpHere">You are on <b>'+esc(cur.n)+'</b>. '+esc(cur.d)+'</div>';
+  if(tab==='goals'){
+    h+='<p style="margin:0 0 12px;color:#93a0c4">Pick what you want to do. We will point you to the right tool.</p>';
+    GOALS.forEach(function(g,i){h+='<div class="cmpGoal" data-g="'+i+'"><button type="button" aria-expanded="false"><span class="ic">'+g.i+'</span><span>'+esc(g.q)+'</span><span class="ar">▶</span></button><div class="ops"><p class="why">'+esc(g.w)+'</p>'+g.to.map(function(id){return ln(byId[id])}).join('')+'</div></div>'});
+  }else if(tab==='path'){
+    var n=PATH.filter(function(id){return DONE[id]}).length;
+    h+='<p style="margin:0 0 4px;color:#93a0c4">Six steps to get comfortable. Each one is ticked off when you open it.</p><div class="cmpBar"><i style="width:'+Math.round(n/PATH.length*100)+'%"></i></div><div style="margin:-6px 0 12px;font-size:13px;color:#93a0c4">'+n+' of '+PATH.length+' done</div><div class="cmpPath">'+PATH.map(function(id){return ln(byId[id])}).join('')+'</div>';
+  }else{
+    h+='<div class="cmpLeg"><span><em style="color:#7fe3a4">●</em> Beginner: safe to start here</span><span><em style="color:#f1c765">●</em> Next step: needs a little setup</span><span><em style="color:#ff9d8f">●</em> Advanced</span></div>';
+    ['Learn','Watch','Track','Find','Protect','Test','Account'].forEach(function(g){var it=ITEMS.filter(function(t){return t.g===g});if(!it.length)return;
+      var sub={Learn:'Understand the tools',Watch:'See the market',Track:'Know what you own',Find:'Spot opportunities',Protect:'Avoid big losses',Test:'Try ideas safely',Account:'Your access'}[g];
+      h+='<div class="cmpGrp">'+g+' · '+sub+'</div><div class="cmpGrid">'+it.map(function(t){return ln(t)}).join('')+'</div>'});
+  }
+  return h;
+}
+var ov;
+function draw(){
+  document.getElementById('cmpTabs').innerHTML=[['goals','What do you want to do?'],['path','Your first week'],['map','All sections']].map(function(t){return '<button type="button" data-t="'+t[0]+'" class="'+(tab===t[0]&&!q?'on':'')+'">'+t[1]+'</button>'}).join('');
+  document.getElementById('cmpBd').innerHTML=body();
+}
+function build(){
+  var s=document.createElement('div');s.id='cmpOv';s.setAttribute('role','dialog');s.setAttribute('aria-modal','true');s.setAttribute('aria-label','Compass navigator');
+  s.innerHTML='<div id="cmpBox"><div id="cmpHd">'+rose+'<div><h2>COMPASS</h2><small>Not sure where to go? Start here.</small></div><button id="cmpX" type="button" aria-label="Close">✕</button></div><div id="cmpSrch"><input id="cmpQ" type="search" placeholder="Search: alerts, loan, profit, moon, pool…" autocomplete="off"></div><div id="cmpTabs"></div><div id="cmpBd"></div></div>';
+  document.body.appendChild(s);ov=s;
+  s.addEventListener('click',function(e){
+    if(e.target===s||e.target.id==='cmpX'){close();return}
+    var t=e.target.closest('#cmpTabs button');if(t){tab=t.getAttribute('data-t');q='';document.getElementById('cmpQ').value='';draw();return}
+    var g=e.target.closest('.cmpGoal>button');if(g){var p=g.parentNode,o=!p.classList.contains('open');p.classList.toggle('open',o);g.setAttribute('aria-expanded',o);return}
+    var a=e.target.closest('a.cmpLn');if(a){DONE[a.getAttribute('data-id')]=1;save();var hf=a.getAttribute('href');
+      if(hf.split('#')[0].toLowerCase()===file){close();setTimeout(function(){hash=location.hash.replace('#','')},50)}
+    }
+  });
+  document.getElementById('cmpQ').addEventListener('input',function(){q=this.value.trim();draw()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.classList.contains('on'))close()});
+}
+function open(){if(!ov)build();hash=location.hash.replace('#','');ov.classList.add('on');document.documentElement.style.overflow='hidden';
+  try{localStorage.setItem('dd_cmp_seen','1')}catch(e){}var nw=document.querySelector('#cmpFab .nw');if(nw)nw.remove();
+  tab='goals';q='';document.getElementById('cmpQ').value='';draw();var f=ov.querySelector('.cmpGoal>button');}
+function close(){ov.classList.remove('on');document.documentElement.style.overflow=''}
+function init(){
+  var seen=false;try{seen=!!localStorage.getItem('dd_cmp_seen')}catch(e){}
+  var b=document.createElement('button');b.id='cmpFab';b.type='button';b.setAttribute('aria-label','Open the Compass navigator');
+  b.innerHTML=rose+'<span class="t">Compass</span>'+(seen?'':'<span class="nw">Start here</span>');
+  b.onclick=open;document.body.appendChild(b);
+  document.querySelectorAll('[data-compass]').forEach(function(x){x.addEventListener('click',function(e){e.preventDefault();open()})});
+  document.addEventListener('keydown',function(e){var ty=/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||''))||e.target.isContentEditable;
+    if(!ty&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&(e.key==='c'||e.key==='C')&&!(ov&&ov.classList.contains('on'))){e.preventDefault();open()}});
+  window.BWSCompass={open:open,close:close};
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
 </body>
 </html>
