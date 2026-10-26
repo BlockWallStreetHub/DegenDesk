@@ -1060,32 +1060,42 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 <!-- BWS RADIO (shared music player) -->
 <style id="rdCss">
-#rdBtn{position:fixed;right:14px;bottom:14px;z-index:8990;display:flex;align-items:center;gap:8px;border:1px solid #d9b650;background:#0d1426;color:#f1d98a;border-radius:999px;height:46px;padding:0 14px;font:700 14px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+#rdBtn{position:fixed;right:14px;bottom:78px;z-index:8990;display:flex;align-items:stretch;border:1px solid #d9b650;background:#0d1426;color:#f1d98a;border-radius:999px;height:42px;font:700 14px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.5);touch-action:none;user-select:none;-webkit-user-select:none}
 #rdBtn.on{background:#d9b650;color:#1a1405}
+#rdBtn button{all:unset;display:flex;align-items:center;justify-content:center;cursor:pointer;color:inherit;font:inherit}
+#rdBtn .q{width:42px;border-radius:999px 0 0 999px}
+#rdBtn .m{padding:0 8px 0 4px}
+#rdBtn .x{width:30px;border-radius:0 999px 999px 0;font-size:16px;opacity:.8}
+#rdBtn .g{display:flex;align-items:center;padding:0 2px 0 8px;cursor:grab;opacity:.7;font-size:14px;letter-spacing:-2px}
+#rdBtn button:focus-visible{outline:2px solid #fff;outline-offset:-3px}
 #rdBtn .eq{display:inline-flex;gap:2px;align-items:flex-end;height:14px}
 #rdBtn .eq i{display:block;width:3px;background:currentColor;height:4px;border-radius:1px}
 #rdBtn.on .eq i{animation:rdE .9s infinite ease-in-out}
 #rdBtn.on .eq i:nth-child(2){animation-delay:.2s}#rdBtn.on .eq i:nth-child(3){animation-delay:.4s}
 @keyframes rdE{0%,100%{height:3px}50%{height:14px}}
 @media (prefers-reduced-motion:reduce){#rdBtn.on .eq i{animation:none;height:9px}}
-#rdPn{position:fixed;right:14px;bottom:68px;z-index:8991;width:min(300px,calc(100vw - 28px));background:#0d1426;border:1px solid #2a3556;border-radius:14px;padding:14px;color:#e8ecf7;font:14px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none}
+#rdTab{position:fixed;right:0;bottom:90px;z-index:8990;display:none;width:30px;height:44px;border:1px solid #d9b650;border-right:0;background:#0d1426;color:#f1d98a;border-radius:12px 0 0 12px;cursor:pointer;font-size:16px;box-shadow:0 6px 24px rgba(0,0,0,.5);padding:0}
+#rdTab.on{background:#d9b650;color:#1a1405}
+#rdPn{position:fixed;z-index:8991;width:min(300px,calc(100vw - 28px));background:#0d1426;border:1px solid #2a3556;border-radius:14px;padding:14px;color:#e8ecf7;font:14px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none}
 #rdPn.open{display:block}
 #rdPn h4{margin:0 0 4px;font-size:14px;color:#f1d98a}
 #rdPn .sub{font-size:12px;color:#8e99b8;margin-bottom:10px}
 #rdPn select,#rdPn input[type=range]{width:100%;margin:0 0 10px}
 #rdPn select{background:#131c33;color:#e8ecf7;border:1px solid #2a3556;border-radius:8px;padding:10px;font-size:16px}
-#rdPn .row2{display:flex;gap:8px;align-items:center}
-#rdPn button{flex:1;min-height:44px;border-radius:10px;border:1px solid #d9b650;background:#d9b650;color:#1a1405;font-weight:700;font-size:15px;cursor:pointer}
+#rdPn .row2{display:flex;gap:8px}
+#rdPn .row2 button{flex:1;min-height:44px;border-radius:10px;border:1px solid #d9b650;background:#d9b650;color:#1a1405;font-weight:700;font-size:15px;cursor:pointer}
+#rdPn .row2 button.sec{background:transparent;color:#f1d98a}
 #rdPn .st{font-size:12px;color:#8e99b8;margin-top:8px;min-height:16px}
 #rdPn .st.err{color:#ff9b9b}
-@media (max-width:700px){#rdBtn .t{display:none}#rdBtn{padding:0 14px}}
+@media (max-width:700px){#rdBtn .m .t{display:none}#rdBtn{bottom:84px}}
 </style>
-<div id="rdPn" role="dialog" aria-label="Music player"><h4>BWS Radio</h4><div class="sub">Free background music. Streams from SomaFM, listener-supported radio.</div>
+<div id="rdPn" role="dialog" aria-label="Music player"><h4>BWS Radio</h4><div class="sub">Free background music from SomaFM. Drag the button anywhere to move it.</div>
 <select id="rdSel" aria-label="Station"></select>
 <input type="range" id="rdVol" min="0" max="100" value="40" aria-label="Volume">
-<div class="row2"><button id="rdPlay" type="button">Play</button></div>
+<div class="row2"><button id="rdPlay" type="button">Play</button><button id="rdHide" type="button" class="sec">Hide button</button></div>
 <div class="st" id="rdSt"></div></div>
-<button id="rdBtn" type="button" aria-label="Music"><span class="eq"><i></i><i></i><i></i></span><span class="t">Music</span></button>
+<div id="rdBtn"><span class="g" id="rdGrip" title="Drag to move" aria-hidden="true">⋮⋮</span><button class="q" id="rdQ" type="button" aria-label="Music on or off" title="Music on / off"><span class="eq"><i></i><i></i><i></i></span></button><button class="m" id="rdM" type="button" aria-label="Open music settings"><span class="t">Music</span></button><button class="x" id="rdX" type="button" aria-label="Tuck the music button away" title="Tuck away">›</button></div>
+<button id="rdTab" type="button" aria-label="Bring back the music button" title="Show music">♪</button>
 <script id="rdJs">
 (function(){
 var ST=[['groovesalad','Groove Salad: chill beats'],['beatblender','Beat Blender: deep house, downtempo'],['lush','Lush: mellow vocals'],['deepspaceone','Deep Space One: ambient'],['dronezone','Drone Zone: calm focus'],['fluid','Fluid: instrumental hip-hop'],['defcon','DEF CON Radio: hacker beats'],['secretagent','Secret Agent: spy lounge']];
@@ -1093,12 +1103,12 @@ var HOSTS=['ice1','ice2','ice4','ice6'];
 function g(k){try{return localStorage.getItem(k)}catch(e){return null}}
 function s(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 var $=function(i){return document.getElementById(i)};
-var sel=$('rdSel'),vol=$('rdVol'),pl=$('rdPlay'),btn=$('rdBtn'),pn=$('rdPn'),st=$('rdSt'),au=null,hi=0;
+var sel=$('rdSel'),vol=$('rdVol'),pl=$('rdPlay'),box=$('rdBtn'),tab=$('rdTab'),pn=$('rdPn'),st=$('rdSt'),au=null,hi=0;
 ST.forEach(function(x){var o=document.createElement('option');o.value=x[0];o.textContent=x[1];sel.appendChild(o)});
 var cur=g('bws_radio_st');if(!cur||!ST.some(function(x){return x[0]===cur}))cur=ST[0][0];sel.value=cur;
 var v=parseInt(g('bws_radio_vol'),10);vol.value=isNaN(v)?40:v;
 function msg(t,e){st.textContent=t||'';st.className='st'+(e?' err':'')}
-function ui(on){btn.classList.toggle('on',on);pl.textContent=on?'Pause':'Play'}
+function ui(on){box.classList.toggle('on',on);tab.classList.toggle('on',on);pl.textContent=on?'Pause':'Play'}
 function url(){return 'https://'+HOSTS[hi]+'.somafm.com/'+sel.value+'-128-mp3'}
 function stop(){if(au){au.pause();au.removeAttribute('src');au.load();au=null}ui(false)}
 function start(auto){
@@ -1106,13 +1116,30 @@ function start(auto){
   au.addEventListener('playing',function(){ui(true);msg('Playing');s('bws_radio_on','1')});
   au.addEventListener('waiting',function(){msg('Buffering…')});
   au.addEventListener('error',function(){if(hi<HOSTS.length-1){hi++;start(auto)}else{hi=0;ui(false);msg('Could not reach the stream. Check your connection or ad-blocker, or try another station.',true)}});
-  var p=au.play();if(p&&p.catch)p.catch(function(e){ui(false);msg(auto?'Tap Play to start the music.':'Could not start. Try again.',!auto&&e&&e.name!=='NotAllowedError')});
+  var p=au.play();if(p&&p.catch)p.catch(function(e){ui(false);msg(auto?'Tap the music button to start.':'Could not start. Try again.',!auto&&e&&e.name!=='NotAllowedError')});
 }
-btn.addEventListener('click',function(){pn.classList.toggle('open')});
+function toggle(){if(au&&!au.paused){stop();s('bws_radio_on','0');msg('Paused')}else{hi=0;start(false)}}
+/* position: remembered, draggable, clamped */
+function clamp(){var r=box.getBoundingClientRect(),W=innerWidth,H=innerHeight,l=Math.min(Math.max(4,r.left),W-r.width-4),t=Math.min(Math.max(4,r.top),H-r.height-4);box.style.left=l+'px';box.style.top=t+'px';box.style.right='auto';box.style.bottom='auto'}
+function place(){if(!pn.classList.contains('open'))return;var r=box.getBoundingClientRect(),w=pn.offsetWidth,h=pn.offsetHeight,l=Math.min(Math.max(8,r.right-w),innerWidth-w-8),t=r.top-h-8;if(t<8)t=Math.min(r.bottom+8,innerHeight-h-8);pn.style.left=l+'px';pn.style.top=Math.max(8,t)+'px'}
+try{var sp=JSON.parse(g('bws_radio_pos')||'null');if(sp&&typeof sp.l==='number'){box.style.left=sp.l+'px';box.style.top=sp.t+'px';box.style.right='auto';box.style.bottom='auto';clamp()}}catch(e){}
+var drag=null,moved=false;
+box.addEventListener('pointerdown',function(e){if(e.button&&e.button!==0)return;var r=box.getBoundingClientRect();drag={x:e.clientX,y:e.clientY,l:r.left,t:r.top};moved=false});
+addEventListener('pointermove',function(e){if(!drag)return;var dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!moved&&Math.abs(dx)+Math.abs(dy)<8)return;moved=true;box.style.left=(drag.l+dx)+'px';box.style.top=(drag.t+dy)+'px';box.style.right='auto';box.style.bottom='auto';clamp();place()});
+addEventListener('pointerup',function(){if(drag&&moved){var r=box.getBoundingClientRect();s('bws_radio_pos',JSON.stringify({l:r.left,t:r.top}));setTimeout(function(){moved=false},0)}drag=null});
+box.addEventListener('click',function(e){if(moved){e.stopPropagation();e.preventDefault()}},true);
+addEventListener('resize',function(){if(box.style.left){clamp()}place()});
+$('rdQ').addEventListener('click',toggle);
+$('rdM').addEventListener('click',function(){pn.classList.toggle('open');place()});
+function tuck(on){box.style.display=on?'none':'flex';tab.style.display=on?'block':'none';if(on)pn.classList.remove('open');s('bws_radio_tuck',on?'1':'0');if(!on)clamp()}
+$('rdX').addEventListener('click',function(){tuck(true)});
+$('rdHide').addEventListener('click',function(){tuck(true)});
+tab.addEventListener('click',function(){tuck(false)});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')pn.classList.remove('open')});
-pl.addEventListener('click',function(){if(au&&!au.paused){stop();s('bws_radio_on','0');msg('Paused')}else{hi=0;start(false)}});
+pl.addEventListener('click',toggle);
 sel.addEventListener('change',function(){s('bws_radio_st',sel.value);hi=0;if(au&&!au.paused)start(false)});
 vol.addEventListener('input',function(){s('bws_radio_vol',vol.value);if(au)au.volume=vol.value/100});
+if(g('bws_radio_tuck')==='1')tuck(true);
 if(g('bws_radio_on')==='1'){hi=0;start(true)}
 })();
 </script>
