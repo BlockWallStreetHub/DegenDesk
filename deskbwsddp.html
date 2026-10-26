@@ -312,7 +312,6 @@ nav button .k{border-radius:6px;border-color:var(--line)}
 </head>
 <body>
 <header class="topbar">
-  <span id="bwsNavSlot"></span>
   <div class="brand"><b>BWS<i> Desk</i></b><small>Markets. Risk. Insight.</small></div>
   <div class="clocks" id="clocks" aria-label="World clocks"></div>
   <span class="eq" title="Position reader status"><span class="dot" id="sysDot"></span><span id="sysTxt">Idle</span></span>
@@ -320,7 +319,19 @@ nav button .k{border-radius:6px;border-color:var(--line)}
   <button class="jump" id="feedBtn">Alert feed <span id="feedBadge" class="tag dn" hidden></span><kbd>F</kbd></button>
   <button class="jump" id="jumpBtn">Jump to...<kbd>Ctrl K</kbd></button>
 </header>
-<style>nav#nav{display:none !important}.topbar #bwsNavSlot{display:inline-flex;flex:none}@media (max-width:820px){.topbar .brand small{display:none}}</style>
+<style>
+body.nm-menu nav#nav{display:none !important}
+.shell{height:calc(100vh - 150px)}
+nav{flex:0 0 262px !important;background:linear-gradient(180deg,rgba(14,22,44,.96),rgba(7,12,26,.96)) !important;padding:14px 10px 24px !important}
+nav h6{margin:20px 10px 6px !important;font-size:12.5px !important;letter-spacing:.14em !important;color:var(--gold) !important}
+nav h6:first-child{margin-top:4px !important}
+nav button{font-size:16px !important;font-weight:600;padding:12px 12px !important;margin:3px 0 !important;border-radius:12px !important;min-height:46px;gap:12px !important;border:1px solid transparent !important}
+nav button .ic{flex:none;width:28px;text-align:center;font-size:18px}
+nav button:hover{background:rgba(255,255,255,.07) !important;border-color:rgba(255,255,255,.12) !important}
+nav button.on{background:color-mix(in srgb,var(--gold) 22%,transparent) !important;border-color:var(--gold) !important;color:#fff !important}
+nav .hint{font-size:12.5px !important}
+@media (max-width:820px){.shell{height:auto}nav button{font-size:15px !important;min-height:44px;margin:0 !important;border-radius:0 !important}nav{flex:none !important;padding:0 !important}}
+</style>
 <div class="tape" id="tape"><span class="msg">Loading prices...</span></div>
 <div class="shell">
   <nav id="nav" aria-label="Desk navigation"></nav>
@@ -592,11 +603,12 @@ const TOOLS=[
  {id:'hosted',n:'Manager (hosted copy)',g:'Build',d:'The standalone Savings Liquidation Manager page.',url:'srcdoc',doc:'savings',kw:'savings manager hosted standalone'}
 ];
 const byId={}; let kc=0; TOOLS.forEach(t=>{byId[t.id]=t; if(!t.nokey&&kc<10){ t.k=String((kc+1)%10); kc++; }});
+const NAVIC={desk:'🏠',risk:'🛡️',port:'📊',pegs:'⚓',ind:'🔔',trend:'🔥',heat:'🗺️',sig:'📡',bt:'🧪',news:'📰',wealth:'🌱',hosted:'💾'};
 function buildNav(){
   let h='',g='';
   TOOLS.forEach(t=>{
     if(t.g!==g){g=t.g;h+='<h6>'+esc(g)+'</h6>';}
-    h+='<button data-go="'+t.id+'" id="nav-'+t.id+'" title="'+esc(t.d)+'">'+esc(t.n)+'<span class="bd" id="bd-'+t.id+'"></span>'+(t.k?'<span class="k">'+t.k+'</span>':'')+'</button>';
+    h+='<button data-go="'+t.id+'" id="nav-'+t.id+'" title="'+esc(t.d)+'"><span class="ic">'+(NAVIC[t.id]||'•')+'</span><span>'+esc(t.n)+'</span>'+'<span class="bd" id="bd-'+t.id+'"></span>'+(t.k?'<span class="k">'+t.k+'</span>':'')+'</button>';
   });
   h+='<div class="hint">Keys: 1 to 0 switch tools, [ and ] step through them. Ctrl K or / opens search. F opens the alert feed, T changes the accent color.</div>';
   $('nav').innerHTML=h;
@@ -677,22 +689,35 @@ tick(); setInterval(tick,30000);
 /* ---------- prices + tape ---------- */
 const COINS=[['bitcoin','BTC'],['ethereum','ETH'],['avalanche-2','AVAX'],['solana','SOL'],['arbitrum','ARB'],['optimism','OP'],['chainlink','LINK']];
 DD.prices={};
+const tmpPx={};
+const PX_SRC=[
+  ['Binance',async()=>{const sy=COINS.map(c=>c[1]+'USDT');const j=await getJSON('https://data-api.binance.vision/api/v3/ticker/24hr?type=MINI&symbols='+encodeURIComponent(JSON.stringify(sy)),null,9000);const o={};(j||[]).forEach(x=>{const sym=String(x.symbol).replace(/USDT$/,'');const l=+x.lastPrice,op=+x.openPrice;if(l>0)o[sym]={p:l,c:op>0?(l/op-1)*100:0}});return o}],
+  ['CryptoCompare',async()=>{const j=await getJSON('https://min-api.cryptocompare.com/data/pricemultifull?fsyms='+COINS.map(c=>c[1]).join(',')+'&tsyms=USD',null,9000);const o={};COINS.forEach(([id,sym])=>{const r=j&&j.RAW&&j.RAW[sym]&&j.RAW[sym].USD;if(r&&r.PRICE>0)o[sym]={p:r.PRICE,c:r.CHANGEPCT24HOUR||0}});return o}],
+  ['CoinGecko',async()=>{const j=await getJSON('https://api.coingecko.com/api/v3/simple/price?ids='+COINS.map(c=>c[0]).join(',')+'&vs_currencies=usd&include_24hr_change=true',null,9000);const o={};COINS.forEach(([id,sym])=>{if(j[id]&&j[id].usd>0)o[sym]={p:j[id].usd,c:j[id].usd_24h_change||0}});return o}],
+  ['Coinbase',async()=>{const o={};await Promise.all(COINS.map(async([id,sym])=>{try{const j=await getJSON('https://api.exchange.coinbase.com/products/'+sym+'-USD/stats',null,9000);const l=+j.last,op=+j.open;if(l>0)o[sym]={p:l,c:op>0?(l/op-1)*100:0}}catch(e){}}));return o}]
+];
 async function loadPrices(){
-  try{
-    const j=await getJSON('https://api.coingecko.com/api/v3/simple/price?ids='+COINS.map(c=>c[0]).join(',')+'&vs_currencies=usd&include_24hr_change=true');
-    COINS.forEach(([id,sym])=>{ if(j[id]) DD.prices[sym]={p:j[id].usd,c:j[id].usd_24h_change}; });
-    DD.pricesAt=Date.now(); DD.pricesErr=null;
-  }catch(e){ DD.pricesErr=e.message||String(e); }
+  const errs=[];
+  for(const [nm,fn] of PX_SRC){
+    try{ const o=await fn(); const k=Object.keys(o); if(!k.length) throw new Error('no data');
+      k.forEach(sym=>{ if(!tmpPx[sym]) tmpPx[sym]=o[sym]; }); DD.pricesSrc=nm;
+      if(COINS.every(c=>tmpPx[c[1]])) break;
+    }catch(e){ errs.push(nm+': '+(e.message||e)); }
+  }
+  const keys=Object.keys(tmpPx);
+  if(keys.length){ keys.forEach(sym=>{DD.prices[sym]=tmpPx[sym]}); DD.pricesAt=Date.now(); DD.pricesErr=null; }
+  else DD.pricesErr='all 4 price sources failed ('+errs.join('; ')+')';
+  for(const k of keys) delete tmpPx[k];
   renderTape(); if(cur==='desk') renderPrices();
 }
 function renderTape(){
   const items=COINS.map(c=>c[1]).filter(s=>DD.prices[s]).map(s=>{const d=DD.prices[s]; return '<span class="t"><b>'+s+'</b>'+fmt$(d.p)+' <span class="'+(d.c>=0?'up':'dn')+'">'+(d.c>=0?'▲':'▼')+' '+Math.abs(d.c).toFixed(2)+'%</span></span>';}).join('');
-  if(!items){ $('tape').innerHTML='<span class="msg">'+(DD.pricesErr?'Prices unavailable ('+esc(DD.pricesErr)+'). Retrying every minute.':'Loading prices...')+'</span>'; return; }
+  if(!items){ $('tape').innerHTML='<span class="msg">'+(DD.pricesErr?'Prices could not load. Retrying every minute. <button type="button" class="btn ghost" id="pxRetry" style="margin-left:8px;padding:4px 12px">Retry now</button>':'Loading prices...')+'</span>'; const rb=$('pxRetry'); if(rb) rb.onclick=()=>{ $('tape').innerHTML='<span class="msg">Loading prices...</span>'; loadPrices(); }; return; }
   $('tape').innerHTML='<div class="track">'+items+items+'</div>';
 }
 function renderPrices(){
   const h=COINS.map(c=>c[1]).map(s=>{const d=DD.prices[s]; return d?'<div class="pc"><small>'+s+'</small><div class="v">'+fmt$(d.p)+'</div><div class="c '+(d.c>=0?'up':'dn')+'">'+pct(d.c)+' 24h</div></div>':'';}).join('');
-  $('deskPrices').innerHTML=h||'<div class="empty">Prices unavailable right now'+(DD.pricesErr?' ('+esc(DD.pricesErr)+')':'')+'.</div>';
+  $('deskPrices').innerHTML=h||'<div class="empty">Prices could not load right now. Press <b>Retry now</b> in the bar above, or turn off any ad-blocker or privacy extension for this site.'+(DD.pricesErr?'<br><small style="opacity:.7">'+esc(DD.pricesErr)+'</small>':'')+'</div>';
 }
 
 /* ---------- pegs ---------- */
@@ -701,7 +726,8 @@ DD.pegs=[]; let pegsAt=0, pegBase=false; const pegLvl={};
 async function loadPegs(force){
   if(!force&&Date.now()-pegsAt<45000){ renderPegs(); return; }
   try{
-    const j=await getJSON('https://api.coingecko.com/api/v3/simple/price?ids='+PEGS.map(p=>p[0]).join(',')+'&vs_currencies=usd');
+    let j=null; try{ j=await getJSON('https://api.coingecko.com/api/v3/simple/price?ids='+PEGS.map(p=>p[0]).join(',')+'&vs_currencies=usd',null,9000); }catch(e1){
+      const cc=await getJSON('https://min-api.cryptocompare.com/data/pricemulti?fsyms='+PEGS.map(p=>p[1]).join(',')+'&tsyms=USD',null,9000); j={}; PEGS.forEach(([id,sym])=>{ if(cc[sym]&&cc[sym].USD) j[id]={usd:cc[sym].USD}; }); if(!Object.keys(j).length) throw e1; }
     DD.pegs=PEGS.map(([id,sym])=>{ const p=j[id]&&j[id].usd; return {sym,p,dev:p==null?null:(p-1)*100}; });
     pegsAt=Date.now(); DD.pegsErr=null;
     DD.pegs.forEach(x=>{ if(x.dev==null) return; const l=Math.abs(x.dev)>1?2:Math.abs(x.dev)>0.3?1:0; if(pegBase&&l===2&&(pegLvl[x.sym]||0)<2) DD.alert('Peg warning: '+x.sym+' is trading at $'+x.p.toFixed(4)+' ('+pct(x.dev)+' from $1.00).','peg','pegs'); pegLvl[x.sym]=l; });
@@ -2173,6 +2199,18 @@ if(state.accounts.length){startTimer();refresh();}
 #bwsDrop .ft button{flex:1;min-width:140px;height:44px;border-radius:10px;border:1px solid #2a3760;background:#111a33;color:#f1d98a;font:600 14px system-ui,Arial,sans-serif;cursor:pointer}
 #bwsDrop .hn{color:#6f7da6;font-size:12px;margin:8px 8px 0}
 @media (max-width:700px){.bwsNav .bwsMenu .cur{display:none}.bwsNav a,.bwsNav button{padding:0 14px}#bwsBar .ttl{display:none}}
+
+#bwsBar{overflow:visible}
+#bwsBar .bwsRow{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;overflow-x:auto;overflow-y:hidden;flex:1;min-width:0;scrollbar-width:none;padding:2px 2px}
+#bwsBar .bwsRow::-webkit-scrollbar{display:none}
+#bwsBar .bwsRow>*{flex:none}
+.bwsPill{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 18px;border-radius:12px;border:1px solid #3a4a80;background:#111a33;color:#e8ecf7;text-decoration:none;font:700 15px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;cursor:pointer}
+.bwsPill:hover{border-color:#d9b650;color:#fff}
+.bwsPill.here{background:#d9b650;border-color:#d9b650;color:#1a1405}
+.bwsPill:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.bwsSw{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:12px;border:1px dashed #6f7da6;background:transparent;color:#b9c8ee;font:600 13.5px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;cursor:pointer;white-space:nowrap;flex:none}
+.bwsSw:hover{border-color:#d9b650;color:#f1d98a}
+@media (max-width:700px){.bwsSw .t{display:none}.bwsPill{height:40px;padding:0 14px;font-size:14px}}
 </style>
 <script id="cmpJs">
 (function(){
@@ -2298,17 +2336,37 @@ function placeDrop(){return;
   drop.style.top=(r.bottom+8)+'px';drop.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';
   drop.style.maxHeight=(window.innerHeight-r.bottom-20)+'px';
 }
-function openDrop(){drop.innerHTML='<div class="dh"><b>MENU</b><button type="button" data-x="1" aria-label="Close menu">✕</button></div>'+dropHtml();bk.classList.add('on');drop.classList.add('on');menuBtn.setAttribute('aria-expanded','true');var f=drop.querySelector('a.here');if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'center'})}catch(e){}}
-function closeDrop(){if(!drop)return;bk.classList.remove('on');drop.classList.remove('on');menuBtn.setAttribute('aria-expanded','false')}
-function labelMenu(){var c=curItem();var cu=menuBtn.querySelector('.cur');cu.textContent=c?'· '+c.n:'';var tt=document.querySelector('#bwsBar .ttl');if(tt)tt.textContent=c?c.n:''}
+function openDrop(){drop.innerHTML='<div class="dh"><b>MENU</b><button type="button" data-x="1" aria-label="Close menu">✕</button></div>'+dropHtml();bk.classList.add('on');drop.classList.add('on');if(menuBtn)menuBtn.setAttribute('aria-expanded','true');var f=drop.querySelector('a.here');if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'center'})}catch(e){}}
+function closeDrop(){if(!drop)return;bk.classList.remove('on');drop.classList.remove('on');if(menuBtn)menuBtn.setAttribute('aria-expanded','false')}
+var MODE='links';try{MODE=localStorage.getItem('dd_navmode')||'links'}catch(e){}
+var PILLS=['course','pf','lp','moon','acct'];
+var onDesk=(file===D.toLowerCase());
+function swLabel(){return MODE==='menu'?'<span>⇄</span><span class="t">Switch to tabs &amp; sidebar</span>':'<span>⇄</span><span class="t">Switch to menu</span>'}
+function renderBar(){
+  var h='<a class="bwsHome" href="'+HOME.h+'" aria-label="Home" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;text-decoration:none;font:700 14px system-ui,Arial,sans-serif;border:1px solid #d9b650;background:#0d1426;color:#f1d98a;flex:none">'+house+'<span>Home</span></a>';
+  h+='<div class="bwsRow">';
+  if(MODE==='menu'){
+    h+='<button type="button" class="bwsMenuB" aria-haspopup="true" aria-expanded="false" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;border:1px solid #d9b650;background:#d9b650;color:#1a1405;font:700 14px system-ui,Arial,sans-serif;cursor:pointer">'+burger+'<span>Menu</span><span class="cur" style="font-weight:500;opacity:.8"></span></button>';
+  }else{
+    PILLS.forEach(function(id){var t=byId[id];h+='<a class="bwsPill'+(here(t)?' here':'')+'" href="'+t.h+'" data-id="'+id+'">'+esc(t.n)+'</a>'});
+    if(!onDesk)h+='<button type="button" class="bwsPill bwsMenuB" aria-haspopup="true" aria-expanded="false">Desk tools ▾</button>';
+  }
+  h+='</div><button type="button" class="bwsSw" title="Switch between tabs & sidebar and the drop-out menu">'+swLabel()+'</button><span class="ttl"></span>';
+  return h;
+}
+function applyMode(){
+  document.body.classList.toggle('nm-menu',MODE==='menu');
+  var bar=document.getElementById('bwsBar');bar.innerHTML=renderBar();
+  menuBtn=bar.querySelector('.bwsMenuB');
+  if(menuBtn)menuBtn.onclick=function(e){e.stopPropagation();drop.classList.contains('on')?closeDrop():openDrop()};
+  bar.querySelector('.bwsSw').onclick=function(){MODE=MODE==='menu'?'links':'menu';try{localStorage.setItem('dd_navmode',MODE)}catch(e){}closeDrop();applyMode()};
+  labelMenu();
+}
+function labelMenu(){var c=curItem();var cu=menuBtn&&menuBtn.querySelector('.cur');if(cu)cu.textContent=c?'· '+c.n:'';var tt=document.querySelector('#bwsBar .ttl');if(tt)tt.textContent=''}
 function initNav(){
-  var slot=document.getElementById('bwsNavSlot'),wrap;
-  wrap=document.createElement('span');wrap.className='bwsNav';
-  wrap.innerHTML='<a class="bwsHome" href="'+HOME.h+'" aria-label="Home">'+house+'<span>Home</span></a><button type="button" class="bwsMenu" aria-haspopup="true" aria-expanded="false">'+burger+'<span>Menu</span><span class="cur"></span></button>';
-  if(slot){slot.appendChild(wrap)}else{var bar=document.createElement('div');bar.id='bwsBar';bar.appendChild(wrap);var t=document.createElement('span');t.className='ttl';bar.appendChild(t);document.body.insertBefore(bar,document.body.firstChild)}
-  menuBtn=wrap.querySelector('.bwsMenu');
-  bk=document.createElement('div');bk.id='bwsBk';document.body.appendChild(bk);bk.onclick=function(){closeDrop()};drop=document.createElement('div');drop.id='bwsDrop';drop.setAttribute('role','navigation');drop.setAttribute('aria-label','Main menu');document.body.appendChild(drop);
-  menuBtn.onclick=function(e){e.stopPropagation();drop.classList.contains('on')?closeDrop():openDrop()};
+  var bar=document.createElement('div');bar.id='bwsBar';document.body.insertBefore(bar,document.body.firstChild);
+  bk=document.createElement('div');bk.id='bwsBk';document.body.appendChild(bk);bk.onclick=function(){closeDrop()};
+  drop=document.createElement('div');drop.id='bwsDrop';drop.setAttribute('role','navigation');drop.setAttribute('aria-label','Main menu');document.body.appendChild(drop);
   drop.addEventListener('click',function(e){
     if(e.target.closest('[data-x]')){closeDrop();return}
     if(e.target.closest('[data-cmp]')){closeDrop();open();return}
@@ -2320,10 +2378,8 @@ function initNav(){
     var ty=/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||''))||e.target.isContentEditable;
     if(!ty&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&(e.key==='m'||e.key==='M')){e.preventDefault();drop.classList.contains('on')?closeDrop():openDrop()}
   });
-  window.addEventListener('resize',function(){if(drop.classList.contains('on'))placeDrop()});
-  
   window.addEventListener('hashchange',function(){labelMenu();closeDrop()});
-  labelMenu();
+  applyMode();
 }
 function init(){
   initNav();
