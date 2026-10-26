@@ -130,6 +130,7 @@ footer{max-width:1500px;margin:auto;padding:0 20px 40px;color:var(--mut);font-si
     <label class="chk"><input type="checkbox" id="bonOnly"> Has bonus APR only</label>
     <label class="chk"><input type="checkbox" id="hideOut" checked> Hide flagged outliers</label>
     <label class="chk"><input type="checkbox" id="favOnly"> Watchlist only (★)</label>
+    <label class="chk"><input type="checkbox" id="stockOnly"> Stock-token pools only (AAPL, TSLA, NVDA…)</label>
   </div>
   <div class="chips">
     <span class="mut" style="font-size:12px;align-self:center">Quick presets:</span>
@@ -138,6 +139,7 @@ footer{max-width:1500px;margin:auto;padding:0 20px 40px;color:var(--mut);font-si
     <button class="chip" data-p="blue">Blue-chip ($10M+ TVL)</button>
     <button class="chip" data-p="hot">High APR ($1M+ TVL)</button>
     <button class="chip" data-p="debt">Lending with debt</button>
+    <button class="chip" data-p="rhstock" style="border-color:var(--gold);color:var(--gold)">★ Robinhood Chain stock LPs</button>
     <button class="chip" data-p="reset">Reset all</button>
   </div>
 </section>
@@ -219,7 +221,7 @@ footer{max-width:1500px;margin:auto;padding:0 20px 40px;color:var(--mut);font-si
   </div>
 </section>
 </main>
-<footer>Educational tool from Block Wall Street. Not financial advice. LP positions carry impermanent loss, smart-contract, depeg and rug risk. Data may be delayed or wrong — verify on the protocol before depositing.</footer>
+<footer>Robinhood Chain rows come from GeckoTerminal. Their APR is an estimate: 24h volume × fee tier ÷ liquidity, annualized, so it moves every day and is not a promise. Stock tokens carry issuer and de-peg risk on top of normal LP risk. Educational tool from Block Wall Street. Not financial advice. LP positions carry impermanent loss, smart-contract, depeg and rug risk. Data may be delayed or wrong — verify on the protocol before depositing.</footer>
 
 <script>
 (function(){
@@ -246,9 +248,11 @@ function load(){
     POOLS=d.map(prep);
     setStatus('ok',POOLS.length.toLocaleString()+' pools loaded · '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
     buildMulti();apply();
+    RH.done=false;loadRH();
   }).catch(function(e){
     setStatus('err','Could not load data ('+esc(e.message)+'). Check your connection or ad-blocker, then Reload.');
     $('tb').innerHTML='<tr><td colspan="13" class="empty">No data yet.</td></tr>';
+    RH.done=false;loadRH();
   });
 }
 function prep(p){
@@ -259,7 +263,91 @@ function prep(p){
     vol:p.volumeUsd1d==null?null:p.volumeUsd1d,base:base,reward:rew,apy:tot,mean30:p.apyMean30d==null?null:p.apyMean30d,
     rev:(p.tvlUsd||0)*base/100/365,debt:p.totalBorrowUsd==null?null:p.totalBorrowUsd,borBase:p.apyBaseBorrow,
     il:p.ilRisk==='yes'?'yes':'no',stable:!!p.stablecoin,exp:p.exposure||'',lend:lend,outlier:!!p.outlier,
-    rewTok:p.rewardTokens||[]};
+    rewTok:p.rewardTokens||[],stock:isStockSym(p.symbol||''),src:'DefiLlama'};
+}
+
+
+/* ---------- Robinhood Chain stock-token pools (GeckoTerminal) ---------- */
+var STOCKS={};('AAPL MSFT NVDA TSLA AMZN GOOGL GOOG META SPY QQQ IWM DIA MU AMD INTC AVGO TSM NFLX COIN HOOD PLTR SHOP UBER ABNB DIS NKE KO PEP MCD WMT COST TGT HD LOW JPM BAC GS MS V MA PYPL SQ XYZ BA LMT GE F GM XOM CVX PFE JNJ UNH LLY MRK ABBV CRM ORCL ADBE IBM CSCO QCOM TXN ARM SMCI MSTR MARA RIOT CRCL SOFI RBLX SNAP PINS SPOT ROKU DKNG AFRM UPST RIVN LCID NIO BABA PDD JD GME AMC BB SPCE TLT GLD SLV USO ARKK VOO VTI IVV SMH SOXX XLK XLF XLE VNQ BRK.B BRKB DELL HPQ PANW CRWD SNOW NET DDOG ZM DOCU OKTA MDB RDDT APP DASH LYFT WBD PARA T VZ TMUS SBUX CMG BKNG MAR LULU ONON'.split(' ')).forEach(function(t){STOCKS[t]=1});
+var STABLES={USDC:1,USDT:1,USDG:1,DAI:1,USDE:1,USDS:1,FDUSD:1,PYUSD:1,USD1:1,'USDC.E':1,BUSD:1,TUSD:1,USDP:1,GUSD:1,LUSD:1,FRAX:1};
+function isStockSym(sym){
+  var parts=String(sym||'').toUpperCase().split(/[\s\/\-+,]+/);
+  for(var i=0;i<parts.length;i++){var t=parts[i].replace(/[^A-Z0-9.]/g,'');if(!t)continue;
+    if(STOCKS[t])return true;
+    var u=t.replace(/(\.R|\.X|ON|X|R|C)$/,'');if(u!==t&&STOCKS[u])return true}
+  return false;
+}
+var RH={done:false,busy:false,net:null,note:''};
+var GT='https://api.geckoterminal.com/api/v2';
+function gj(u){return fetch(u,{headers:{accept:'application/json;version=20230302'}}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})}
+function findNet(){
+  var tried=[],cand=['robinhood-chain','robinhood','robinhood_chain'];
+  function page(n){
+    if(n>6)return Promise.resolve(null);
+    return gj(GT+'/networks?page='+n).then(function(j){
+      var d=(j&&j.data)||[];if(!d.length)return null;
+      for(var i=0;i<d.length;i++){var a=d[i].attributes||{};if(/robinhood/i.test((a.name||'')+' '+d[i].id))return d[i].id}
+      return page(n+1);
+    });
+  }
+  return page(1).then(function(id){return id||cand[0]});
+}
+function parseFee(name,attr){
+  if(attr&&attr.pool_fee_percentage!=null&&!isNaN(parseFloat(attr.pool_fee_percentage)))return parseFloat(attr.pool_fee_percentage);
+  var m=String(name||'').match(/(\d+(?:\.\d+)?)\s*%/);return m?parseFloat(m[1]):null;
+}
+function loadRH(){
+  if(RH.busy)return;RH.busy=true;
+  var base=$('stxt').innerHTML;
+  var out=[],seen={};
+  findNet().then(function(net){
+    RH.net=net;
+    function pg(n){
+      if(n>10)return Promise.resolve();
+      var u=GT+'/networks/'+net+'/pools?include=base_token,quote_token,dex&page='+n+'&sort=h24_volume_usd_desc';
+      return gj(u).catch(function(){return gj(GT+'/networks/'+net+'/pools?include=base_token,quote_token,dex&page='+n)}).then(function(j){
+        var d=(j&&j.data)||[],inc=(j&&j.included)||[],idx={};
+        inc.forEach(function(x){idx[x.type+':'+x.id]=x.attributes||{}});
+        if(!d.length)return;
+        d.forEach(function(x){
+          var a=x.attributes||{},rel=x.relationships||{};
+          var addr=a.address||(x.id||'').split('_').pop();if(!addr||seen[addr])return;seen[addr]=1;
+          var bt=rel.base_token&&rel.base_token.data?idx['token:'+rel.base_token.data.id]||{}:{},
+              qt=rel.quote_token&&rel.quote_token.data?idx['token:'+rel.quote_token.data.id]||{}:{},
+              dx=rel.dex&&rel.dex.data?idx['dex:'+rel.dex.data.id]||{}:{};
+          var nm=a.name||((bt.symbol||'?')+' / '+(qt.symbol||'?'));
+          var fee=parseFee(nm,a),tvl=parseFloat(a.reserve_in_usd)||0,vol=a.volume_usd&&a.volume_usd.h24!=null?parseFloat(a.volume_usd.h24):null;
+          var baseApr=(fee!=null&&vol!=null&&tvl>0)?vol*fee/100/tvl*365*100:0;
+          var bs=String(bt.symbol||'').toUpperCase(),qs=String(qt.symbol||'').toUpperCase();
+          var allStable=!!(STABLES[bs]&&STABLES[qs]);
+          var stock=isStockSym(bs)||isStockSym(qs)||isStockSym(nm)||/stock token/i.test((bt.name||'')+' '+(qt.name||''));
+          out.push({id:'gt:'+addr,symbol:nm.replace(/\s*\d+(?:\.\d+)?\s*%\s*$/,''),meta:(fee!=null?fee+'% fee tier':'')+((bt.name&&stock)?' · '+bt.name:''),
+            chain:'Robinhood Chain',project:dx.name||'DEX',tvlUsd:tvl,vol:vol,base:baseApr,reward:0,apy:baseApr,mean30:null,
+            rev:vol!=null&&fee!=null?vol*fee/100:0,debt:null,borBase:null,il:allStable?'no':'yes',stable:allStable,exp:'multi',lend:false,
+            outlier:false,rewTok:[],stock:stock,src:'GeckoTerminal',url:'https://www.geckoterminal.com/'+net+'/pools/'+addr});
+        });
+        if(d.length<20)return;
+        return new Promise(function(r){setTimeout(r,350)}).then(function(){return pg(n+1)});
+      });
+    }
+    return pg(1);
+  }).then(function(){
+    // drop GeckoTerminal rows that DefiLlama already lists for the same pair + chain
+    var have={};POOLS.forEach(function(p){if(/robinhood/i.test(p.chain)&&p.src==='DefiLlama')have[p.symbol.toUpperCase().split(/[\s\/\-]+/).sort().join('|')+'|'+p.project.split('-')[0]]=1});
+    var add=out.filter(function(p){var k=p.symbol.toUpperCase().split(/[\s\/\-]+/).sort().join('|')+'|'+p.project.toLowerCase().split(/[\s-]/)[0];return !have[k]});
+    POOLS=POOLS.filter(function(p){return p.src!=='GeckoTerminal'}).concat(add);
+    var st=add.filter(function(p){return p.stock}).length;
+    RH.done=true;RH.busy=false;
+    buildMulti();
+    if(RH.preset){RH.preset=false;MS.chain.set={};MS.chain.opts.forEach(function(o){if(/robinhood/i.test(o.v))MS.chain.set[o.v]=1});drawMulti('chain')}
+    apply();
+    var sx=$('stxt');sx.innerHTML=(POOLS.length.toLocaleString()+' pools loaded · Robinhood Chain: '+(add.length+POOLS.filter(function(p){return p.src==='DefiLlama'&&/robinhood/i.test(p.chain)}).length)+' pools, '+st+' stock-token pools · '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
+    $('status').className='ok';
+    if(!add.length&&!POOLS.some(function(p){return /robinhood/i.test(p.chain)}))sx.innerHTML+=' · <span class="mut">no Robinhood Chain pools came back — try Reload, or check <a href="https://www.geckoterminal.com/robinhood-chain/pools" target="_blank" rel="noopener">GeckoTerminal ↗</a></span>';
+  }).catch(function(e){
+    RH.busy=false;RH.done=true;
+    var sx=$('stxt');sx.innerHTML+=' · <span class="mut">Robinhood Chain extra pools could not load ('+esc(e.message)+'). Try Reload.</span>';
+  });
 }
 
 /* ---------- multi-selects ---------- */
@@ -298,7 +386,7 @@ function apply(){
   var q=$('q').value.trim().toLowerCase().split(/\s+/).filter(Boolean),type=$('type').value;
   var tMin=num('tvlMin'),tMax=num('tvlMax'),aMin=num('aprMin'),aMax=num('aprMax'),bMin=num('baseMin'),rMin=num('bonMin'),
       dMin=num('debtMin'),dMax=num('debtMax'),revMin=num('revMin'),vMin=num('volMin'),stab=$('stab').value,il=$('il').value,
-      bonOnly=$('bonOnly').checked,hideOut=$('hideOut').checked,favOnly=$('favOnly').checked;
+      bonOnly=$('bonOnly').checked,hideOut=$('hideOut').checked,favOnly=$('favOnly').checked,stockOnly=$('stockOnly').checked;
   var cs=MS.chain.set,ps=MS.proj.set,hasC=Object.keys(cs).length,hasP=Object.keys(ps).length;
   VIEW=POOLS.filter(function(p){
     if(hasC&&!cs[p.chain])return false;if(hasP&&!ps[p.project])return false;
@@ -312,7 +400,7 @@ function apply(){
     if(revMin!=null&&p.rev<revMin)return false;if(vMin!=null&&(p.vol==null||p.vol<vMin))return false;
     if(stab==='yes'&&!p.stable)return false;if(stab==='no'&&p.stable)return false;
     if(il==='no'&&p.il!=='no')return false;if(il==='yes'&&p.il!=='yes')return false;
-    if(bonOnly&&!(p.reward>0))return false;if(hideOut&&p.outlier)return false;if(favOnly&&!FAV[p.id])return false;
+    if(stockOnly&&!p.stock)return false;if(bonOnly&&!(p.reward>0))return false;if(hideOut&&p.outlier)return false;if(favOnly&&!FAV[p.id])return false;
     if(q.length){var hay=(p.symbol+' '+p.project+' '+p.chain+' '+p.meta).toLowerCase();for(var i=0;i<q.length;i++)if(hay.indexOf(q[i])<0)return false}
     return true;
   });
@@ -333,7 +421,7 @@ function render(){
     var ilb=p.il==='yes'?'<span class="badge y">IL risk</span>':'<span class="badge g">No IL</span>';
     h+='<tr data-i="'+i+'" class="'+(sel&&sel.id===p.id?'sel':'')+'">'+
      '<td class="l"><span class="star'+(FAV[p.id]?' on':'')+'" data-f="'+esc(p.id)+'">'+(FAV[p.id]?'★':'☆')+'</span></td>'+
-     '<td class="l pool">'+esc(p.symbol)+(p.meta?'<span class="m">'+esc(p.meta)+'</span>':'')+'</td>'+
+     '<td class="l pool">'+esc(p.symbol)+(p.stock?' <span class="badge y" style="background:#2a2410;color:var(--gold)">STOCK</span>':'')+(p.meta?'<span class="m">'+esc(p.meta)+'</span>':'')+'</td>'+
      '<td class="l">'+esc(p.chain)+'</td><td class="l">'+esc(p.project)+'</td>'+
      '<td>'+usd(p.tvlUsd)+'</td><td>'+usd(p.vol)+'</td>'+
      '<td>'+pct(p.base)+'</td><td class="'+(p.reward>0?'gold':'mut')+'">'+(p.reward>0?pct(p.reward):'—')+'</td>'+
@@ -355,7 +443,7 @@ $('tb').onclick=function(e){
 };
 $('more').onclick=function(){shown+=100;render()};
 ['q','tvlMin','tvlMax','aprMin','aprMax','baseMin','bonMin','debtMin','debtMax','revMin','volMin'].forEach(function(id){$(id).addEventListener('input',debounce(apply,200))});
-['type','stab','il','bonOnly','hideOut','favOnly'].forEach(function(id){$(id).addEventListener('change',apply)});
+['type','stab','il','bonOnly','hideOut','favOnly','stockOnly'].forEach(function(id){$(id).addEventListener('change',apply)});
 function debounce(f,ms){var t;return function(){clearTimeout(t);t=setTimeout(f,ms)}}
 $('reload').onclick=load;
 
@@ -363,7 +451,7 @@ $('reload').onclick=load;
 function resetFilters(){
   ['q','tvlMax','aprMin','aprMax','baseMin','bonMin','debtMin','debtMax','revMin','volMin'].forEach(function(id){$(id).value=''});
   $('tvlMin').value=100000;$('type').value='lp';$('stab').value='any';$('il').value='any';
-  $('bonOnly').checked=false;$('hideOut').checked=true;$('favOnly').checked=false;MS.chain.set={};MS.proj.set={};
+  $('bonOnly').checked=false;$('hideOut').checked=true;$('favOnly').checked=false;$('stockOnly').checked=false;MS.chain.set={};MS.proj.set={};
   if(MS.chain.opts){drawMulti('chain');drawMulti('proj')}
 }
 document.querySelectorAll('.chip').forEach(function(c){c.onclick=function(){
@@ -372,6 +460,10 @@ document.querySelectorAll('.chip').forEach(function(c){c.onclick=function(){
   if(p==='bonus'){$('bonOnly').checked=true;$('bonMin').value=5;$('tvlMin').value=500000}
   if(p==='blue'){$('tvlMin').value=10000000;$('aprMin').value=2}
   if(p==='hot'){$('tvlMin').value=1000000;$('aprMin').value=50}
+  if(p==='rhstock'){$('type').value='lp';$('tvlMin').value=0;$('stockOnly').checked=true;$('hideOut').checked=false;
+    MS.chain.set={};(MS.chain.opts||[]).forEach(function(o){var n=typeof o==='string'?o:(o.name||o.v||'');if(/robinhood/i.test(n))MS.chain.set[n]=1});
+    if(MS.chain.opts)drawMulti('chain');sortK='tvlUsd';sortD=-1;
+    RH.preset=true;if(RH.done)RH.preset=false;}
   if(p==='debt'){$('type').value='lend';$('debtMin').value=1000000;$('tvlMin').value=1000000}
   apply()}});
 
@@ -405,7 +497,7 @@ function selCard(){
   el.innerHTML='<div><b>'+esc(sel.symbol)+'</b> <span class="mut">'+esc(sel.project)+' · '+esc(sel.chain)+'</span></div>'+
    '<div class="row" style="gap:18px"><span>TVL <b>'+usd(sel.tvlUsd)+'</b></span><span>Base <b>'+pct(sel.base)+'</b></span><span>Bonus <b>'+pct(sel.reward)+'</b></span>'+
    '<span>Total <b class="gold">'+pct(sel.apy)+'</b></span>'+(sel.debt!=null?'<span>Debt <b>'+usd(sel.debt)+'</b></span>':'')+
-   '<a href="https://defillama.com/yields/pool/'+encodeURIComponent(sel.id)+'" target="_blank" rel="noopener">DefiLlama ↗</a></div>';
+   (sel.src==='GeckoTerminal'?'<a href="'+esc(sel.url)+'" target="_blank" rel="noopener">GeckoTerminal ↗</a>':'<a href="https://defillama.com/yields/pool/'+encodeURIComponent(sel.id)+'" target="_blank" rel="noopener">DefiLlama ↗</a>')+'</div>';
 }
 
 /* ---------- simulation core ---------- */
