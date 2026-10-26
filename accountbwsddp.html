@@ -197,8 +197,14 @@ draw();
 .bwsNav a:focus-visible,.bwsNav button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 #bwsBar{position:sticky;top:0;z-index:8500;display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(7,11,22,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid #1f2a4a}
 #bwsBar .ttl{color:#93a0c4;font:13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#bwsDrop{position:fixed;z-index:9400;display:none;width:min(380px,94vw);max-height:calc(100vh - 80px);overflow:auto;background:#0b1224;border:1px solid #d9b650;border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.7);padding:8px 8px 10px;font:15px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#e8ecf7;-webkit-overflow-scrolling:touch}
-#bwsDrop.on{display:block}
+#bwsDrop{position:fixed;z-index:9400;top:0;left:0;bottom:0;width:min(370px,88vw);overflow:auto;background:#0b1224;border-right:1px solid #d9b650;box-shadow:18px 0 60px rgba(0,0,0,.6);padding:0 8px 18px;font:15px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#e8ecf7;-webkit-overflow-scrolling:touch;transform:translateX(-102%);transition:transform .22s ease;visibility:hidden}
+#bwsDrop.on{transform:none;visibility:visible}
+@media (prefers-reduced-motion:reduce){#bwsDrop{transition:none}}
+#bwsBk{position:fixed;inset:0;z-index:9390;background:rgba(2,5,14,.6);display:none}
+#bwsBk.on{display:block}
+#bwsDrop .dh{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;background:#0b1224;padding:14px 8px 10px;margin:0 -8px;padding-left:16px;padding-right:12px;border-bottom:1px solid #1f2a4a}
+#bwsDrop .dh b{color:#f1d98a;letter-spacing:.1em;font-size:14px}
+#bwsDrop .dh button{width:44px;height:44px;border-radius:10px;border:1px solid #2a3760;background:#111a33;color:#e8ecf7;font-size:20px;cursor:pointer}
 #bwsDrop h6{margin:12px 10px 4px;color:#d9b650;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase}
 #bwsDrop h6:first-child{margin-top:6px}
 #bwsDrop a.it{display:block;text-decoration:none;color:inherit;border-radius:10px;padding:10px 12px;min-height:46px;position:relative}
@@ -319,7 +325,7 @@ var HOME={h:D+'#desk',n:'Home'};
 var ORDER=['Learn','Watch','Track','Find','Protect','Test','Account'];
 var house='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>';
 var burger='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
-var drop,menuBtn;
+var drop,menuBtn,bk;
 function curItem(){hash=location.hash.replace('#','');for(var i=0;i<ITEMS.length;i++)if(here(ITEMS[i]))return ITEMS[i];return null}
 function dropHtml(){
   var h='<h6>Start</h6><a class="it'+((file===D.toLowerCase()&&(hash||'desk')==='desk')?' here':'')+'" href="'+HOME.h+'"><b>Home · Overview</b><span>Prices, alerts, positions and news on one screen.</span></a>';
@@ -333,13 +339,13 @@ function dropHtml(){
   h+='<div class="ft"><button type="button" data-cmp="1">🧭 Not sure? Ask the Compass</button></div><div class="hn">Tip: press M to open this menu from the keyboard.</div>';
   return h;
 }
-function placeDrop(){
+function placeDrop(){return;
   var r=menuBtn.getBoundingClientRect(),w=Math.min(380,window.innerWidth*0.94);
   drop.style.top=(r.bottom+8)+'px';drop.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';
   drop.style.maxHeight=(window.innerHeight-r.bottom-20)+'px';
 }
-function openDrop(){drop.innerHTML=dropHtml();placeDrop();drop.classList.add('on');menuBtn.setAttribute('aria-expanded','true');var f=drop.querySelector('a.here')||drop.querySelector('a.it');if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'nearest'})}catch(e){}}
-function closeDrop(){if(!drop)return;drop.classList.remove('on');menuBtn.setAttribute('aria-expanded','false')}
+function openDrop(){drop.innerHTML='<div class="dh"><b>MENU</b><button type="button" data-x="1" aria-label="Close menu">✕</button></div>'+dropHtml();bk.classList.add('on');drop.classList.add('on');menuBtn.setAttribute('aria-expanded','true');var f=drop.querySelector('a.here');if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'center'})}catch(e){}}
+function closeDrop(){if(!drop)return;bk.classList.remove('on');drop.classList.remove('on');menuBtn.setAttribute('aria-expanded','false')}
 function labelMenu(){var c=curItem();var cu=menuBtn.querySelector('.cur');cu.textContent=c?'· '+c.n:'';var tt=document.querySelector('#bwsBar .ttl');if(tt)tt.textContent=c?c.n:''}
 function initNav(){
   var slot=document.getElementById('bwsNavSlot'),wrap;
@@ -347,9 +353,10 @@ function initNav(){
   wrap.innerHTML='<a class="bwsHome" href="'+HOME.h+'" aria-label="Home">'+house+'<span>Home</span></a><button type="button" class="bwsMenu" aria-haspopup="true" aria-expanded="false">'+burger+'<span>Menu</span><span class="cur"></span></button>';
   if(slot){slot.appendChild(wrap)}else{var bar=document.createElement('div');bar.id='bwsBar';bar.appendChild(wrap);var t=document.createElement('span');t.className='ttl';bar.appendChild(t);document.body.insertBefore(bar,document.body.firstChild)}
   menuBtn=wrap.querySelector('.bwsMenu');
-  drop=document.createElement('div');drop.id='bwsDrop';document.body.appendChild(drop);
+  bk=document.createElement('div');bk.id='bwsBk';document.body.appendChild(bk);bk.onclick=function(){closeDrop()};drop=document.createElement('div');drop.id='bwsDrop';drop.setAttribute('role','navigation');drop.setAttribute('aria-label','Main menu');document.body.appendChild(drop);
   menuBtn.onclick=function(e){e.stopPropagation();drop.classList.contains('on')?closeDrop():openDrop()};
   drop.addEventListener('click',function(e){
+    if(e.target.closest('[data-x]')){closeDrop();return}
     if(e.target.closest('[data-cmp]')){closeDrop();open();return}
     var a=e.target.closest('a.it');if(a){var id=a.getAttribute('data-id');if(id){DONE[id]=1;save()}closeDrop();setTimeout(labelMenu,60)}
   });
@@ -360,7 +367,7 @@ function initNav(){
     if(!ty&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&(e.key==='m'||e.key==='M')){e.preventDefault();drop.classList.contains('on')?closeDrop():openDrop()}
   });
   window.addEventListener('resize',function(){if(drop.classList.contains('on'))placeDrop()});
-  window.addEventListener('scroll',function(){if(drop.classList.contains('on'))placeDrop()},true);
+  
   window.addEventListener('hashchange',function(){labelMenu();closeDrop()});
   labelMenu();
 }
