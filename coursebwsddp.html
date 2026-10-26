@@ -186,7 +186,7 @@ function chart(cv,a,e,marks,label){
 function rangeRow(id,label,min,max,step,val,fmt){return '<label class="sl"><span>'+label+'</span><input type="range" id="'+id+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+val+'"><output id="'+id+'o">'+fmt(val)+'</output></label>'}
 
 /* ---------- lessons ---------- */
-var KEYS=[['1','Overview'],['2','Liquidation Manager'],['3','Portfolio Simulator'],['4','Stablecoin Pegs'],['5','Indicators'],['6','Trending Coins'],['7','Heat Map'],['8','Signal Scanner'],['9','News'],['0','Accumulation Sim']];
+var KEYS=[['1','Overview'],['2','Lending Account Manager'],['3','Portfolio Simulator'],['4','Stablecoin Pegs'],['5','Indicators'],['6','Trending Coins'],['7','Heat Map'],['8','Signal Scanner'],['9','News'],['0','Accumulation Sim']];
 
 var L=[
 {id:'start',code:'START',title:'How the desk is laid out',tool:null,
@@ -206,7 +206,7 @@ var L=[
   window._kh=function(e){if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;var k=e.key.toLowerCase();if(e.ctrlKey&&k==='k'){e.preventDefault();hit('ctrlk')}else if('1234567890[]/ft'.indexOf(k)>-1&&k.length===1)hit(k)};
   document.addEventListener('keydown',window._kh);
  },
- quiz:{q:'You want the Signal Scanner fast. Which key do you press?',o:['3','8','0','F'],a:1,why:'8 opens the Signal Scanner. Number keys follow the order of the menu: 1 Overview, 2 Liquidation Manager, 3 Portfolio Simulator, and so on.'}},
+ quiz:{q:'You want the Signal Scanner fast. Which key do you press?',o:['3','8','0','F'],a:1,why:'8 opens the Signal Scanner. Number keys follow the order of the menu: 1 Overview, 2 Lending Account Manager, 3 Portfolio Simulator, and so on.'}},
 
 {id:'ovr',code:'OVR',title:'Overview: your morning scan',tool:'desk',
  body:'<p>Overview is the first screen. It pulls the most important things from every other tool onto one page: live prices, your latest alerts, a Start here guide, your Aave positions, your liquidation record, stablecoin pegs and the news that may move price. Below that is a set of tiles that open every tool.</p><p>Use it the way a trader uses a morning briefing. You are not making decisions here. You are checking whether anything needs your attention before you open a tool.</p>',
@@ -294,8 +294,8 @@ var L=[
  },
  quiz:{q:'A backtest shows the 50 EMA rule beat holding on one token. What does that prove?',o:['The rule will work next year','It only shows what happened on that token in that period','The token is safe','You should use more leverage'],a:1,why:'A backtest describes the past. Test many tokens and timeframes, count the trades, and remember fees and slippage lower real results.'}},
 
-{id:'risk',code:'LIQ',title:'Liquidation Manager: staying out of danger',tool:'risk',
- body:'<p>If you borrow on Aave, your loan is backed by collateral. The <b>health factor</b> is the safety number. Above 1 you are safe. At or below 1, part of your collateral can be sold off to repay the loan. That is a <b>liquidation</b>, and it comes with a penalty.</p><p>The Liquidation Manager watches your Aave V3 positions on Ethereum, Arbitrum, Base, Optimism and Avalanche. It is <b>read-only</b>: you paste a public address, never a seed phrase or private key. Add one entry per network. If you use Instadapp, enter the <b>DSA address</b> (the smart account that holds the loan), not your wallet address. Set a caution line and a danger line, and add Telegram, Discord, WhatsApp or other alert channels so it can reach you.</p>',
+{id:'risk',code:'LIQ',title:'Lending Account Manager: staying out of danger',tool:'risk',
+ body:'<p>If you borrow on Aave, your loan is backed by collateral. The <b>health factor</b> is the safety number. Above 1 you are safe. At or below 1, part of your collateral can be sold off to repay the loan. That is a <b>liquidation</b>, and it comes with a penalty.</p><p>The tool covers Aave and Instadapp, and also <b>Morpho</b>, <b>Kamino</b> and <b>Jupiter Lend</b>. Scroll to <b>More lending accounts</b>, pick the protocol, paste your public address and add it. Each account is checked every 90 seconds and you get an alert if its health factor falls below your floor. Fluid accounts cannot be read yet, so the tool gives you a link to check them on fluid.io.</p><p>The Lending Account Manager watches your Aave V3 positions on Ethereum, Arbitrum, Base, Optimism and Avalanche. It is <b>read-only</b>: you paste a public address, never a seed phrase or private key. Add one entry per network. If you use Instadapp, enter the <b>DSA address</b> (the smart account that holds the loan), not your wallet address. Set a caution line and a danger line, and add Telegram, Discord, WhatsApp or other alert channels so it can reach you.</p>',
  widget:function(el){
   el.innerHTML='<div class="lab"><h4>Health factor calculator</h4><p class="hint">Example numbers. Health factor = collateral value × liquidation threshold ÷ debt. Your real threshold depends on the asset, and the tool reads it for you.</p>'
    +rangeRow('hc','Collateral (coins)',1,50,1,10,function(v){return v})+rangeRow('hp2','Price now',500,5000,50,3000,money)+rangeRow('hd','Debt',1000,100000,500,15000,money)+rangeRow('hl','Liquidation threshold',60,90,.5,82.5,function(v){return v+'%'})+rangeRow('hm2','Price move',-70,50,1,0,function(v){return pct(v,0)})
@@ -380,14 +380,14 @@ var L=[
     el.querySelectorAll('[data-p]').forEach(function(b){b.onclick=function(){path=b.dataset.p;calc()}});
     $('ws').innerHTML='<div><small>Total put in</small><b>'+money(spent)+'</b></div><div><small>Average cost</small><b>'+avg.toFixed(1)+'</b></div><div><small>Final price</small><b>'+end.toFixed(1)+'</b></div><div><small>Value at the end</small><b class="'+(val>=spent?'up':'dn')+'">'+money(val)+'</b></div><div><small>30% of that value</small><b>'+money(val*.3)+'</b></div>';
     $('wv').className='verdict';
-    $('wv').textContent='The last box shows how much a 30% LTV loan could be on this stack. Borrowing adds liquidation risk, so use the Liquidation Manager to watch it.';
+    $('wv').textContent='The last box shows how much a 30% LTV loan could be on this stack. Borrowing adds liquidation risk, so use the Lending Account Manager to watch it.';
   }
   el.querySelectorAll('input').forEach(function(i){i.oninput=calc});calc();
  },
  quiz:{q:'What does borrowing at 30% LTV mean?',o:['You pay 30% interest','The loan is 30% of the value of your collateral','You must repay in 30 days','Your collateral is locked for 30 months'],a:1,why:'LTV is debt divided by collateral value. Lower LTV means a bigger buffer before a price drop can cause liquidation.'}},
 
 {id:'lp',code:'LP',title:'LP Scout: finding and testing liquidity pools',tool:null,link:['lpscoutbwsddp.html','Open LP Scout'],
- body:'<p>A <b>liquidity pool</b> (LP) position means you put two coins into a pool so other people can trade against it. In return you earn a share of the trading fees (the <b>base APR</b>) and sometimes extra reward tokens (the <b>bonus APR</b>). LP Scout lists pools across every chain and lets you filter them.</p><p>Tap the gold <b>Robinhood Chain stock LPs</b> button to see only pools that hold stock tokens such as NVDA, AAPL and TSLA. Their APR there is an estimate from recent trading volume, so treat it as a guide, and remember stock tokens add issuer and de-peg risk.</p><p>Filter in this order: pick the <b>chain</b> you actually use, set a <b>minimum TVL</b> (total value locked, so you are not in a tiny pool), then compare <b>base APR</b> against <b>bonus APR</b>. Base APR comes from real trading and tends to last. Bonus APR is paid in a token that can fall in price and often shrinks over time. <b>Est. fees per day</b> shows what all LPs together earn. <b>Debt</b> only shows on lending markets, where it means the total borrowed.</p><p>Click a pool to open the simulator. It runs a bear, flat and bull price case, then 1,000 random price paths, so you see a range of outcomes instead of one hopeful number. The risk it models is <b>impermanent loss</b>: when one coin moves a lot, you end up holding less of the winner than if you had simply held both coins.</p><p><b>Red flags:</b> APR above 200%, almost all of the APR coming from bonus rewards, a very small TVL, and any leverage you cannot explain.</p>',
+ body:'<p>A <b>liquidity pool</b> (LP) position means you put two coins into a pool so other people can trade against it. In return you earn a share of the trading fees (the <b>base APR</b>) and sometimes extra reward tokens (the <b>bonus APR</b>). LP Scout lists pools across every chain and lets you filter them.</p><p>Tap the gold <b>Robinhood Chain stock LPs</b> button to see only pools that hold stock tokens such as NVDA, AAPL and TSLA. Their APR there is an estimate from recent trading volume, so treat it as a guide, and remember stock tokens add issuer and de-peg risk.</p><p><b>Found a new token?</b> Paste its contract address (or a pool address) into the LP Scout search box. It looks across Uniswap, PancakeSwap, Meteora, Raydium, Orca and more, and shows every pool with a NEW badge if it is under a week old. APR there is estimated from volume and an assumed fee tier, so open the pool on the DEX to confirm the real fee.</p><p>Filter in this order: pick the <b>chain</b> you actually use, set a <b>minimum TVL</b> (total value locked, so you are not in a tiny pool), then compare <b>base APR</b> against <b>bonus APR</b>. Base APR comes from real trading and tends to last. Bonus APR is paid in a token that can fall in price and often shrinks over time. <b>Est. fees per day</b> shows what all LPs together earn. <b>Debt</b> only shows on lending markets, where it means the total borrowed.</p><p>Click a pool to open the simulator. It runs a bear, flat and bull price case, then 1,000 random price paths, so you see a range of outcomes instead of one hopeful number. The risk it models is <b>impermanent loss</b>: when one coin moves a lot, you end up holding less of the winner than if you had simply held both coins.</p><p><b>Red flags:</b> APR above 200%, almost all of the APR coming from bonus rewards, a very small TVL, and any leverage you cannot explain.</p>',
  widget:function(el){
   el.innerHTML='<div class="lab"><h4>Fees vs impermanent loss</h4><p class="hint">You put $10,000 in a pool, half in a volatile coin and half in a stable coin. Move the sliders (made-up numbers).</p>'+rangeRow('lq1','Volatile coin price change',-80,300,5,100,function(v){return pct(+v,0)})+rangeRow('lq2','Pool APR (fees + bonus)',0,200,5,30,function(v){return v+'%'})+rangeRow('lq3','Days in the pool',7,365,1,90,function(v){return v+' days'})+'<div class="stat" id="lqs"></div><div class="verdict" id="lqv"></div></div>';
   function calc(){
@@ -450,7 +450,7 @@ var L=[
   $('cn').oninput=function(){prog.name=this.value;save();$('cnm').textContent=this.value||'Your name'};
   $('pr').onclick=function(){window.print()};
  },
- quiz:{q:'Which of these is safe to paste into the Liquidation Manager?',o:['Your 12-word seed phrase','Your wallet private key','A public wallet or DSA address','Your exchange password'],a:2,why:'The desk is read-only and only needs a public address. Anyone who asks for your seed phrase or private key is trying to steal from you.'}}
+ quiz:{q:'Which of these is safe to paste into the Lending Account Manager?',o:['Your 12-word seed phrase','Your wallet private key','A public wallet or DSA address','Your exchange password'],a:2,why:'The desk is read-only and only needs a public address. Anyone who asks for your seed phrase or private key is trying to steal from you.'}}
 ];
 
 /* hidden symbol for the certificate emblem */
@@ -606,7 +606,7 @@ var ITEMS=[
  {id:'acct',n:'Account',h:A,g:'Account',lv:'b',d:'Your sign-up info, access time, alert channels and renewal.',kw:'settings email subscription renew billing login'},
  {id:'moon',n:'Moon Desk',h:M,g:'Test',lv:'b',d:'Moon phases, zodiac and eclipses laid behind real price charts, with a back-test.',kw:'astrology zodiac eclipse planetarium lunar full new mercury'},
  {id:'wealth',n:'Accumulation Sim',h:D+'#wealth',g:'Test',lv:'b',d:'See how saving a little each week into BTC and ETH could grow over a year.',kw:'dca save stack feed the machine aave'},
- {id:'risk',n:'Liquidation Manager',h:D+'#risk',g:'Protect',lv:'m',d:'Watches the health factor on your Aave loan so you can act before you are liquidated.',kw:'aave health factor liquidation instadapp loan borrow margin'},
+ {id:'risk',n:'Lending Account Manager',h:D+'#risk',g:'Protect',lv:'m',d:'Watches the health factor on your loans (Aave, Morpho, Kamino, Jupiter Lend) so you can act before you are liquidated.',kw:'aave morpho fluid kamino jupiter lend health factor liquidation instadapp loan borrow margin'},
  {id:'ind',n:'Indicators & Alerts',h:D+'#ind',g:'Protect',lv:'m',d:'Alerts for health factor, EMA crosses, divergences and liquidations.',kw:'alerts ema rsi divergence telegram'},
  {id:'lp',n:'LP Scout',h:L,g:'Find',lv:'m',d:'Search liquidity pools on every chain, filter by size and yield, and simulate outcomes.',kw:'liquidity pool yield apr tvl farm uniswap'},
  {id:'rh',n:'Robinhood Chain stock LPs',h:L+'#rhstock',g:'Find',lv:'m',d:'Only the pools that hold stock tokens such as NVDA, AAPL and TSLA.',kw:'robinhood stock token tsla nvda aapl lp'},
@@ -618,7 +618,7 @@ var ITEMS=[
 var GOALS=[
  {i:'🌱',q:'I am new. Where do I start?',w:'Take the course first. It is short and every lesson ends with something to try. Then look at the Overview.',to:['course','desk']},
  {i:'📰',q:'What is happening in the market today?',w:'Start with the Overview for prices, then check the news and the heat map.',to:['desk','news','heat']},
- {i:'🛡️',q:'I have a loan and do not want to be liquidated',w:'The Liquidation Manager watches your health factor. Add alerts so you hear about trouble early.',to:['risk','ind','pegs']},
+ {i:'🛡️',q:'I have a loan and do not want to be liquidated',w:'The Lending Account Manager watches your health factor. Add alerts so you hear about trouble early.',to:['risk','ind','pegs']},
  {i:'💼',q:'Track what I own and my profit',w:'Log your buys in Portfolio. It works out your profit, loss and value over time.',to:['pf','port']},
  {i:'🔔',q:'Get alerts on Telegram, email or my phone',w:'Set up your channels once in Account. Every alert on the desk and in Portfolio uses them.',to:['acct','pf','ind']},
  {i:'🔎',q:'Find coins that are moving',w:'Trending shows what is new and hot. The heat map shows the big picture. Signals add a technical view.',to:['trend','heat','sig']},

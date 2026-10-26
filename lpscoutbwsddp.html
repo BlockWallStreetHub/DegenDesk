@@ -98,7 +98,7 @@ footer{max-width:1500px;margin:auto;padding:0 20px 40px;color:var(--mut);font-si
 <section class="card">
   <h2>Filters</h2>
   <div class="filters">
-    <label class="f">Search<input type="text" id="q" placeholder="ETH-USDC, Aerodrome, Base…"></label>
+    <label class="f" style="grid-column:1/-1">Search by name, protocol, or paste a token or pool contract address<input type="text" id="q" placeholder="ETH-USDC, Aerodrome, Base…  or paste 0x… / Solana address to find every pool, even brand-new ones" autocomplete="off" spellcheck="false"></label>
     <div class="f">Chain<div class="multi" id="mChain"></div></div>
     <div class="f">Protocol<div class="multi" id="mProj"></div></div>
     <label class="f">Type
@@ -268,6 +268,71 @@ function prep(p){
 }
 
 
+/* ---------- contract-address search (DexScreener, GeckoTerminal fallback) ---------- */
+var ADDR={on:false,run:0,busy:false};
+var A_EVM=/0x[0-9a-fA-F]{40}/g,A_SOL=/(?:^|[^1-9A-HJ-NP-Za-km-z])([1-9A-HJ-NP-Za-km-z]{32,44})(?![1-9A-HJ-NP-Za-km-z])/g;
+function parseAddrs(t){
+  var out=[],seen={};t=String(t||'');
+  (t.match(A_EVM)||[]).forEach(function(a){var k=a.toLowerCase();if(!seen[k]){seen[k]=1;out.push(a)}});
+  var m;A_SOL.lastIndex=0;while((m=A_SOL.exec(t))){var a=m[1];if(/^0x/i.test(a))continue;if(!seen[a]){seen[a]=1;out.push(a)}}
+  return out.slice(0,30);
+}
+var CHAINN={ethereum:'Ethereum',bsc:'BNB Chain',base:'Base',arbitrum:'Arbitrum',polygon:'Polygon',optimism:'Optimism',avalanche:'Avalanche',solana:'Solana',sui:'Sui',ton:'TON',robinhood:'Robinhood Chain',robinhoodchain:'Robinhood Chain',unichain:'Unichain',linea:'Linea',blast:'Blast',scroll:'Scroll',zksync:'zkSync',mantle:'Mantle',sonic:'Sonic',berachain:'Berachain',hyperevm:'HyperEVM',pulsechain:'PulseChain',fantom:'Fantom',cronos:'Cronos',celo:'Celo',gnosischain:'Gnosis',abstract:'Abstract',monad:'Monad'};
+function chainName(c){c=String(c||'');return CHAINN[c.toLowerCase()]||(c?c.charAt(0).toUpperCase()+c.slice(1):'?')}
+var DEXN={uniswap:'Uniswap',pancakeswap:'PancakeSwap',meteora:'Meteora',raydium:'Raydium',orca:'Orca',aerodrome:'Aerodrome',velodrome:'Velodrome',sushiswap:'SushiSwap',curve:'Curve',balancer:'Balancer',camelot:'Camelot',jupiter:'Jupiter',lifinity:'Lifinity',phoenix:'Phoenix',pumpswap:'PumpSwap',pumpfun:'Pump.fun',aerodromeslipstream:'Aerodrome Slipstream',traderjoe:'Trader Joe',fluid:'Fluid',maverick:'Maverick'};
+var FEE_GUESS={uniswap:0.3,pancakeswap:0.25,raydium:0.25,orca:0.3,meteora:0.25,aerodrome:0.3,velodrome:0.3,sushiswap:0.3,camelot:0.3,traderjoe:0.3};
+function agoStr(ms){if(!ms)return '';var d=(Date.now()-ms)/864e5;return d<1?Math.max(1,Math.round(d*24))+'h ago':d<60?Math.round(d)+'d ago':Math.round(d/30)+'mo ago'}
+function mapDS(x,runId){
+  var b=x.baseToken||{},q=x.quoteToken||{},lab=(x.labels||[]).join(' '),dx=String(x.dexId||'');
+  var tvl=x.liquidity&&x.liquidity.usd!=null?+x.liquidity.usd:0,vol=x.volume&&x.volume.h24!=null?+x.volume.h24:null;
+  var fee=FEE_GUESS[dx.toLowerCase()];if(fee==null)fee=0.3;
+  var apr=(vol!=null&&tvl>0)?vol*fee/100/tvl*365*100:0;
+  var bs=String(b.symbol||'').toUpperCase(),qs=String(q.symbol||'').toUpperCase(),allStable=!!(STABLES[bs]&&STABLES[qs]);
+  var age=x.pairCreatedAt?(Date.now()-x.pairCreatedAt)/864e5:null;
+  var nm=(DEXN[dx.toLowerCase()]||dx)+(lab?' '+lab.toUpperCase():'');
+  return {id:'ds:'+x.chainId+':'+x.pairAddress,symbol:(b.symbol||'?')+' / '+(q.symbol||'?'),
+    meta:(x.pairCreatedAt?'created '+agoStr(x.pairCreatedAt)+' · ':'')+'est. at '+fee+'% fee · '+String(x.pairAddress||'').slice(0,6)+'…'+String(x.pairAddress||'').slice(-4),
+    chain:chainName(x.chainId),project:nm,tvlUsd:tvl,vol:vol,base:apr,reward:0,apy:apr,mean30:null,rev:vol!=null?vol*fee/100:0,debt:null,borBase:null,
+    il:allStable?'no':'yes',stable:allStable,exp:'multi',lend:false,outlier:apr>10000,rewTok:[],stock:isStockSym(bs)||isStockSym(qs),
+    src:'DexScreener',url:x.url||'https://dexscreener.com/'+x.chainId+'/'+x.pairAddress,qid:runId,isNew:age!=null&&age<7};
+}
+function mapGT(d,inc,runId){
+  var idx={};(inc||[]).forEach(function(x){idx[x.type+':'+x.id]=x.attributes||{}});
+  return (d||[]).map(function(x){var a=x.attributes||{},r=x.relationships||{};
+    var bt=r.base_token&&r.base_token.data?idx['token:'+r.base_token.data.id]||{}:{},qt=r.quote_token&&r.quote_token.data?idx['token:'+r.quote_token.data.id]||{}:{},dx=r.dex&&r.dex.data?idx['dex:'+r.dex.data.id]||{}:{};
+    var net=r.network&&r.network.data?r.network.data.id:(String(x.id||'').split('_')[0]),addr=a.address||String(x.id||'').split('_').pop();
+    var nm=a.name||((bt.symbol||'?')+' / '+(qt.symbol||'?')),fee=parseFee(nm,a),tvl=parseFloat(a.reserve_in_usd)||0,vol=a.volume_usd&&a.volume_usd.h24!=null?parseFloat(a.volume_usd.h24):null;
+    var f=fee!=null?fee:0.3,apr=(vol!=null&&tvl>0)?vol*f/100/tvl*365*100:0,bs=String(bt.symbol||'').toUpperCase(),qs=String(qt.symbol||'').toUpperCase(),st=!!(STABLES[bs]&&STABLES[qs]);
+    return {id:'gt:'+addr,symbol:nm.replace(/\s*\d+(?:\.\d+)?\s*%\s*$/,''),meta:(fee!=null?fee+'% fee tier':'est. at 0.3% fee'),chain:chainName(net),project:dx.name||'DEX',tvlUsd:tvl,vol:vol,base:apr,reward:0,apy:apr,mean30:null,
+      rev:vol!=null?vol*f/100:0,debt:null,borBase:null,il:st?'no':'yes',stable:st,exp:'multi',lend:false,outlier:apr>10000,rewTok:[],stock:isStockSym(bs)||isStockSym(qs),src:'GeckoTerminal',url:'https://www.geckoterminal.com/'+net+'/pools/'+addr,qid:runId}})
+}
+function lookupAddr(addrs){
+  var run=++ADDR.run;ADDR.busy=true;ADDR.on=true;
+  setStatus('','<span class="spin"></span>Looking up '+addrs.length+' address'+(addrs.length>1?'es':'')+' across every chain and DEX…');
+  var DS='https://api.dexscreener.com';
+  function one(a){return gj(DS+'/latest/dex/tokens/'+encodeURIComponent(a)).then(function(j){var p=(j&&j.pairs)||[];if(p.length)return p;return gj(DS+'/latest/dex/search?q='+encodeURIComponent(a)).then(function(k){return (k&&k.pairs)||[]})})}
+  Promise.all(addrs.map(function(a){return one(a).catch(function(){return null})})).then(function(rs){
+    if(run!==ADDR.run)return;
+    var failed=rs.every(function(r){return r===null}),seen={},list=[];
+    rs.forEach(function(r){(r||[]).forEach(function(x){var k=x.chainId+':'+x.pairAddress;if(!seen[k]){seen[k]=1;list.push(mapDS(x,run))}})});
+    if(!list.length){
+      return Promise.all(addrs.map(function(a){return gj('https://api.geckoterminal.com/api/v2/search/pools?query='+encodeURIComponent(a)+'&include=base_token,quote_token,dex,network').then(function(j){return mapGT(j.data,j.included,run)}).catch(function(){return []})})).then(function(g){
+        if(run!==ADDR.run)return;var all=[].concat.apply([],g),s2={};all=all.filter(function(p){if(s2[p.id])return false;s2[p.id]=1;return true});
+        finishAddr(addrs,all,failed&&!all.length,run)});
+    }
+    finishAddr(addrs,list,false,run);
+  });
+}
+function finishAddr(addrs,list,failed,run){
+  ADDR.busy=false;
+  POOLS=POOLS.filter(function(p){return p.qid==null}).concat(list);
+  buildMulti();apply();
+  var ch={};list.forEach(function(p){ch[p.chain]=1});
+  var nn=list.filter(function(p){return p.isNew}).length;
+  if(failed)setStatus('err','Address lookup could not reach DexScreener or GeckoTerminal. An ad-blocker may be blocking them. Try again, or paste the address into <a href="https://dexscreener.com" target="_blank" rel="noopener">dexscreener.com ↗</a>.');
+  else if(!list.length)setStatus('ok','No pools found for '+esc(addrs[0].slice(0,10))+'… . Double-check the address. Brand-new tokens can take a few minutes to appear. <span class="mut">Clear the search box to go back.</span>');
+  else setStatus('ok','Found '+list.length+' pool'+(list.length>1?'s':'')+' across '+Object.keys(ch).length+' chain'+(Object.keys(ch).length>1?'s':'')+(nn?' · '+nn+' created in the last 7 days':'')+' · filters are off while you search by address. <span class="mut">Clear the search box to go back.</span>');
+}
 /* ---------- Robinhood Chain stock-token pools (GeckoTerminal) ---------- */
 var STOCKS={};('AAPL MSFT NVDA TSLA AMZN GOOGL GOOG META SPY QQQ IWM DIA MU AMD INTC AVGO TSM NFLX COIN HOOD PLTR SHOP UBER ABNB DIS NKE KO PEP MCD WMT COST TGT HD LOW JPM BAC GS MS V MA PYPL SQ XYZ BA LMT GE F GM XOM CVX PFE JNJ UNH LLY MRK ABBV CRM ORCL ADBE IBM CSCO QCOM TXN ARM SMCI MSTR MARA RIOT CRCL SOFI RBLX SNAP PINS SPOT ROKU DKNG AFRM UPST RIVN LCID NIO BABA PDD JD GME AMC BB SPCE TLT GLD SLV USO ARKK VOO VTI IVV SMH SOXX XLK XLF XLE VNQ BRK.B BRKB DELL HPQ PANW CRWD SNOW NET DDOG ZM DOCU OKTA MDB RDDT APP DASH LYFT WBD PARA T VZ TMUS SBUX CMG BKNG MAR LULU ONON'.split(' ')).forEach(function(t){STOCKS[t]=1});
 var STABLES={USDC:1,USDT:1,USDG:1,DAI:1,USDE:1,USDS:1,FDUSD:1,PYUSD:1,USD1:1,'USDC.E':1,BUSD:1,TUSD:1,USDP:1,GUSD:1,LUSD:1,FRAX:1};
@@ -389,6 +454,8 @@ function apply(){
       dMin=num('debtMin'),dMax=num('debtMax'),revMin=num('revMin'),vMin=num('volMin'),stab=$('stab').value,il=$('il').value,
       bonOnly=$('bonOnly').checked,hideOut=$('hideOut').checked,favOnly=$('favOnly').checked,stockOnly=$('stockOnly').checked;
   var cs=MS.chain.set,ps=MS.proj.set,hasC=Object.keys(cs).length,hasP=Object.keys(ps).length;
+  if(ADDR.on&&!parseAddrs($('q').value).length){ADDR.on=false;ADDR.key='';POOLS=POOLS.filter(function(p){return p.qid==null});buildMulti()}
+  if(ADDR.on){VIEW=POOLS.filter(function(p){return p.qid===ADDR.run});shown=100;sortRender();return}
   VIEW=POOLS.filter(function(p){
     if(hasC&&!cs[p.chain])return false;if(hasP&&!ps[p.project])return false;
     if(type==='lp'&&!(p.exp==='multi'&&!p.lend))return false;
@@ -422,7 +489,7 @@ function render(){
     var ilb=p.il==='yes'?'<span class="badge y">IL risk</span>':'<span class="badge g">No IL</span>';
     h+='<tr data-i="'+i+'" class="'+(sel&&sel.id===p.id?'sel':'')+'">'+
      '<td class="l"><span class="star'+(FAV[p.id]?' on':'')+'" data-f="'+esc(p.id)+'">'+(FAV[p.id]?'★':'☆')+'</span></td>'+
-     '<td class="l pool">'+esc(p.symbol)+(p.stock?' <span class="badge y" style="background:#2a2410;color:var(--gold)">STOCK</span>':'')+(p.meta?'<span class="m">'+esc(p.meta)+'</span>':'')+'</td>'+
+     '<td class="l pool">'+esc(p.symbol)+(p.isNew?' <span class="badge y" style="background:#10281d;color:#7fe3a4">NEW</span>':'')+(p.stock?' <span class="badge y" style="background:#2a2410;color:var(--gold)">STOCK</span>':'')+(p.meta?'<span class="m">'+esc(p.meta)+'</span>':'')+'</td>'+
      '<td class="l">'+esc(p.chain)+'</td><td class="l">'+esc(p.project)+'</td>'+
      '<td>'+usd(p.tvlUsd)+'</td><td>'+usd(p.vol)+'</td>'+
      '<td>'+pct(p.base)+'</td><td class="'+(p.reward>0?'gold':'mut')+'">'+(p.reward>0?pct(p.reward):'—')+'</td>'+
@@ -444,6 +511,8 @@ $('tb').onclick=function(e){
 };
 $('more').onclick=function(){shown+=100;render()};
 ['q','tvlMin','tvlMax','aprMin','aprMax','baseMin','bonMin','debtMin','debtMax','revMin','volMin'].forEach(function(id){$(id).addEventListener('input',debounce(apply,200))});
+$('q').addEventListener('input',debounce(function(){var a=parseAddrs($('q').value);if(a.length){var key=a.join(',').toLowerCase();if(key!==ADDR.key){ADDR.key=key;lookupAddr(a)}}else{ADDR.key='';if(ADDR.on){ADDR.on=false;POOLS=POOLS.filter(function(p){return p.qid==null});apply();RH.done&&setStatus('ok',POOLS.length.toLocaleString()+' pools loaded')}}},550));
+$('q').addEventListener('keydown',function(e){if(e.key==='Enter'){var a=parseAddrs($('q').value);if(a.length){ADDR.key=a.join(',').toLowerCase();lookupAddr(a)}}});
 ['type','stab','il','bonOnly','hideOut','favOnly','stockOnly'].forEach(function(id){$(id).addEventListener('change',apply)});
 function debounce(f,ms){var t;return function(){clearTimeout(t);t=setTimeout(f,ms)}}
 $('reload').onclick=load;
@@ -498,7 +567,7 @@ function selCard(){
   el.innerHTML='<div><b>'+esc(sel.symbol)+'</b> <span class="mut">'+esc(sel.project)+' · '+esc(sel.chain)+'</span></div>'+
    '<div class="row" style="gap:18px"><span>TVL <b>'+usd(sel.tvlUsd)+'</b></span><span>Base <b>'+pct(sel.base)+'</b></span><span>Bonus <b>'+pct(sel.reward)+'</b></span>'+
    '<span>Total <b class="gold">'+pct(sel.apy)+'</b></span>'+(sel.debt!=null?'<span>Debt <b>'+usd(sel.debt)+'</b></span>':'')+
-   (sel.src==='GeckoTerminal'?'<a href="'+esc(sel.url)+'" target="_blank" rel="noopener">GeckoTerminal ↗</a>':'<a href="https://defillama.com/yields/pool/'+encodeURIComponent(sel.id)+'" target="_blank" rel="noopener">DefiLlama ↗</a>')+'</div>';
+   (sel.src==='DexScreener'?'<a href="'+esc(sel.url)+'" target="_blank" rel="noopener">DexScreener ↗</a>'+(/robinhood|base|arbitrum/i.test(sel.chain)?' <a href="https://www.maxfi.tech/" target="_blank" rel="noopener">MaxFi (auto-managed LP) ↗</a>':''):sel.src==='GeckoTerminal'?'<a href="'+esc(sel.url)+'" target="_blank" rel="noopener">GeckoTerminal ↗</a>':'<a href="https://defillama.com/yields/pool/'+encodeURIComponent(sel.id)+'" target="_blank" rel="noopener">DefiLlama ↗</a>')+'</div>';
 }
 
 /* ---------- simulation core ---------- */
@@ -739,7 +808,7 @@ var ITEMS=[
  {id:'acct',n:'Account',h:A,g:'Account',lv:'b',d:'Your sign-up info, access time, alert channels and renewal.',kw:'settings email subscription renew billing login'},
  {id:'moon',n:'Moon Desk',h:M,g:'Test',lv:'b',d:'Moon phases, zodiac and eclipses laid behind real price charts, with a back-test.',kw:'astrology zodiac eclipse planetarium lunar full new mercury'},
  {id:'wealth',n:'Accumulation Sim',h:D+'#wealth',g:'Test',lv:'b',d:'See how saving a little each week into BTC and ETH could grow over a year.',kw:'dca save stack feed the machine aave'},
- {id:'risk',n:'Liquidation Manager',h:D+'#risk',g:'Protect',lv:'m',d:'Watches the health factor on your Aave loan so you can act before you are liquidated.',kw:'aave health factor liquidation instadapp loan borrow margin'},
+ {id:'risk',n:'Lending Account Manager',h:D+'#risk',g:'Protect',lv:'m',d:'Watches the health factor on your loans (Aave, Morpho, Kamino, Jupiter Lend) so you can act before you are liquidated.',kw:'aave morpho fluid kamino jupiter lend health factor liquidation instadapp loan borrow margin'},
  {id:'ind',n:'Indicators & Alerts',h:D+'#ind',g:'Protect',lv:'m',d:'Alerts for health factor, EMA crosses, divergences and liquidations.',kw:'alerts ema rsi divergence telegram'},
  {id:'lp',n:'LP Scout',h:L,g:'Find',lv:'m',d:'Search liquidity pools on every chain, filter by size and yield, and simulate outcomes.',kw:'liquidity pool yield apr tvl farm uniswap'},
  {id:'rh',n:'Robinhood Chain stock LPs',h:L+'#rhstock',g:'Find',lv:'m',d:'Only the pools that hold stock tokens such as NVDA, AAPL and TSLA.',kw:'robinhood stock token tsla nvda aapl lp'},
@@ -751,7 +820,7 @@ var ITEMS=[
 var GOALS=[
  {i:'🌱',q:'I am new. Where do I start?',w:'Take the course first. It is short and every lesson ends with something to try. Then look at the Overview.',to:['course','desk']},
  {i:'📰',q:'What is happening in the market today?',w:'Start with the Overview for prices, then check the news and the heat map.',to:['desk','news','heat']},
- {i:'🛡️',q:'I have a loan and do not want to be liquidated',w:'The Liquidation Manager watches your health factor. Add alerts so you hear about trouble early.',to:['risk','ind','pegs']},
+ {i:'🛡️',q:'I have a loan and do not want to be liquidated',w:'The Lending Account Manager watches your health factor. Add alerts so you hear about trouble early.',to:['risk','ind','pegs']},
  {i:'💼',q:'Track what I own and my profit',w:'Log your buys in Portfolio. It works out your profit, loss and value over time.',to:['pf','port']},
  {i:'🔔',q:'Get alerts on Telegram, email or my phone',w:'Set up your channels once in Account. Every alert on the desk and in Portfolio uses them.',to:['acct','pf','ind']},
  {i:'🔎',q:'Find coins that are moving',w:'Trending shows what is new and hot. The heat map shows the big picture. Signals add a technical view.',to:['trend','heat','sig']},
