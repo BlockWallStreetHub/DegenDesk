@@ -305,6 +305,7 @@ nav button .k{border-radius:6px;border-color:var(--line)}
 .swatch{border:0;box-shadow:0 0 0 2px rgba(255,255,255,.18),0 0 10px var(--gold)}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#22315a;border-radius:10px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-track{background:transparent}
 @media (max-width:820px){.shell{height:auto}.frame{height:80vh}.pad{padding:18px 16px 60px}nav{padding:0}nav button{border-radius:0;box-shadow:none;margin:0}nav button.on{box-shadow:inset 0 -3px 0 var(--gold);background:transparent}}
+@media (max-width:820px){.topbar{overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:none}.topbar::-webkit-scrollbar{display:none}.topbar>*{flex-shrink:0}.clocks{display:none}}
 .openpg{margin-left:6px;padding:4px 12px;font-size:12px;border-radius:999px !important;white-space:nowrap}
 </style>
 </head>
@@ -314,6 +315,8 @@ nav button .k{border-radius:6px;border-color:var(--line)}
   <div class="clocks" id="clocks" aria-label="World clocks"></div>
   <span class="eq" title="Position reader status"><span class="dot" id="sysDot"></span><span id="sysTxt">Idle</span></span>
   <a class="jump" href="coursebwsddp.html" title="Open the guided course" style="text-decoration:none;display:inline-flex;align-items:center">Course</a>
+  <a class="jump" href="moonbwsddp.html" title="Moon phases, zodiac and eclipses behind the charts" style="text-decoration:none;display:inline-flex;align-items:center">Moon</a>
+  <a class="jump" href="lpscoutbwsddp.html" title="Search and simulate LP positions" style="text-decoration:none;display:inline-flex;align-items:center">LP Scout</a>
   <a class="jump" href="portfoliobwsddp.html" title="Track holdings and set price alerts" style="text-decoration:none;display:inline-flex;align-items:center">Portfolio</a>
   <a class="jump" href="accountbwsddp.html" title="Your sign-up info and settings" style="text-decoration:none;display:inline-flex;align-items:center">Account</a>
   <button class="jump" id="themeBtn" title="Change the accent color (T)"><span class="swatch"></span><span id="themeName">Cyan</span></button>
