@@ -679,6 +679,32 @@ load();
 .cmpEmpty{color:#93a0c4;padding:18px 4px}
 .cmpLeg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:#93a0c4;margin:0 0 6px}
 @media (max-width:700px){#cmpBox{top:0;left:0;transform:none;width:100vw;max-height:100vh;height:100vh;border-radius:0;border:0}#cmpFab{height:50px}#cmpFab .t{display:none}#cmpFab{padding:0 12px 0 10px}#cmpFab .nw{display:inline}}
+
+.bwsNav{display:inline-flex;align-items:center;gap:8px;font:600 14px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+.bwsNav a,.bwsNav button{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;text-decoration:none;cursor:pointer;white-space:nowrap;font:inherit;letter-spacing:.01em}
+.bwsNav .bwsHome{border:1px solid #d9b650;background:#0d1426;color:#f1d98a}
+.bwsNav .bwsMenu{border:1px solid #d9b650;background:#d9b650;color:#1a1405}
+.bwsNav .bwsMenu .cur{font-weight:500;opacity:.8;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.bwsNav svg{width:18px;height:18px;flex:none}
+.bwsNav a:focus-visible,.bwsNav button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+#bwsBar{position:sticky;top:0;z-index:8500;display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(7,11,22,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid #1f2a4a}
+#bwsBar .ttl{color:#93a0c4;font:13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#bwsDrop{position:fixed;z-index:9400;display:none;width:min(380px,94vw);max-height:calc(100vh - 80px);overflow:auto;background:#0b1224;border:1px solid #d9b650;border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.7);padding:8px 8px 10px;font:15px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#e8ecf7;-webkit-overflow-scrolling:touch}
+#bwsDrop.on{display:block}
+#bwsDrop h6{margin:12px 10px 4px;color:#d9b650;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase}
+#bwsDrop h6:first-child{margin-top:6px}
+#bwsDrop a.it{display:block;text-decoration:none;color:inherit;border-radius:10px;padding:10px 12px;min-height:46px;position:relative}
+#bwsDrop a.it:hover,#bwsDrop a.it:focus{background:#16224a;outline:none}
+#bwsDrop a.it b{display:block;color:#fff;font-size:15px}
+#bwsDrop a.it span{display:block;color:#93a0c4;font-size:12.5px;margin-top:1px}
+#bwsDrop a.it.here{background:#1a2650;box-shadow:inset 3px 0 0 #d9b650}
+#bwsDrop a.it.here b:after{content:"  · you are here";color:#d9b650;font-weight:500;font-size:12px}
+#bwsDrop a.it i{position:absolute;right:12px;top:14px;width:10px;height:10px;border-radius:50%;background:#e5a93c}
+#bwsDrop a.it i.d{background:#e5584b}
+#bwsDrop .ft{border-top:1px solid #1f2a4a;margin:10px 4px 0;padding-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+#bwsDrop .ft button{flex:1;min-width:140px;height:44px;border-radius:10px;border:1px solid #2a3760;background:#111a33;color:#f1d98a;font:600 14px system-ui,Arial,sans-serif;cursor:pointer}
+#bwsDrop .hn{color:#6f7da6;font-size:12px;margin:8px 8px 0}
+@media (max-width:700px){.bwsNav .bwsMenu .cur{display:none}.bwsNav a,.bwsNav button{padding:0 14px}#bwsBar .ttl{display:none}}
 </style>
 <script id="cmpJs">
 (function(){
@@ -779,7 +805,59 @@ function open(){if(!ov)build();hash=location.hash.replace('#','');ov.classList.a
   try{localStorage.setItem('dd_cmp_seen','1')}catch(e){}var nw=document.querySelector('#cmpFab .nw');if(nw)nw.remove();
   tab='goals';q='';document.getElementById('cmpQ').value='';draw();var f=ov.querySelector('.cmpGoal>button');}
 function close(){ov.classList.remove('on');document.documentElement.style.overflow=''}
+
+/* ===== top navigator: Home button + drop-down menu ===== */
+var HOME={h:D+'#desk',n:'Home'};
+var ORDER=['Learn','Watch','Track','Find','Protect','Test','Account'];
+var house='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>';
+var burger='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+var drop,menuBtn;
+function curItem(){hash=location.hash.replace('#','');for(var i=0;i<ITEMS.length;i++)if(here(ITEMS[i]))return ITEMS[i];return null}
+function dropHtml(){
+  var h='<h6>Start</h6><a class="it'+((file===D.toLowerCase()&&(hash||'desk')==='desk')?' here':'')+'" href="'+HOME.h+'"><b>Home · Overview</b><span>Prices, alerts, positions and news on one screen.</span></a>';
+  ORDER.forEach(function(g){
+    var it=ITEMS.filter(function(t){return t.g===g&&t.id!=='desk'});if(!it.length)return;
+    h+='<h6>'+g+'</h6>';
+    it.forEach(function(t){
+      var dot='',b=document.getElementById('bd-'+t.id);if(b){if(b.classList.contains('danger'))dot='<i class="d" title="Needs attention"></i>';else if(b.classList.contains('warn'))dot='<i title="Heads up"></i>'}
+      h+='<a class="it'+(here(t)?' here':'')+'" href="'+t.h+'" data-id="'+t.id+'"><b>'+esc(t.n)+'</b><span>'+esc(t.d)+'</span>'+dot+'</a>'});
+  });
+  h+='<div class="ft"><button type="button" data-cmp="1">🧭 Not sure? Ask the Compass</button></div><div class="hn">Tip: press M to open this menu from the keyboard.</div>';
+  return h;
+}
+function placeDrop(){
+  var r=menuBtn.getBoundingClientRect(),w=Math.min(380,window.innerWidth*0.94);
+  drop.style.top=(r.bottom+8)+'px';drop.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';
+  drop.style.maxHeight=(window.innerHeight-r.bottom-20)+'px';
+}
+function openDrop(){drop.innerHTML=dropHtml();placeDrop();drop.classList.add('on');menuBtn.setAttribute('aria-expanded','true');var f=drop.querySelector('a.here')||drop.querySelector('a.it');if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'nearest'})}catch(e){}}
+function closeDrop(){if(!drop)return;drop.classList.remove('on');menuBtn.setAttribute('aria-expanded','false')}
+function labelMenu(){var c=curItem();var cu=menuBtn.querySelector('.cur');cu.textContent=c?'· '+c.n:'';var tt=document.querySelector('#bwsBar .ttl');if(tt)tt.textContent=c?c.n:''}
+function initNav(){
+  var slot=document.getElementById('bwsNavSlot'),wrap;
+  wrap=document.createElement('span');wrap.className='bwsNav';
+  wrap.innerHTML='<a class="bwsHome" href="'+HOME.h+'" aria-label="Home">'+house+'<span>Home</span></a><button type="button" class="bwsMenu" aria-haspopup="true" aria-expanded="false">'+burger+'<span>Menu</span><span class="cur"></span></button>';
+  if(slot){slot.appendChild(wrap)}else{var bar=document.createElement('div');bar.id='bwsBar';bar.appendChild(wrap);var t=document.createElement('span');t.className='ttl';bar.appendChild(t);document.body.insertBefore(bar,document.body.firstChild)}
+  menuBtn=wrap.querySelector('.bwsMenu');
+  drop=document.createElement('div');drop.id='bwsDrop';document.body.appendChild(drop);
+  menuBtn.onclick=function(e){e.stopPropagation();drop.classList.contains('on')?closeDrop():openDrop()};
+  drop.addEventListener('click',function(e){
+    if(e.target.closest('[data-cmp]')){closeDrop();open();return}
+    var a=e.target.closest('a.it');if(a){var id=a.getAttribute('data-id');if(id){DONE[id]=1;save()}closeDrop();setTimeout(labelMenu,60)}
+  });
+  document.addEventListener('click',function(e){if(drop.classList.contains('on')&&!drop.contains(e.target))closeDrop()});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape')closeDrop();
+    var ty=/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||''))||e.target.isContentEditable;
+    if(!ty&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&(e.key==='m'||e.key==='M')){e.preventDefault();drop.classList.contains('on')?closeDrop():openDrop()}
+  });
+  window.addEventListener('resize',function(){if(drop.classList.contains('on'))placeDrop()});
+  window.addEventListener('scroll',function(){if(drop.classList.contains('on'))placeDrop()},true);
+  window.addEventListener('hashchange',function(){labelMenu();closeDrop()});
+  labelMenu();
+}
 function init(){
+  initNav();
   var seen=false;try{seen=!!localStorage.getItem('dd_cmp_seen')}catch(e){}
   var b=document.createElement('button');b.id='cmpFab';b.type='button';b.setAttribute('aria-label','Open the Compass navigator');
   b.innerHTML=rose+'<span class="t">Compass</span>'+(seen?'':'<span class="nw">Start here</span>');
