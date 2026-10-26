@@ -976,5 +976,64 @@ function init(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
+<!-- BWS RADIO (shared music player) -->
+<style id="rdCss">
+#rdBtn{position:fixed;right:14px;bottom:14px;z-index:8990;display:flex;align-items:center;gap:8px;border:1px solid #d9b650;background:#0d1426;color:#f1d98a;border-radius:999px;height:46px;padding:0 14px;font:700 14px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+#rdBtn.on{background:#d9b650;color:#1a1405}
+#rdBtn .eq{display:inline-flex;gap:2px;align-items:flex-end;height:14px}
+#rdBtn .eq i{display:block;width:3px;background:currentColor;height:4px;border-radius:1px}
+#rdBtn.on .eq i{animation:rdE .9s infinite ease-in-out}
+#rdBtn.on .eq i:nth-child(2){animation-delay:.2s}#rdBtn.on .eq i:nth-child(3){animation-delay:.4s}
+@keyframes rdE{0%,100%{height:3px}50%{height:14px}}
+@media (prefers-reduced-motion:reduce){#rdBtn.on .eq i{animation:none;height:9px}}
+#rdPn{position:fixed;right:14px;bottom:68px;z-index:8991;width:min(300px,calc(100vw - 28px));background:#0d1426;border:1px solid #2a3556;border-radius:14px;padding:14px;color:#e8ecf7;font:14px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none}
+#rdPn.open{display:block}
+#rdPn h4{margin:0 0 4px;font-size:14px;color:#f1d98a}
+#rdPn .sub{font-size:12px;color:#8e99b8;margin-bottom:10px}
+#rdPn select,#rdPn input[type=range]{width:100%;margin:0 0 10px}
+#rdPn select{background:#131c33;color:#e8ecf7;border:1px solid #2a3556;border-radius:8px;padding:10px;font-size:16px}
+#rdPn .row2{display:flex;gap:8px;align-items:center}
+#rdPn button{flex:1;min-height:44px;border-radius:10px;border:1px solid #d9b650;background:#d9b650;color:#1a1405;font-weight:700;font-size:15px;cursor:pointer}
+#rdPn .st{font-size:12px;color:#8e99b8;margin-top:8px;min-height:16px}
+#rdPn .st.err{color:#ff9b9b}
+@media (max-width:700px){#rdBtn .t{display:none}#rdBtn{padding:0 14px}}
+</style>
+<div id="rdPn" role="dialog" aria-label="Music player"><h4>BWS Radio</h4><div class="sub">Free background music. Streams from SomaFM, listener-supported radio.</div>
+<select id="rdSel" aria-label="Station"></select>
+<input type="range" id="rdVol" min="0" max="100" value="40" aria-label="Volume">
+<div class="row2"><button id="rdPlay" type="button">Play</button></div>
+<div class="st" id="rdSt"></div></div>
+<button id="rdBtn" type="button" aria-label="Music"><span class="eq"><i></i><i></i><i></i></span><span class="t">Music</span></button>
+<script id="rdJs">
+(function(){
+var ST=[['groovesalad','Groove Salad: chill beats'],['beatblender','Beat Blender: deep house, downtempo'],['lush','Lush: mellow vocals'],['deepspaceone','Deep Space One: ambient'],['dronezone','Drone Zone: calm focus'],['fluid','Fluid: instrumental hip-hop'],['defcon','DEF CON Radio: hacker beats'],['secretagent','Secret Agent: spy lounge']];
+var HOSTS=['ice1','ice2','ice4','ice6'];
+function g(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function s(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var $=function(i){return document.getElementById(i)};
+var sel=$('rdSel'),vol=$('rdVol'),pl=$('rdPlay'),btn=$('rdBtn'),pn=$('rdPn'),st=$('rdSt'),au=null,hi=0;
+ST.forEach(function(x){var o=document.createElement('option');o.value=x[0];o.textContent=x[1];sel.appendChild(o)});
+var cur=g('bws_radio_st');if(!cur||!ST.some(function(x){return x[0]===cur}))cur=ST[0][0];sel.value=cur;
+var v=parseInt(g('bws_radio_vol'),10);vol.value=isNaN(v)?40:v;
+function msg(t,e){st.textContent=t||'';st.className='st'+(e?' err':'')}
+function ui(on){btn.classList.toggle('on',on);pl.textContent=on?'Pause':'Play'}
+function url(){return 'https://'+HOSTS[hi]+'.somafm.com/'+sel.value+'-128-mp3'}
+function stop(){if(au){au.pause();au.removeAttribute('src');au.load();au=null}ui(false)}
+function start(auto){
+  stop();au=new Audio();au.preload='none';au.volume=vol.value/100;au.src=url();msg('Connecting…');
+  au.addEventListener('playing',function(){ui(true);msg('Playing');s('bws_radio_on','1')});
+  au.addEventListener('waiting',function(){msg('Buffering…')});
+  au.addEventListener('error',function(){if(hi<HOSTS.length-1){hi++;start(auto)}else{hi=0;ui(false);msg('Could not reach the stream. Check your connection or ad-blocker, or try another station.',true)}});
+  var p=au.play();if(p&&p.catch)p.catch(function(e){ui(false);msg(auto?'Tap Play to start the music.':'Could not start. Try again.',!auto&&e&&e.name!=='NotAllowedError')});
+}
+btn.addEventListener('click',function(){pn.classList.toggle('open')});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')pn.classList.remove('open')});
+pl.addEventListener('click',function(){if(au&&!au.paused){stop();s('bws_radio_on','0');msg('Paused')}else{hi=0;start(false)}});
+sel.addEventListener('change',function(){s('bws_radio_st',sel.value);hi=0;if(au&&!au.paused)start(false)});
+vol.addEventListener('input',function(){s('bws_radio_vol',vol.value);if(au)au.volume=vol.value/100});
+if(g('bws_radio_on')==='1'){hi=0;start(true)}
+})();
+</script>
+<!-- /BWS RADIO -->
 </body>
 </html>

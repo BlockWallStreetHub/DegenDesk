@@ -145,7 +145,7 @@ const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').m
 const COINS=[['BTC',95000],['ETH',3400],['SOL',190],['BNB',620],['XRP',2.4],['DOGE',.21],['AVAX',38],['LINK',19],['ADA',.72],['SUI',3.6],['DOT',7.1],['TON',5.9]];
 const BASE={};COINS.forEach(c=>BASE[c[0]]=c[1]);
 const jit={};COINS.forEach(c=>jit[c[0]]=0);
-let shock=0;                         // market move in percent, set by the slider in Liquidation Manager
+let shock=0;                         // market move in percent, set by the slider in Lending Account Manager
 const mult=()=>1+shock/100;
 const price=s=>BASE[s]*(1+jit[s])*mult();
 function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -193,7 +193,7 @@ const TRENDS=[['MOON1','Solana',12000,'+240%'],['PUPX','Base',48000,'+95%'],['DE
 const HEAT=[['BTC',30],['ETH',22],['SOL',12],['BNB',10],['XRP',8],['DOGE',5],['ADA',4],['AVAX',3],['LINK',3],['SUI',2],['DOT',2],['TON',2]];
 const HV={'1H':[.4,-.2,1.1,.3,-.6,.9,-1.4,.2,.1,-.3,2.1,-.8],'24H':[2.1,-1.4,4.8,1.2,-3.6,5.2,-6.1,.7,2.4,-.9,9.5,-4.2],'7D':[6.5,3.2,-8.4,12.1,-2.2,9.9,-14.6,4.4,-6.8,1.1,22.5,-11.9],'30D':[18,-9.5,25,-21,7.4,31,-38,12,-4.5,16,55,-27]};
 
-const NAV=[['Desk',[['ovr','Overview']]],['Risk',[['liq','Liquidation Manager'],['peg','Stablecoin Pegs'],['port','Portfolio Simulator',1]]],['Alerts',[['ind','Indicators']]],['Markets',[['trend','Trending Coins'],['heat','Heat Map'],['sig','Signal Scanner'],['bt','EMA Backtester',1]]],['Intel',[['news','News']]],['Build',[['sim','Accumulation Sim',1]]]];
+const NAV=[['Desk',[['ovr','Overview']]],['Risk',[['liq','Lending Account Manager'],['peg','Stablecoin Pegs'],['port','Portfolio Simulator',1]]],['Alerts',[['ind','Indicators']]],['Markets',[['trend','Trending Coins'],['heat','Heat Map'],['sig','Signal Scanner'],['bt','EMA Backtester',1]]],['Intel',[['news','News']]],['Build',[['sim','Accumulation Sim',1]]]];
 const LOCK={port:['Portfolio Simulator','Project your holdings and your Aave accounts to a future date under price moves you choose, and see your lowest health factor on the way.'],bt:['EMA Backtester','Test buying and selling on the 20, 50, 100 or 200 EMA for any ticker or contract address, 1 hour to monthly, and compare it to just holding.'],sim:['Accumulation Sim','Feed the Machine: model regular deposits into BTC, ETH and USDC on Aave and what 30% borrowing against the stack would look like.']};
 
 /* ================= alerts ================= */
@@ -205,7 +205,7 @@ function pushAlert(kind,msg,quiet){
   drawFeed();
 }
 function drawFeed(){
-  $('fl').innerHTML=alerts.length?alerts.map(a=>`<div class="al"><span class="tag ${a.kind==='Health factor'||a.kind==='Peg'?'high':'med'}">${a.kind}</span>${a.msg}<small>${a.t} &middot; demo alert</small></div>`).join(''):'<p class="note" style="margin-top:12px">No alerts yet. Try the market slider in Liquidation Manager.</p>';
+  $('fl').innerHTML=alerts.length?alerts.map(a=>`<div class="al"><span class="tag ${a.kind==='Health factor'||a.kind==='Peg'?'high':'med'}">${a.kind}</span>${a.msg}<small>${a.t} &middot; demo alert</small></div>`).join(''):'<p class="note" style="margin-top:12px">No alerts yet. Try the market slider in Lending Account Manager.</p>';
   const n=$('feedN');n.hidden=!unread;n.textContent=unread;
 }
 $('feedBtn').onclick=()=>{$('feed').classList.toggle('open');if($('feed').classList.contains('open')){unread=0;drawFeed()}};
@@ -255,7 +255,7 @@ V.ovr=()=>{
      <button data-go="sig">3. Pick a different EMA in the Signal Scanner</button>
      <button data-go="news">4. See how news gets scored</button></div></div>
    <div class="box"><h3>Latest alerts <a data-feed="1">Open feed</a></h3>${al}</div>
-   <div class="box"><h3>Your positions <a data-go="liq">Open Liquidation Manager</a></h3>${pos}</div>
+   <div class="box"><h3>Your positions <a data-go="liq">Open Lending Account Manager</a></h3>${pos}</div>
    <div class="box"><h3>Stablecoin pegs <a data-go="peg">Open</a></h3>${pg}</div>
    <div class="box"><h3>News that may move price <a data-go="news">Open News</a></h3>${nw}</div>
   </div>`;
@@ -264,7 +264,7 @@ V.ovr=()=>{
 V.liq=()=>{
   const rows=ACCTS.map(a=>{const h=hf(a),s=stat(h),buf=h>1?(1-1/h)*100:0;
     return `<tr><td class="t">${a.n}</td><td class="t">${a.net}</td><td class="t">${a.type}</td><td>${a.addr}</td><td>${money(collat(a))}</td><td>${money(a.debt)}</td><td class="${s[1]==='ok'?'up':s[1]==='cau'?'gd':'dn'}"><b>${h.toFixed(2)}</b></td><td>${buf.toFixed(0)}%</td><td class="t"><span class="tag ${s[1]}">${s[0]}</span></td></tr>`}).join('');
-  return `<div class="vh"><h2>Liquidation Manager</h2><p>Watches Aave V3 positions on Ethereum, Arbitrum, Base, Optimism and Avalanche. Read-only: in the real desk you paste a public address, never a seed phrase or private key. These three accounts are made up.</p></div>
+  return `<div class="vh"><h2>Lending Account Manager</h2><p>Watches Aave V3 positions on Ethereum, Arbitrum, Base, Optimism and Avalanche. Read-only: in the real desk you paste a public address, never a seed phrase or private key. These three accounts are made up.</p></div>
   <div class="box" style="margin-bottom:14px"><h3>Market move</h3><p class="note">Drag to make every crypto price in this demo rise or fall. Health factor is collateral value times liquidation threshold, divided by debt. At 1.00 the position can be liquidated.</p>
    <div class="row"><input type="range" id="shk" min="-50" max="30" step="1" value="${shock}"><b class="mono" id="shv">${pct(shock,0)}</b><button class="chip" id="shr">Reset to 0%</button></div></div>
   <div class="tw"><table><thead><tr><th>Name</th><th>Network</th><th>Type</th><th>Address</th><th>Collateral</th><th>Debt</th><th>Health factor</th><th>Can fall</th><th>Status</th></tr></thead><tbody id="lb">${rows}</tbody></table></div>
@@ -415,5 +415,64 @@ function seed(){
 seed();drawTape();go('ovr');
 setInterval(tick,reduce?8000:2500);
 </script>
+<!-- BWS RADIO (shared music player) -->
+<style id="rdCss">
+#rdBtn{position:fixed;right:14px;bottom:14px;z-index:8990;display:flex;align-items:center;gap:8px;border:1px solid #d9b650;background:#0d1426;color:#f1d98a;border-radius:999px;height:46px;padding:0 14px;font:700 14px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+#rdBtn.on{background:#d9b650;color:#1a1405}
+#rdBtn .eq{display:inline-flex;gap:2px;align-items:flex-end;height:14px}
+#rdBtn .eq i{display:block;width:3px;background:currentColor;height:4px;border-radius:1px}
+#rdBtn.on .eq i{animation:rdE .9s infinite ease-in-out}
+#rdBtn.on .eq i:nth-child(2){animation-delay:.2s}#rdBtn.on .eq i:nth-child(3){animation-delay:.4s}
+@keyframes rdE{0%,100%{height:3px}50%{height:14px}}
+@media (prefers-reduced-motion:reduce){#rdBtn.on .eq i{animation:none;height:9px}}
+#rdPn{position:fixed;right:14px;bottom:68px;z-index:8991;width:min(300px,calc(100vw - 28px));background:#0d1426;border:1px solid #2a3556;border-radius:14px;padding:14px;color:#e8ecf7;font:14px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none}
+#rdPn.open{display:block}
+#rdPn h4{margin:0 0 4px;font-size:14px;color:#f1d98a}
+#rdPn .sub{font-size:12px;color:#8e99b8;margin-bottom:10px}
+#rdPn select,#rdPn input[type=range]{width:100%;margin:0 0 10px}
+#rdPn select{background:#131c33;color:#e8ecf7;border:1px solid #2a3556;border-radius:8px;padding:10px;font-size:16px}
+#rdPn .row2{display:flex;gap:8px;align-items:center}
+#rdPn button{flex:1;min-height:44px;border-radius:10px;border:1px solid #d9b650;background:#d9b650;color:#1a1405;font-weight:700;font-size:15px;cursor:pointer}
+#rdPn .st{font-size:12px;color:#8e99b8;margin-top:8px;min-height:16px}
+#rdPn .st.err{color:#ff9b9b}
+@media (max-width:700px){#rdBtn .t{display:none}#rdBtn{padding:0 14px}}
+</style>
+<div id="rdPn" role="dialog" aria-label="Music player"><h4>BWS Radio</h4><div class="sub">Free background music. Streams from SomaFM, listener-supported radio.</div>
+<select id="rdSel" aria-label="Station"></select>
+<input type="range" id="rdVol" min="0" max="100" value="40" aria-label="Volume">
+<div class="row2"><button id="rdPlay" type="button">Play</button></div>
+<div class="st" id="rdSt"></div></div>
+<button id="rdBtn" type="button" aria-label="Music"><span class="eq"><i></i><i></i><i></i></span><span class="t">Music</span></button>
+<script id="rdJs">
+(function(){
+var ST=[['groovesalad','Groove Salad: chill beats'],['beatblender','Beat Blender: deep house, downtempo'],['lush','Lush: mellow vocals'],['deepspaceone','Deep Space One: ambient'],['dronezone','Drone Zone: calm focus'],['fluid','Fluid: instrumental hip-hop'],['defcon','DEF CON Radio: hacker beats'],['secretagent','Secret Agent: spy lounge']];
+var HOSTS=['ice1','ice2','ice4','ice6'];
+function g(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function s(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var $=function(i){return document.getElementById(i)};
+var sel=$('rdSel'),vol=$('rdVol'),pl=$('rdPlay'),btn=$('rdBtn'),pn=$('rdPn'),st=$('rdSt'),au=null,hi=0;
+ST.forEach(function(x){var o=document.createElement('option');o.value=x[0];o.textContent=x[1];sel.appendChild(o)});
+var cur=g('bws_radio_st');if(!cur||!ST.some(function(x){return x[0]===cur}))cur=ST[0][0];sel.value=cur;
+var v=parseInt(g('bws_radio_vol'),10);vol.value=isNaN(v)?40:v;
+function msg(t,e){st.textContent=t||'';st.className='st'+(e?' err':'')}
+function ui(on){btn.classList.toggle('on',on);pl.textContent=on?'Pause':'Play'}
+function url(){return 'https://'+HOSTS[hi]+'.somafm.com/'+sel.value+'-128-mp3'}
+function stop(){if(au){au.pause();au.removeAttribute('src');au.load();au=null}ui(false)}
+function start(auto){
+  stop();au=new Audio();au.preload='none';au.volume=vol.value/100;au.src=url();msg('Connecting…');
+  au.addEventListener('playing',function(){ui(true);msg('Playing');s('bws_radio_on','1')});
+  au.addEventListener('waiting',function(){msg('Buffering…')});
+  au.addEventListener('error',function(){if(hi<HOSTS.length-1){hi++;start(auto)}else{hi=0;ui(false);msg('Could not reach the stream. Check your connection or ad-blocker, or try another station.',true)}});
+  var p=au.play();if(p&&p.catch)p.catch(function(e){ui(false);msg(auto?'Tap Play to start the music.':'Could not start. Try again.',!auto&&e&&e.name!=='NotAllowedError')});
+}
+btn.addEventListener('click',function(){pn.classList.toggle('open')});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')pn.classList.remove('open')});
+pl.addEventListener('click',function(){if(au&&!au.paused){stop();s('bws_radio_on','0');msg('Paused')}else{hi=0;start(false)}});
+sel.addEventListener('change',function(){s('bws_radio_st',sel.value);hi=0;if(au&&!au.paused)start(false)});
+vol.addEventListener('input',function(){s('bws_radio_vol',vol.value);if(au)au.volume=vol.value/100});
+if(g('bws_radio_on')==='1'){hi=0;start(true)}
+})();
+</script>
+<!-- /BWS RADIO -->
 </body>
 </html>
