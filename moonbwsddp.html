@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BWS Moon Desk — Astrology Behind the Charts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04050c;--panel:rgba(7,9,20,.64);--panel2:rgba(22,26,44,.8);--line:rgba(217,180,74,.22);--line2:rgba(160,170,210,.18);--tx:#ece9df;--mut:#9aa0b8;--gold:#d9b44a;--gold2:#f1d27a;--up:#26a69a;--dn:#ef5350;--vio:#b58cff;--serif:'Cinzel','Trajan Pro',Georgia,'Times New Roman',serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+#dome{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block}
+#wrap{position:relative;z-index:1}
+a{color:var(--gold2)}
+header{padding:30px 20px 8px;max-width:1400px;margin:auto;text-align:center}
+.glyphs{font-size:20px;letter-spacing:.45em;color:var(--gold);opacity:.85;margin-bottom:8px;white-space:nowrap;overflow:hidden;font-family:'Segoe UI Symbol','Noto Sans Symbols','Apple Symbols',serif}
+h1{margin:0;font:700 34px/1.1 var(--serif);letter-spacing:.14em;text-transform:uppercase;text-shadow:0 0 28px rgba(217,180,74,.45)}
+h1 b{color:var(--gold2)}
+.sub{color:var(--mut);margin:10px auto 0;max-width:760px}
+.orn{color:var(--gold);letter-spacing:.6em;margin:10px 0 0;opacity:.8}
+#status{font-size:12px;color:var(--mut);margin-top:10px}
+#status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mut);margin-right:6px}
+#status.ok .dot{background:var(--up)} #status.err .dot{background:var(--dn)}
+main{max-width:1400px;margin:auto;padding:0 20px 60px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);box-shadow:0 0 40px rgba(60,70,140,.12),inset 0 0 0 1px rgba(255,255,255,.02)}
+.card h2{margin:0 0 14px;font:700 14px var(--serif);letter-spacing:.18em;text-transform:uppercase;color:var(--gold2)}
+.card h2::before{content:'✦ ';color:var(--gold)}
+.card h3{margin:18px 0 6px;font:500 14px var(--serif);letter-spacing:.08em;color:var(--tx)}
+.controls{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;align-items:end}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+input,select,button{font:inherit;color:var(--tx)}
+input[type=text],input[type=number],input[type=date],select{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;width:100%;outline:none;color-scheme:dark}
+input:focus,select:focus{border-color:var(--gold)}
+input[type=file]{width:100%;font-size:12px}
+.btn{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--gold)}
+.btn.on{border-color:var(--gold);color:var(--gold2);background:rgba(217,180,74,.12)}
+.btn.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:700}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--tx)}
+.chk input{accent-color:var(--gold)}
+.cw{position:relative;touch-action:pan-y;user-select:none}
+canvas.plot{width:100%;display:block;background:rgba(6,8,16,.72);border:1px solid var(--line2);border-radius:10px}
+#c1o{position:absolute;left:0;top:0;pointer-events:none;background:none;border:0}
+#ohlc{font:12.5px ui-monospace,Consolas,monospace;color:var(--mut);margin:0 0 8px;min-height:18px}
+#ohlc b{color:var(--tx)}
+#tip{position:absolute;pointer-events:none;background:rgba(6,8,16,.94);border:1px solid var(--gold);border-radius:8px;padding:7px 10px;font-size:12px;display:none;z-index:5;white-space:nowrap;line-height:1.5}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:8px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.gridw{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:20px;align-items:center}
+@media(max-width:980px){.grid2,.gridw{grid-template-columns:1fr}}
+.tw{overflow:auto;border:1px solid var(--line2);border-radius:10px}
+table{border-collapse:collapse;width:100%}
+th,td{padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line2);font-size:13px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);background:rgba(20,24,42,.9)}
+th.l,td.l{text-align:left}
+.up{color:var(--up)} .dn{color:var(--dn)} .gold{color:var(--gold2)} .mut{color:var(--mut)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:10px 0}
+.kpi{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px}
+.kpi .t{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.kpi .v{font-size:21px;font-weight:700;margin:2px 0}
+.kpi .s{font-size:12px;color:var(--mut)}
+.verdict{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13px;background:var(--panel2)}
+.verdict.y{border-color:#6d5a1c}
+.note{font-size:12px;color:var(--mut);margin-top:8px}
+.phases,.signs{display:grid;gap:6px;margin:8px 0}
+.phases{grid-template-columns:repeat(4,1fr)}
+.signs{grid-template-columns:repeat(6,1fr)}
+@media(max-width:700px){.phases{grid-template-columns:repeat(2,1fr)}.signs{grid-template-columns:repeat(3,1fr)}}
+.phases label,.signs label{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:7px 9px;display:flex;gap:7px;align-items:center;font-size:12.5px;cursor:pointer}
+.phases label:has(input:checked),.signs label:has(input:checked){border-color:var(--gold);background:rgba(217,180,74,.14)}
+.phases input,.signs input{accent-color:var(--gold)}
+.sg{font-family:'Segoe UI Symbol','Noto Sans Symbols','Apple Symbols',serif;font-size:16px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--gold);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+#facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+#facts .kpi .v{font-size:17px}
+footer{max-width:1400px;margin:auto;padding:0 20px 40px;color:var(--mut);font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="dome"></canvas>
+<div id="wrap">
+<header>
+  <div class="glyphs">♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎</div>
+  <h1><b>BWS</b> Moon Desk</h1>
+  <div class="orn">✦ ✧ ✦</div>
+  <div class="sub">Lay the moon, the zodiac and the eclipses behind any chart. Switch between daily, weekly and monthly candles, see how price has behaved under each sign and phase, then back-test the past. A random-calendar test tells you whether a pattern is real or luck.</div>
+  <div id="status"><span class="dot"></span><span id="stxt">Pick an asset</span></div>
+</header>
+<main>
+
+<section class="card">
+  <h2>The sky <span id="skyDate" class="mut" style="font-family:system-ui;letter-spacing:0;text-transform:none;font-size:12px"></span></h2>
+  <div class="gridw">
+    <canvas id="c0" width="320" height="320" style="width:100%;max-width:340px;margin:auto;background:none;border:0"></canvas>
+    <div>
+      <div id="facts"></div>
+      <h3>Coming eclipses</h3>
+      <div class="tw"><table id="eclTab"></table></div>
+      <div class="note">Hover any candle below and the wheel moves to that date. Eclipse types are estimates from orbit maths (the kind of eclipse can be off near the borders between types).</div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Asset &amp; data</h2>
+  <div class="controls">
+    <label class="f">Asset
+      <select id="asset">
+        <option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="SOL">Solana (SOL)</option>
+        <option value="BNB">BNB</option><option value="XRP">XRP</option><option value="DOGE">Dogecoin (DOGE)</option>
+        <option value="AVAX">Avalanche (AVAX)</option><option value="LINK">Chainlink (LINK)</option><option value="ADA">Cardano (ADA)</option>
+        <option value="custom">Other ticker…</option>
+      </select>
+    </label>
+    <label class="f" id="custWrap" style="display:none">Ticker (e.g. PEPE)<input type="text" id="cust" placeholder="PEPE"></label>
+    <div class="f">Or upload any price history (CSV)<input type="file" id="csv" accept=".csv,.txt" class="btn"></div>
+    <div class="row"><button class="btn gold" id="go">Load</button></div>
+  </div>
+  <div class="note">Crypto loads from Binance's public data feed (CryptoCompare as backup). For stocks or gold, download a CSV (Date, Open, High, Low, Close) from Yahoo Finance or TradingView and upload it.</div>
+</section>
+
+<section class="card">
+  <h2>Chart with the sky behind it</h2>
+  <div class="row" style="margin-bottom:10px">
+    <button class="btn tf on" data-tf="D">1D</button><button class="btn tf" data-tf="W">1W</button><button class="btn tf" data-tf="M">1M</button>
+    <span style="width:10px"></span>
+    <select id="mode" style="width:auto"><option value="candle">Candles</option><option value="line">Line</option></select>
+    <span style="width:10px"></span>
+    <button class="btn rg" data-r="90">3M</button><button class="btn rg" data-r="180">6M</button><button class="btn rg" data-r="365">1Y</button><button class="btn rg" data-r="730">2Y</button><button class="btn rg" data-r="1825">5Y</button><button class="btn rg" data-r="0">All</button>
+    <button class="btn" id="zin">＋</button><button class="btn" id="zout">－</button>
+  </div>
+  <div class="row" style="margin-bottom:10px;gap:16px">
+    <label class="chk"><input type="checkbox" id="lGlow" checked> Moon glow</label>
+    <label class="chk"><input type="checkbox" id="lMark" checked> New / full moons</label>
+    <label class="chk"><input type="checkbox" id="lEcl" checked> Eclipses</label>
+    <label class="chk"><input type="checkbox" id="lRetro" checked> Mercury retrograde</label>
+    <label class="chk"><input type="checkbox" id="lZod" checked> Zodiac band</label>
+    <label class="chk"><input type="checkbox" id="lLog" checked> Log price</label>
+  </div>
+  <div id="ohlc"></div>
+  <div class="cw" id="cw1"><canvas id="c1" class="plot" style="height:460px"></canvas><canvas id="c1o"></canvas></div>
+  <div class="legend">
+    <span><i style="background:rgba(241,210,122,.5)"></i>Brighter = nearer full moon</span>
+    <span><i style="background:#f6f1dc;border:1px solid #d9b44a;border-radius:50%"></i>Full moon</span>
+    <span><i style="background:#05060c;border:1px solid #9aa0b8;border-radius:50%"></i>New moon</span>
+    <span><i style="background:#000;border:2px solid #ff9f43;border-radius:50%"></i>Solar eclipse</span>
+    <span><i style="background:#5a1b1b;border:2px solid #ff6b6b;border-radius:50%"></i>Lunar eclipse</span>
+    <span><i style="background:rgba(181,140,255,.6)"></i>Mercury retrograde</span>
+    <span class="mut">Zodiac band: moon's sign when zoomed in, sun's sign when zoomed out. Scroll to zoom, drag to pan, double-click to reset.</span>
+  </div>
+</section>
+
+<section class="card">
+  <h2>How price behaved under each phase</h2>
+  <div class="grid2">
+    <div>
+      <canvas id="c2" class="plot" style="height:280px"></canvas>
+      <div class="note">Average daily return on days in each phase (daily data). The table adds the number of days and a t-stat (about ±2 or more means that bucket alone is unlikely to be pure chance).</div>
+    </div>
+    <div class="tw"><table id="ptab"></table></div>
+  </div>
+
+  <h3>How price behaved with the Moon in each sign</h3>
+  <div class="grid2">
+    <div><canvas id="c6" class="plot" style="height:280px"></canvas></div>
+    <div class="tw"><table id="stab"></table></div>
+  </div>
+
+  <h3>Head-to-head comparisons and the random-calendar test</h3>
+  <div class="tw"><table id="cmp"></table></div>
+  <div id="cmpV"></div>
+  <div class="note">The random-calendar test re-runs each comparison on the same prices with the moon (and signs) slid forward by random amounts, or the Mercury / eclipse calendar shifted. If the real calendar barely beats the fake ones, the pattern is what luck produces. With this many tests, a few will look good by accident.</div>
+
+  <h3>Around the new moon and full moon (average path, ±10 days)</h3>
+  <canvas id="c3" class="plot" style="height:260px"></canvas>
+  <div class="legend"><span><i style="background:#9aa0b8"></i>Around NEW moon</span><span><i style="background:#f1d27a"></i>Around FULL moon</span><span class="mut">Change vs the day-0 close. Bands = ±1 standard error.</span></div>
+  <div id="evN" class="note"></div>
+
+  <h3>Around eclipses (average path, ±10 days)</h3>
+  <canvas id="c7" class="plot" style="height:260px"></canvas>
+  <div class="legend"><span><i style="background:#ff9f43"></i>Solar eclipses</span><span><i style="background:#ff6b6b"></i>Lunar eclipses</span></div>
+  <div id="evE" class="note"></div>
+</section>
+
+<section class="card">
+  <h2>Past simulator — back-test a moon strategy</h2>
+  <div class="controls">
+    <label class="f">Starting money ($)<input type="number" id="cap" value="10000" min="1"></label>
+    <label class="f">From<input type="date" id="dFrom"></label>
+    <label class="f">To<input type="date" id="dTo"></label>
+    <label class="f">Fee per buy or sell (%)<input type="number" id="fee" value="0.1" step="0.01" min="0"></label>
+  </div>
+  <h3>Be invested only during these moon phases</h3>
+  <div class="phases" id="phSel"></div>
+  <div class="row"><span class="mut" style="font-size:12px">Phase presets:</span>
+    <button class="btn pre" data-p="0,1,2,3">Waxing (new → full)</button><button class="btn pre" data-p="4,5,6,7">Waning (full → new)</button>
+    <button class="btn pre" data-p="0">New only</button><button class="btn pre" data-p="4">Full only</button><button class="btn pre" data-p="0,1,2,3,4,5,6,7">All phases</button></div>
+  <h3>…and only while the Moon is in these signs</h3>
+  <div class="signs" id="sgSel"></div>
+  <div class="row"><span class="mut" style="font-size:12px">Sign presets:</span>
+    <button class="btn sp" data-s="0,4,8">🔥 Fire</button><button class="btn sp" data-s="1,5,9">🌍 Earth</button><button class="btn sp" data-s="2,6,10">💨 Air</button><button class="btn sp" data-s="3,7,11">💧 Water</button><button class="btn sp" data-s="0,1,2,3,4,5,6,7,8,9,10,11">All signs</button></div>
+  <div class="row" style="margin:12px 0;gap:18px">
+    <label class="chk"><input type="checkbox" id="rOff"> Go to cash during Mercury retrograde</label>
+    <label class="chk"><input type="checkbox" id="eOff"> Go to cash within 2 days of an eclipse</label>
+    <button class="btn gold" id="bt">Run back-test</button>
+  </div>
+  <div id="btOut"></div>
+  <canvas id="c4" class="plot" style="height:320px;margin-top:10px"></canvas>
+  <div class="legend"><span><i style="background:#d9b44a"></i>Your moon strategy</span><span><i style="background:#9aa0b8"></i>Buy &amp; hold</span></div>
+  <canvas id="c5" class="plot" style="height:200px"></canvas>
+  <div class="note" id="c5n"></div>
+</section>
+</main>
+<footer>Entertainment and research tool from Block Wall Street. Not financial advice. Moon, sun and Mercury positions come from simplified orbit formulas (moon phase and sign accurate to well under a day; Mercury stations within about a day). Eclipse dates match published ones for 2024–2026 in testing, but the eclipse kind is approximate. Past results never guarantee future results. The line "millionaires don't use astrologers, billionaires do" is widely attributed to J.P. Morgan but I can't confirm he said it. Treat it as lore, not evidence.</footer>
+</div>
+
+<!-- ====================== astronomy library ====================== -->
+<script>
+(function(){
+var RAD=Math.PI/180,DAY=86400000,SYN=29.530588853,EPOCH=2451550.1;
+function jd(ms){return ms/86400000+2440587.5}
+function w360(x){x%=360;return x<0?x+360:x}
+function w180(x){x=w360(x);return x>180?x-360:x}
+function kepler(Mdeg,e){var M=Mdeg*RAD,E=M+e*Math.sin(M)*(1+e*Math.cos(M));for(var k=0;k<8;k++)E=E-(E-e*Math.sin(E)-M)/(1-e*Math.cos(E));return E}
+function sunLon(ms){var d=jd(ms)-2451543.5,ws=282.9404+4.70935e-5*d,es=0.016709-1.151e-9*d,Ms=(356.0470+0.9856002585*d)%360,Es=kepler(Ms,es),xv=Math.cos(Es)-es,yv=Math.sqrt(1-es*es)*Math.sin(Es);return w360(Math.atan2(yv,xv)/RAD+ws)}
+function moonPos(ms){
+  var d=jd(ms)-2451543.5,N=125.1228-0.0529538083*d,w=318.0634+0.1643573223*d,a=60.2666,e=0.0549,M=115.3654+13.0649929509*d,ir=5.1454*RAD;
+  var E=kepler(w360(M),e),xv=a*(Math.cos(E)-e),yv=a*Math.sqrt(1-e*e)*Math.sin(E),v=Math.atan2(yv,xv),r=Math.hypot(xv,yv),u=v+w*RAD,Nr=N*RAD;
+  var xh=r*(Math.cos(Nr)*Math.cos(u)-Math.sin(Nr)*Math.sin(u)*Math.cos(ir)),yh=r*(Math.sin(Nr)*Math.cos(u)+Math.cos(Nr)*Math.sin(u)*Math.cos(ir)),zh=r*Math.sin(u)*Math.sin(ir);
+  var lon=Math.atan2(yh,xh)/RAD,lat=Math.atan2(zh,Math.hypot(xh,yh))/RAD;
+  var Ms=356.0470+0.9856002585*d,ws=282.9404+4.70935e-5*d,Lm=M+w+N,Ls=Ms+ws,Dd=Lm-Ls,F=Lm-N,s=function(x){return Math.sin(x*RAD)};
+  lon+=-1.274*s(M-2*Dd)+0.658*s(2*Dd)-0.186*s(Ms)-0.059*s(2*M-2*Dd)-0.057*s(M-2*Dd+Ms)+0.053*s(M+2*Dd)+0.046*s(2*Dd-Ms)+0.041*s(M-Ms)-0.035*s(Dd)-0.031*s(M+Ms)-0.015*s(2*F-2*Dd)+0.010*s(M-4*Dd);
+  lat+=-0.173*s(F-2*Dd)-0.055*s(M-F-2*Dd)-0.046*s(M+F-2*Dd)+0.033*s(F+2*Dd)+0.017*s(2*M+F);
+  return [w360(lon),lat];
+}
+function mercLon(ms){
+  var d=jd(ms)-2451543.5,ws=282.9404+4.70935e-5*d,es=0.016709-1.151e-9*d,Ms=(356.0470+0.9856002585*d)%360,Es=kepler(Ms,es),xv=Math.cos(Es)-es,yv=Math.sqrt(1-es*es)*Math.sin(Es),vs=Math.atan2(yv,xv),rs=Math.hypot(xv,yv),ls=vs+ws*RAD,xs=rs*Math.cos(ls),ys=rs*Math.sin(ls);
+  var N=(48.3313+3.24587e-5*d)*RAD,inc=(7.0047+5.00e-8*d)*RAD,w=(29.1241+1.01444e-5*d)*RAD,a=0.387098,e=0.205635+5.59e-10*d,M=(168.6562+4.0923344368*d)%360;
+  var E=kepler(w360(M),e),X=a*(Math.cos(E)-e),Y=a*Math.sqrt(1-e*e)*Math.sin(E),v=Math.atan2(Y,X),r=Math.hypot(X,Y),u=v+w;
+  var xh=r*(Math.cos(N)*Math.cos(u)-Math.sin(N)*Math.sin(u)*Math.cos(inc)),yh=r*(Math.sin(N)*Math.cos(u)+Math.cos(N)*Math.sin(u)*Math.cos(inc));
+  return w360(Math.atan2(yh+ys,xh+xs)/RAD);
+}
+function isRetro(ms){var dl=w180(mercLon(ms+DAY)-mercLon(ms-DAY));return dl<0}
+function elong(ms){return w360(moonPos(ms)[0]-sunLon(ms))}
+function syz(k){var t=(EPOCH+k*SYN/2-2440587.5)*DAY,tg=(k%2===0)?0:180;for(var i=0;i<5;i++){var e=w180(elong(t)-tg);t-=e/12.19*DAY}return t}
+function eclEq(lonDeg,latDeg){ /* ecliptic -> RA(hours), Dec(deg) */
+  var l=lonDeg*RAD,b=latDeg*RAD,ep=23.4393*RAD,x=Math.cos(b)*Math.cos(l),y=Math.cos(b)*Math.sin(l)*Math.cos(ep)-Math.sin(b)*Math.sin(ep),z=Math.cos(b)*Math.sin(l)*Math.sin(ep)+Math.sin(b)*Math.cos(ep);
+  var ra=Math.atan2(y,x)/RAD;if(ra<0)ra+=360;return [ra/15,Math.asin(z)/RAD]}
+window.AS={RAD:RAD,DAY:DAY,SYN:SYN,jd:jd,w360:w360,w180:w180,sunLon:sunLon,moonPos:moonPos,mercLon:mercLon,isRetro:isRetro,elong:elong,syz:syz,eclEq:eclEq,EPOCH:EPOCH};
+})();
+</script>
+
+<!-- ====================== planetarium dome ====================== -->
+<script>
+(function(){
+var A=window.AS,RAD=A.RAD,cv=document.getElementById('dome'),x=cv.getContext('2d'),W=0,H=0,DPR=Math.min(1.5,window.devicePixelRatio||1);
+/* [name,[ [raHours,decDeg], ...], [[a,b]...]] */
+var CON=[
+['Orion',[[5.92,7.41],[5.42,6.35],[5.59,9.93],[5.53,-0.30],[5.60,-1.20],[5.68,-1.94],[5.80,-9.67],[5.24,-8.20]],[[2,0],[2,1],[0,5],[1,3],[3,4],[4,5],[5,6],[3,7]]],
+['Ursa Major',[[11.06,61.75],[11.03,56.38],[11.90,53.69],[12.26,57.03],[12.90,55.96],[13.40,54.93],[13.79,49.31]],[[0,1],[1,2],[2,3],[3,0],[3,4],[4,5],[5,6]]],
+['Cassiopeia',[[0.15,59.15],[0.68,56.54],[0.95,60.72],[1.43,60.24],[1.91,63.67]],[[0,1],[1,2],[2,3],[3,4]]],
+['Ursa Minor',[[2.53,89.26],[17.54,86.59],[16.77,82.04],[15.73,77.79],[16.29,75.76],[15.35,71.83],[14.84,74.16]],[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]]],
+['Cygnus',[[20.69,45.28],[20.37,40.26],[19.51,27.96],[20.77,33.97],[19.75,45.13]],[[0,1],[1,2],[4,1],[1,3]]],
+['Lyra',[[18.62,38.78],[18.74,37.60],[18.91,36.90],[18.98,32.69],[18.83,33.36]],[[0,1],[1,2],[2,3],[3,4],[4,1]]],
+['Aquila',[[19.77,10.61],[19.85,8.87],[19.92,6.41]],[[0,1],[1,2]]],
+['Pegasus',[[23.08,15.21],[23.06,28.08],[0.14,29.09],[0.22,15.18]],[[0,1],[1,2],[2,3],[3,0]]],
+['Canis Major',[[6.75,-16.72],[6.38,-17.96],[7.14,-26.39],[6.98,-28.97],[7.40,-29.30]],[[1,0],[0,2],[2,3],[2,4]]],
+['Aries',[[1.89,19.29],[1.91,20.81],[2.12,23.46],[2.83,27.26]],[[0,1],[1,2],[2,3]]],
+['Taurus',[[4.60,16.51],[5.44,28.61],[5.63,21.14],[4.33,15.63],[4.38,17.54],[4.48,19.18],[4.48,15.87],[3.79,24.11]],[[3,4],[4,5],[5,1],[3,6],[6,0],[0,2]]],
+['Gemini',[[7.58,31.89],[7.76,28.03],[6.63,16.40],[6.38,22.51],[6.73,25.13],[7.34,21.98],[7.07,20.57]],[[0,4],[4,3],[1,5],[5,6],[6,2],[0,1]]],
+['Cancer',[[8.97,11.86],[8.28,9.19],[8.74,18.15],[8.72,21.47],[8.78,28.76]],[[1,2],[0,2],[2,3],[3,4]]],
+['Leo',[[10.14,11.97],[10.12,16.76],[10.33,19.84],[10.28,23.77],[9.88,26.01],[9.76,23.77],[11.24,15.43],[11.82,14.57],[11.24,20.52]],[[0,1],[1,2],[2,3],[3,4],[4,5],[0,6],[6,7],[7,8],[8,2]]],
+['Virgo',[[13.42,-11.16],[12.69,-1.45],[13.04,10.96],[11.84,1.76],[13.58,-0.60],[12.93,3.40]],[[3,1],[1,4],[4,0],[1,5],[5,2]]],
+['Libra',[[14.85,-16.04],[15.28,-9.38],[15.07,-25.28],[15.59,-14.79]],[[2,0],[0,1],[1,3],[3,0]]],
+['Scorpius',[[16.09,-19.81],[16.00,-22.62],[15.98,-26.11],[16.35,-25.59],[16.49,-26.43],[16.60,-28.22],[16.84,-34.29],[16.86,-38.05],[16.91,-42.36],[17.20,-43.24],[17.62,-43.00],[17.71,-39.03],[17.56,-37.10],[17.51,-37.30]],[[0,1],[1,2],[1,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13]]],
+['Sagittarius',[[18.40,-34.38],[18.35,-29.83],[18.47,-25.42],[18.92,-26.30],[19.04,-29.88],[18.76,-26.99],[18.10,-30.42],[19.12,-27.67]],[[6,1],[1,2],[2,5],[5,3],[3,7],[7,4],[4,0],[0,1],[0,6]]],
+['Capricornus',[[20.30,-12.54],[20.35,-14.78],[20.77,-25.27],[20.46,-26.92],[21.44,-22.41],[21.78,-16.13],[21.67,-16.66],[21.10,-17.23]],[[0,1],[1,3],[3,4],[4,5],[5,6],[6,7],[7,0]]],
+['Aquarius',[[21.53,-5.57],[22.10,-0.32],[22.10,-1.39],[22.48,-0.02],[22.59,-0.12],[22.91,-15.82],[22.28,-7.58],[20.79,-9.50]],[[7,0],[0,1],[1,3],[3,4],[1,2],[2,6],[6,5]]],
+['Pisces',[[2.03,2.76],[1.76,9.16],[1.52,15.35],[23.29,3.28],[23.47,6.38],[23.67,5.63],[23.70,1.78],[23.45,1.26],[23.06,3.82]],[[8,3],[3,4],[4,5],[5,6],[6,7],[7,3],[0,1],[1,2],[0,6]]]
+];
+var BRIGHT=[[6.75,-16.72,3.4,'#dff0ff'],[18.62,38.78,3.2,'#e4eeff'],[14.26,19.18,3.2,'#ffd9a0'],[5.28,46.0,3,'#fff1c8'],[5.24,-8.20,3,'#cfe3ff'],[5.92,7.41,3.2,'#ffb27a'],
+ [4.60,16.51,3,'#ffc27a'],[16.49,-26.43,3.2,'#ff8a70'],[19.85,8.87,2.9,'#f2f6ff'],[20.69,45.28,2.9,'#e4eeff'],[10.14,11.97,2.8,'#d6e6ff'],[13.42,-11.16,2.8,'#cfe0ff'],[2.53,89.26,2.6,'#ffffff'],[7.65,5.22,2.8,'#fff4d9'],[22.96,-29.62,2.6,'#ffffff'],[7.76,28.03,2.6,'#ffd9a0']];
+var seed=12345;function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+var FIELD=[],MW=[];
+for(var i=0;i<650;i++){var u=rnd()*2-1;FIELD.push({ra:rnd()*24,dec:Math.asin(u)/RAD,s:.35+Math.pow(rnd(),5)*1.5,p:rnd()*6.28,v:.6+rnd()*2.4,c:rnd()<.12?'#ffe2b8':(rnd()<.2?'#bcd4ff':'#ffffff')})}
+/* milky way (galactic plane) */
+(function(){
+  var P=[Math.cos(27.13*RAD)*Math.cos(192.86*RAD),Math.cos(27.13*RAD)*Math.sin(192.86*RAD),Math.sin(27.13*RAD)];
+  var G=[Math.cos(-28.94*RAD)*Math.cos(266.4*RAD),Math.cos(-28.94*RAD)*Math.sin(266.4*RAD),Math.sin(-28.94*RAD)];
+  var Q=[P[1]*G[2]-P[2]*G[1],P[2]*G[0]-P[0]*G[2],P[0]*G[1]-P[1]*G[0]];
+  for(var i=0;i<1700;i++){
+    var l=rnd()*6.283,g=(rnd()+rnd()+rnd()-1.5)*14*RAD*(1+.6*Math.cos(l)),cb=Math.cos(g),sb=Math.sin(g);
+    var v=[cb*(Math.cos(l)*G[0]+Math.sin(l)*Q[0])+sb*P[0],cb*(Math.cos(l)*G[1]+Math.sin(l)*Q[1])+sb*P[1],cb*(Math.cos(l)*G[2]+Math.sin(l)*Q[2])+sb*P[2]];
+    var ra=Math.atan2(v[1],v[0])/RAD;if(ra<0)ra+=360;
+    MW.push({ra:ra/15,dec:Math.asin(v[2])/RAD,a:.05+rnd()*.22,r:.5+rnd()*1.4})}
+})();
+function hexA(h,a){var v=h.replace('#','');if(v.length===3)v=v.replace(/./g,function(c){return c+c});return 'rgba('+parseInt(v.slice(0,2),16)+','+parseInt(v.slice(2,4),16)+','+parseInt(v.slice(4,6),16)+','+a+')'}
+function resize(){W=window.innerWidth;H=window.innerHeight;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);x.setTransform(DPR,0,0,DPR,0,0)}
+var CX,CY,K,ROT;
+function pr(ra,dec){var rho=90-dec;if(rho>138)return null;var a=ra*15*RAD+ROT;return[CX-K*rho*Math.sin(a),CY-K*rho*Math.cos(a)]}
+var sky={t:0,sun:0,moon:[0,0],mer:0,el:0};
+function updSky(){var t=Date.now();sky.t=t;sky.sun=A.sunLon(t);sky.moon=A.moonPos(t);sky.mer=A.mercLon(t);sky.el=A.w360(sky.moon[0]-sky.sun)}
+function drawMoon(px,py,r,el){
+  var g=x.createRadialGradient(px,py,r*.5,px,py,r*3.2);g.addColorStop(0,'rgba(255,240,200,.35)');g.addColorStop(1,'rgba(255,240,200,0)');x.fillStyle=g;x.beginPath();x.arc(px,py,r*3.2,0,7);x.fill();
+  x.fillStyle='#1b1e2c';x.beginPath();x.arc(px,py,r,0,7);x.fill();
+  var ph=el*RAD,k=Math.cos(ph);x.save();x.beginPath();x.arc(px,py,r,0,7);x.clip();x.fillStyle='#f5efd8';x.beginPath();
+  var waxing=el<180;x.arc(px,py,r,-Math.PI/2,Math.PI/2,!waxing);x.ellipse(px,py,Math.abs(k)*r,r,0,Math.PI/2,-Math.PI/2,waxing?(k>0):(k<0));x.fill();x.restore();
+  x.strokeStyle='rgba(255,240,200,.5)';x.lineWidth=1;x.beginPath();x.arc(px,py,r,0,7);x.stroke();
+}
+function frame(tm){
+  var t=tm/1000;ROT=reduce?0.6:(t*0.0045+0.6);CX=W*.5;CY=H*.46;K=Math.hypot(W,H)*.5/128;
+  var bg=x.createRadialGradient(CX,CY,0,CX,CY,Math.hypot(W,H)*.62);bg.addColorStop(0,'#0b1230');bg.addColorStop(.55,'#060a1c');bg.addColorStop(1,'#02030a');x.fillStyle=bg;x.fillRect(0,0,W,H);
+  /* milky way */
+  x.fillStyle='#b9c8ff';for(var i=0;i<MW.length;i++){var m=MW[i],p=pr(m.ra,m.dec);if(!p)continue;x.globalAlpha=m.a;x.fillRect(p[0],p[1],m.r,m.r)}
+  x.globalAlpha=1;
+  /* altitude rings */
+  x.strokeStyle='rgba(120,140,220,.07)';x.lineWidth=1;for(var rr=30;rr<=120;rr+=30){x.beginPath();x.arc(CX,CY,K*rr,0,7);x.stroke()}
+  /* field stars */
+  for(var j=0;j<FIELD.length;j++){var s=FIELD[j],q=pr(s.ra,s.dec);if(!q)continue;var tw=reduce?.85:.7+.3*Math.sin(t*s.v+s.p);x.globalAlpha=Math.min(1,tw*(.35+s.s*.4));x.fillStyle=s.c;x.beginPath();x.arc(q[0],q[1],s.s,0,7);x.fill()}
+  x.globalAlpha=1;
+  /* ecliptic */
+  x.strokeStyle='rgba(217,180,74,.35)';x.setLineDash([6,6]);x.lineWidth=1.2;x.beginPath();var first=true;
+  for(var l=0;l<=360;l+=3){var e=A.eclEq(l,0),p2=pr(e[0],e[1]);if(!p2){first=true;continue}if(first){x.moveTo(p2[0],p2[1]);first=false}else x.lineTo(p2[0],p2[1])}x.stroke();x.setLineDash([]);
+  x.font='15px "Segoe UI Symbol","Noto Sans Symbols","Apple Symbols",serif';x.textAlign='center';x.fillStyle='rgba(241,210,122,.7)';
+  var GL=['♈︎','♉︎','♊︎','♋︎','♌︎','♍︎','♎︎','♏︎','♐︎','♑︎','♒︎','♓︎'];
+  for(var sgn=0;sgn<12;sgn++){var e2=A.eclEq(sgn*30+15,0),p3=pr(e2[0],e2[1]);if(p3){var dx=p3[0]-CX,dy=p3[1]-CY,d=Math.hypot(dx,dy)||1;x.fillText(GL[sgn],p3[0]+dx/d*18,p3[1]+dy/d*18+5)}}
+  /* constellations */
+  x.lineWidth=1;x.font='italic 11px Georgia,serif';
+  for(var c=0;c<CON.length;c++){
+    var C=CON[c],pts=C[1].map(function(s){return pr(s[0],s[1])});
+    x.strokeStyle='rgba(150,175,255,.30)';x.beginPath();
+    C[2].forEach(function(ln){var a=pts[ln[0]],b=pts[ln[1]];if(a&&b){x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1])}});x.stroke();
+    var sx=0,sy=0,n=0;pts.forEach(function(p){if(p){x.fillStyle='rgba(235,242,255,.95)';x.beginPath();x.arc(p[0],p[1],1.9,0,7);x.fill();sx+=p[0];sy+=p[1];n++}});
+    if(n){x.fillStyle='rgba(160,180,240,.42)';x.fillText(C[0],sx/n,sy/n+Math.max(26,K*6))}
+  }
+  /* bright named stars */
+  BRIGHT.forEach(function(b){var p=pr(b[0],b[1]);if(!p)return;var g=x.createRadialGradient(p[0],p[1],0,p[0],p[1],b[2]*5);g.addColorStop(0,b[3]);g.addColorStop(.25,hexA(b[3],.4));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.beginPath();x.arc(p[0],p[1],b[2]*5,0,7);x.fill();x.fillStyle=b[3];x.beginPath();x.arc(p[0],p[1],b[2]*.55,0,7);x.fill()});
+  /* Sun, Moon, Mercury today */
+  var se=A.eclEq(sky.sun,0),sp=pr(se[0],se[1]);
+  if(sp){var sg=x.createRadialGradient(sp[0],sp[1],2,sp[0],sp[1],34);sg.addColorStop(0,'rgba(255,214,120,.95)');sg.addColorStop(.35,'rgba(255,170,60,.35)');sg.addColorStop(1,'rgba(255,170,60,0)');x.fillStyle=sg;x.beginPath();x.arc(sp[0],sp[1],34,0,7);x.fill();x.fillStyle='#fff3c8';x.beginPath();x.arc(sp[0],sp[1],5,0,7);x.fill()}
+  var me=A.eclEq(sky.mer,0),mp=pr(me[0],me[1]);if(mp){x.fillStyle='#d9c2ff';x.beginPath();x.arc(mp[0],mp[1],3,0,7);x.fill();x.fillStyle='rgba(217,194,255,.7)';x.font='13px "Segoe UI Symbol",serif';x.fillText('☿︎',mp[0]+10,mp[1]-6)}
+  var mo=A.eclEq(sky.moon[0],sky.moon[1]),mq=pr(mo[0],mo[1]);if(mq)drawMoon(mq[0],mq[1],11,sky.el);
+  /* dome vignette */
+  var vg=x.createRadialGradient(CX,CY,Math.min(W,H)*.35,CX,CY,Math.hypot(W,H)*.62);vg.addColorStop(0,'rgba(2,3,10,0)');vg.addColorStop(1,'rgba(2,3,10,.82)');x.fillStyle=vg;x.fillRect(0,0,W,H);
+}
+var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches,last=0;
+function loop(tm){if(!document.hidden&&tm-last>45){last=tm;try{frame(tm)}catch(e){}}if(!reduce)requestAnimationFrame(loop)}
+resize();updSky();try{frame(0)}catch(e){}if(!reduce)requestAnimationFrame(loop);
+setInterval(updSky,60000);
+window.addEventListener('resize',function(){resize();try{frame(performance.now())}catch(e){}});
+})();
+</script>
+
+<!-- ====================== app ====================== -->
+<script>
+(function(){
+'use strict';
+var A=window.AS,$=function(id){return document.getElementById(id)},DAY=A.DAY,SYN=A.SYN,w360=A.w360;
+var SIGNS=[['Aries','♈︎'],['Taurus','♉︎'],['Gemini','♊︎'],['Cancer','♋︎'],['Leo','♌︎'],['Virgo','♍︎'],['Libra','♎︎'],['Scorpio','♏︎'],['Sagittarius','♐︎'],['Capricorn','♑︎'],['Aquarius','♒︎'],['Pisces','♓︎']];
+var ELN=['Fire','Earth','Air','Water'],ELCOL=['#ff8a4c','#8bc34a','#5aa9ff','#b58cff'];
+var PH=[{n:'New Moon',e:'🌑',s:'New'},{n:'Waxing Crescent',e:'🌒',s:'Wax Cres'},{n:'First Quarter',e:'🌓',s:'1st Qtr'},{n:'Waxing Gibbous',e:'🌔',s:'Wax Gib'},
+        {n:'Full Moon',e:'🌕',s:'Full'},{n:'Waning Gibbous',e:'🌖',s:'Wan Gib'},{n:'Last Quarter',e:'🌗',s:'Last Qtr'},{n:'Waning Crescent',e:'🌘',s:'Wan Cres'}];
+var SG='Segoe UI Symbol,Noto Sans Symbols,Apple Symbols,serif';
+function phaseIdx(age){return Math.floor(((age+SYN/16)%SYN)/(SYN/8))%8}
+function illumE(el){return(1-Math.cos(el*Math.PI/180))/2}
+var D={name:'',t:[],o:[],h:[],l:[],c:[],r:[],age:[],ph:[],retro:[],mlon:[],ms:[],ss:[],ecl:[],hasOHLC:true},BARS={D:[],W:[],M:[]};
+var V={tf:'D',start:0,count:180,mode:'candle'};
+
+/* ---------- formatting ---------- */
+function fd(ms){return new Date(ms).toISOString().slice(0,10)}
+function usd(n){if(n==null||isNaN(n))return '—';var a=Math.abs(n),s=n<0?'-':'';if(a>=1e9)return s+'$'+(a/1e9).toFixed(2)+'B';if(a>=1e6)return s+'$'+(a/1e6).toFixed(2)+'M';if(a>=1e4)return s+'$'+(a/1e3).toFixed(1)+'K';if(a>=100)return s+'$'+a.toFixed(0);return s+'$'+a.toFixed(a<1?4:2)}
+function px(n){if(n==null)return '—';var a=Math.abs(n);return a>=1000?n.toLocaleString('en-US',{maximumFractionDigits:0}):a>=1?n.toFixed(2):n.toPrecision(4)}
+function pc(n,d){return (n>=0?'+':'')+n.toFixed(d==null?2:d)+'%'}
+function cls(n){return n>=0?'up':'dn'}
+function status(c,t){$('status').className=c;$('stxt').innerHTML=t}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function deg(l){var d=l%30;return Math.floor(d)+'°'+('0'+Math.floor((d%1)*60)).slice(-2)+'′'}
+function signOf(l){return Math.floor(w360(l)/30)}
+
+/* ---------- eclipse + new/full catalogue ---------- */
+var NF=[],ECL=[];
+(function(){
+  var k0=Math.floor(((Date.UTC(2009,0,1)/DAY+2440587.5)-A.EPOCH)/SYN*2),k1=Math.floor(((Date.UTC(2031,0,1)/DAY+2440587.5)-A.EPOCH)/SYN*2);
+  for(var k=k0;k<=k1;k++){
+    var t=A.syz(k),full=(k%2!==0);NF.push({t:t,full:full});
+    var b=Math.abs(A.moonPos(t)[1]);
+    if(!full){if(b<1.55)ECL.push({t:t,type:'solar',kind:b<0.9?'Total / annular':'Partial',b:b})}
+    else{if(b<1.55)ECL.push({t:t,type:'lunar',kind:b<0.5?'Total':'Partial / penumbral',b:b})}
+  }
+})();
+
+/* ---------- data loading ---------- */
+function getJ(u){return fetch(u).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})}
+function binance(sym){
+  var out=[],end=Date.now();
+  function step(n){return getJ('https://data-api.binance.vision/api/v3/klines?symbol='+sym+'USDT&interval=1d&limit=1000&endTime='+end).then(function(a){
+    if(!Array.isArray(a)||!a.length){if(!out.length)throw new Error('no data');return out}
+    out=a.map(function(k){return{t:k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}}).concat(out);end=a[0][0]-1;
+    if(a.length<1000||n>=4)return out;return step(n+1)})}
+  return step(0);
+}
+function cryptocompare(sym){
+  var out=[],to=Math.floor(Date.now()/1000);
+  function step(n){return getJ('https://min-api.cryptocompare.com/data/v2/histoday?fsym='+sym+'&tsym=USD&limit=2000&toTs='+to).then(function(j){
+    var a=(j.Data&&j.Data.Data)||[];a=a.filter(function(q){return q.close>0});
+    if(!a.length){if(!out.length)throw new Error('no data');return out}
+    out=a.map(function(q){return{t:q.time*1000,o:q.open,h:q.high,l:q.low,c:q.close}}).concat(out);to=a[0].time-86400;
+    if(a.length<1500||n>=2)return out;return step(n+1)})}
+  return step(0);
+}
+function loadAsset(){
+  var sym=$('asset').value==='custom'?$('cust').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''):$('asset').value;
+  if(!sym){status('err','Type a ticker first.');return}
+  status('','<span class="spin"></span>Loading '+esc(sym)+'…');
+  binance(sym).catch(function(){return cryptocompare(sym)}).then(function(rows){if(!rows||rows.length<120)throw new Error('not enough history');setData(sym,rows,true)})
+   .catch(function(e){status('err','Could not load '+esc(sym)+' ('+esc(e.message)+'). Try another ticker, turn off ad-blockers, or upload a CSV.')});
+}
+function parseCSV(txt){
+  var lines=txt.replace(/\r/g,'').split('\n').filter(function(l){return l.trim()});if(lines.length<30)throw new Error('too few rows');
+  var sep=lines[0].indexOf('\t')>=0?'\t':(lines[0].split(';').length>lines[0].split(',').length?';':',');
+  function sp(l){return l.split(sep).map(function(q){return q.replace(/^"|"$/g,'').trim()})}
+  var h=sp(lines[0]).map(function(q){return q.toLowerCase()}),di=-1,ci=-1,oi=-1,hi=-1,li=-1;
+  h.forEach(function(q,i){if(di<0&&/date|time|day/.test(q))di=i;if(q==='open')oi=i;if(q==='high')hi=i;if(q==='low')li=i});
+  ['close','adj close','adj_close','price','last'].some(function(k){var i=h.indexOf(k);if(i>=0){ci=i;return true}return false});
+  if(ci<0)h.forEach(function(q,i){if(ci<0&&/close|price/.test(q))ci=i});
+  var start=1;if(di<0||ci<0){var t0=sp(lines[0]);if(isNaN(Date.parse(t0[0])))throw new Error('could not find Date and Close columns');di=0;ci=1;start=0;oi=hi=li=-1}
+  var rows=[];
+  for(var i=start;i<lines.length;i++){var p=sp(lines[i]),t=Date.parse(p[di]),f=function(ix){return ix<0?NaN:parseFloat((p[ix]||'').replace(/[$,]/g,''))},c=f(ci);
+    if(!isNaN(t)&&c>0){var dd=new Date(t),o=f(oi),hh=f(hi),ll=f(li);rows.push({t:Date.UTC(dd.getUTCFullYear(),dd.getUTCMonth(),dd.getUTCDate()),o:o>0?o:c,h:hh>0?hh:c,l:ll>0?ll:c,c:c,real:o>0&&hh>0&&ll>0})}}
+  rows.sort(function(a,b){return a.t-b.t});if(rows.length<120)throw new Error('need at least ~120 daily rows');return rows;
+}
+$('csv').onchange=function(){var f=this.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{var rows=parseCSV(rd.result);setData(f.name.replace(/\.[^.]+$/,''),rows,rows[0].real!==false&&rows.some(function(r){return r.real}))}catch(e){status('err','CSV problem: '+esc(e.message))}};rd.readAsText(f)};
+$('asset').onchange=function(){$('custWrap').style.display=this.value==='custom'?'':'none'};
+$('go').onclick=loadAsset;
+$('cust').addEventListener('keydown',function(e){if(e.key==='Enter')loadAsset()});
+
+function setData(name,rows,ohlc){
+  var n0=0;D={name:name,t:[],o:[],h:[],l:[],c:[],r:[],age:[],ph:[],retro:[],mlon:[],ms:[],ss:[],ecl:[],hasOHLC:!!ohlc};
+  rows.forEach(function(q,i){if(i&&q.t===rows[i-1].t)return;D.t.push(q.t);D.o.push(q.o);D.h.push(q.h);D.l.push(q.l);D.c.push(q.c)});
+  var n=D.t.length;
+  for(var i=0;i<n;i++){
+    var mid=D.t[i]+DAY/2,mp=A.moonPos(mid),sl=A.sunLon(mid),el=w360(mp[0]-sl),age=el/360*SYN;
+    D.age.push(age);D.ph.push(phaseIdx(age));D.retro.push(A.isRetro(mid));D.mlon.push(mp[0]);D.ms.push(signOf(mp[0]));D.ss.push(signOf(sl));
+    D.r.push(i?D.c[i]/D.c[i-1]-1:0);
+    var f=0;for(var e=0;e<ECL.length;e++){if(Math.abs(ECL[e].t-mid)<=2.5*DAY){f=1;break}}D.ecl.push(f);
+  }
+  buildBars();
+  $('dFrom').value=fd(D.t[Math.max(0,n-1825)]);$('dTo').value=fd(D.t[n-1]);$('dFrom').min=$('dTo').min=fd(D.t[0]);$('dFrom').max=$('dTo').max=fd(D.t[n-1]);
+  if(!D.hasOHLC){V.mode='line';$('mode').value='line'}else{V.mode=$('mode').value}
+  status('ok',esc(name)+' · '+n.toLocaleString()+' days · '+fd(D.t[0])+' → '+fd(D.t[n-1])+(D.hasOHLC?'':' · close prices only (line chart)'));
+  setTF(V.tf,true);analyze();runBT();
+}
+function buildBars(){
+  var n=D.t.length;
+  BARS.D=D.t.map(function(t,i){return{t:t,e:t+DAY,o:D.o[i],h:D.h[i],l:D.l[i],c:D.c[i],a:i,b:i}});
+  function agg(keyf,endf){var out=[],cur=null,ck=null;
+    for(var i=0;i<n;i++){var k=keyf(D.t[i]);if(k!==ck){cur={t:null,e:0,o:D.o[i],h:D.h[i],l:D.l[i],c:D.c[i],a:i,b:i,k:k};out.push(cur);ck=k}else{cur.h=Math.max(cur.h,D.h[i]);cur.l=Math.min(cur.l,D.l[i]);cur.c=D.c[i];cur.b=i}}
+    out.forEach(function(b){var s=endf(b.k);b.t=s[0];b.e=s[1]});return out}
+  BARS.W=agg(function(t){return Math.floor((t-4*DAY)/(7*DAY))},function(k){return[4*DAY+k*7*DAY,4*DAY+(k+1)*7*DAY]});
+  BARS.M=agg(function(t){var d=new Date(t);return d.getUTCFullYear()*12+d.getUTCMonth()},function(k){return[Date.UTC(Math.floor(k/12),k%12,1),Date.UTC(Math.floor((k+1)/12),(k+1)%12,1)]});
+}
+
+/* ---------- sky wheel + facts ---------- */
+var SKY_T=Date.now();
+function skyAt(ms){var mp=A.moonPos(ms),sl=A.sunLon(ms),me=A.mercLon(ms),el=w360(mp[0]-sl);return{t:ms,moon:mp[0],sun:sl,mer:me,el:el,retro:A.isRetro(ms),ph:phaseIdx(el/360*SYN),il:illumE(el)}}
+function drawWheel(ms){
+  var s=skyAt(ms),c=$('c0'),dpr=window.devicePixelRatio||1,S=c.clientWidth||320;c.width=S*dpr;c.height=S*dpr;var x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,S,S);
+  var cx=S/2,cy=S/2,R=S/2-6,R2=R*.80,R3=R*.58,ang=function(l){return Math.PI+l*Math.PI/180},P=function(l,r){return[cx+r*Math.cos(ang(l)),cy-r*Math.sin(ang(l))]};
+  x.lineWidth=1;
+  for(var i=0;i<12;i++){
+    x.beginPath();x.arc(cx,cy,R,-ang(i*30),-ang(i*30+30),true);x.arc(cx,cy,R2,-ang(i*30+30),-ang(i*30),false);x.closePath();
+    x.fillStyle=ELCOL[i%4]+'22';x.fill();x.strokeStyle='rgba(217,180,74,.45)';x.stroke();
+    var g=P(i*30+15,(R+R2)/2);x.font=(S*.07)+'px '+SG;x.fillStyle=ELCOL[i%4];x.textAlign='center';x.textBaseline='middle';x.fillText(SIGNS[i][1],g[0],g[1]+1);
+  }
+  x.strokeStyle='rgba(217,180,74,.5)';x.beginPath();x.arc(cx,cy,R2,0,7);x.stroke();x.beginPath();x.arc(cx,cy,R3,0,7);x.stroke();
+  for(var d=0;d<360;d+=5){var a=P(d,R2),b=P(d,R2-(d%30===0?8:4));x.strokeStyle='rgba(217,180,74,.3)';x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke()}
+  /* aspect line sun-moon */
+  var ps=P(s.sun,R3),pm=P(s.moon,R3),pe=P(s.mer,R3);
+  x.strokeStyle='rgba(241,210,122,.35)';x.beginPath();x.moveTo(ps[0],ps[1]);x.lineTo(pm[0],pm[1]);x.stroke();
+  x.strokeStyle='rgba(181,140,255,.25)';x.beginPath();x.moveTo(ps[0],ps[1]);x.lineTo(pe[0],pe[1]);x.stroke();
+  function body(p,col,glyph,r){x.fillStyle='#0a0c18';x.beginPath();x.arc(p[0],p[1],r,0,7);x.fill();x.strokeStyle=col;x.lineWidth=1.6;x.stroke();x.fillStyle=col;x.font=(r*1.45)+'px '+SG;x.textAlign='center';x.textBaseline='middle';x.fillText(glyph,p[0],p[1]+1)}
+  body(ps,'#ffd56b','☉︎',S*.045);body(pm,'#f1f1f6','☽︎',S*.045);body(pe,'#b58cff','☿︎',S*.04);
+  x.fillStyle='rgba(236,233,223,.9)';x.font=(S*.045)+'px system-ui';x.textAlign='center';x.fillText(PH[s.ph].e,cx,cy-S*.03);x.fillStyle='rgba(154,160,184,.95)';x.font=(S*.036)+'px system-ui';x.fillText((s.il*100).toFixed(0)+'% lit',cx,cy+S*.045);
+  $('skyDate').textContent='· '+new Date(ms).toISOString().slice(0,10)+(Math.abs(ms-Date.now())<DAY?' (today)':'');
+  return s;
+}
+function facts(s){
+  function k(t,v,sub){return '<div class="kpi"><div class="t">'+t+'</div><div class="v">'+v+'</div><div class="s">'+sub+'</div></div>'}
+  var ms=signOf(s.moon),ss=signOf(s.sun),mr=signOf(s.mer);
+  $('facts').innerHTML=
+   k('Moon','<span class="sg">'+PH[s.ph].e+'</span> '+PH[s.ph].n,(s.il*100).toFixed(0)+'% lit')+
+   k('Moon sign','<span class="sg" style="color:'+ELCOL[ms%4]+'">'+SIGNS[ms][1]+'</span> '+SIGNS[ms][0],deg(s.moon)+' · '+ELN[ms%4])+
+   k('Sun sign','<span class="sg" style="color:'+ELCOL[ss%4]+'">'+SIGNS[ss][1]+'</span> '+SIGNS[ss][0],deg(s.sun)+' · '+ELN[ss%4])+
+   k('Mercury','<span class="sg">☿︎</span> '+(s.retro?'<span style="color:#b58cff">Retrograde</span>':'Direct'),SIGNS[mr][0]+' '+deg(s.mer));
+}
+var eclShow=(function(){
+  var now=Date.now(),up=ECL.filter(function(e){return e.t>now-DAY}).slice(0,4);
+  $('eclTab').innerHTML='<tr><th class="l">Date (UTC)</th><th class="l">Type</th><th class="l">Kind</th><th>Sign</th></tr>'+up.map(function(e){
+    var sl=e.type==='solar'?A.sunLon(e.t):A.moonPos(e.t)[0],si=signOf(sl);
+    return '<tr><td class="l">'+fd(e.t)+'</td><td class="l">'+(e.type==='solar'?'☀ Solar':'☾ Lunar')+'</td><td class="l">'+e.kind+'</td><td><span class="sg" style="color:'+ELCOL[si%4]+'">'+SIGNS[si][1]+'</span> '+SIGNS[si][0]+' '+deg(sl)+'</td></tr>'}).join('');
+})();
+function showSky(ms){facts(drawWheel(ms))}
+showSky(Date.now());
+
+/* ---------- canvas helpers ---------- */
+function setup(id){var c=$(id),dpr=window.devicePixelRatio||1,w=c.clientWidth||600,h=c.clientHeight||260;c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);var x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);return{x:x,w:w,h:h}}
+function lb(arr,t){var lo=0,hi=arr.length;while(lo<hi){var m=(lo+hi)>>1;if(arr[m]<t)lo=m+1;else hi=m}return lo}
+function niceTicks(lo,hi,n){var span=hi-lo,st=Math.pow(10,Math.floor(Math.log10(span/n))),m=span/n/st,f=m<1.5?1:m<3?2:m<7?5:10,step=f*st,out=[];for(var v=Math.ceil(lo/step)*step;v<=hi;v+=step)out.push(v);return out}
+
+/* ---------- main chart ---------- */
+var G=null;
+function bars(){return BARS[V.tf]}
+function clampView(){var n=bars().length;V.count=Math.max(12,Math.min(Math.max(12,n+6),V.count));V.start=Math.max(-3,Math.min(n-V.count+8,V.start))}
+function setTF(tf,keep){
+  var old=bars(),endT=old.length&&V.start!=null?biToTime(old,V.start+V.count):null;V.tf=tf;
+  document.querySelectorAll('.tf').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-tf')===tf)});
+  var n=bars().length,def={D:180,W:104,M:72}[tf];V.count=Math.min(def,n);V.start=n-V.count+3;
+  if(!keep&&endT){var k=lb(bars().map(function(b){return b.t}),endT);V.start=k-V.count}
+  clampView();drawMain();
+}
+document.querySelectorAll('.tf').forEach(function(b){b.onclick=function(){if(D.t.length)setTF(b.getAttribute('data-tf'),false)}});
+document.querySelectorAll('.rg').forEach(function(b){b.onclick=function(){if(!D.t.length)return;var days=+b.getAttribute('data-r'),B=bars(),span={D:1,W:7,M:30.4}[V.tf];V.count=days?Math.max(12,Math.round(days/span)):B.length;V.start=B.length-V.count+3;clampView();drawMain()}});
+$('zin').onclick=function(){zoom(1/1.3,.5)};$('zout').onclick=function(){zoom(1.3,.5)};
+['lGlow','lMark','lEcl','lRetro','lZod','lLog'].forEach(function(id){$(id).onchange=drawMain});
+$('mode').onchange=function(){V.mode=$('mode').value;drawMain()};
+function biToTime(B,bi){var n=B.length;if(!n)return 0;var k=Math.floor(bi);if(k<0){var s0=B[0].e-B[0].t;return B[0].t+bi*s0}if(k>=n){var s1=B[n-1].e-B[n-1].t;return B[n-1].t+(bi-(n-1))*s1}return B[k].t+(bi-k)*(B[k].e-B[k].t)}
+function timeToBi(B,t){var n=B.length,lo=0,hi=n-1;if(t<=B[0].t)return(t-B[0].t)/(B[0].e-B[0].t);if(t>=B[n-1].t)return n-1+(t-B[n-1].t)/(B[n-1].e-B[n-1].t);
+  while(lo<hi){var m=(lo+hi+1)>>1;if(B[m].t<=t)lo=m;else hi=m-1}return lo+(t-B[lo].t)/(B[lo].e-B[lo].t)}
+function drawMain(){
+  if(!D.t.length)return;
+  var o=setup('c1'),x=o.x,W=o.w,H=o.h,B=bars(),n=B.length,L=10,R=70,T=34,BB=58,PW=W-L-R,Pb=H-BB;
+  var ov=$('c1o'),dpr=window.devicePixelRatio||1;ov.style.width=W+'px';ov.style.height=H+'px';ov.width=Math.round(W*dpr);ov.height=Math.round(H*dpr);
+  clampView();
+  var i0=Math.max(0,Math.floor(V.start)),i1=Math.min(n-1,Math.ceil(V.start+V.count)),log=$('lLog').checked,lo=Infinity,hi=-Infinity;
+  for(var i=i0;i<=i1;i++){if(B[i].l<lo)lo=B[i].l;if(B[i].h>hi)hi=B[i].h}
+  if(!isFinite(lo)){lo=1;hi=2}
+  var f=log?Math.log:function(v){return v},tl=f(lo),th=f(hi),pd=(th-tl)*.08||.1;tl-=pd;th+=pd;
+  var XB=function(bi){return L+(bi-V.start)/V.count*PW},Y=function(v){return T+(1-(f(v)-tl)/(th-tl))*(Pb-T)},XT=function(t){return XB(timeToBi(B,t))};
+  var tS=biToTime(B,V.start),tE=biToTime(B,V.start+V.count),spanDays=(tE-tS)/DAY;
+  G={L:L,R:R,W:W,H:H,T:T,Pb:Pb,PW:PW,XB:XB,Y:Y,tl:tl,th:th,log:log,B:B};
+  /* background day strips */
+  var jS=Math.max(0,lb(D.t,tS-DAY)),jE=Math.min(D.t.length-1,lb(D.t,tE+DAY)),glow=$('lGlow').checked,rtr=$('lRetro').checked;
+  x.save();x.beginPath();x.rect(L,T-24,PW,H-T+24);x.clip();
+  for(var j=jS;j<=jE;j++){
+    var x0=XT(D.t[j]),x1=XT(D.t[j]+DAY),w=Math.max(1,x1-x0);
+    if(glow){var el=D.age[j]/SYN*360;x.fillStyle='rgba(241,210,122,'+(illumE(el)*.2).toFixed(3)+')';x.fillRect(x0,T,w+.6,Pb-T)}
+    if(rtr&&D.retro[j]){x.fillStyle='rgba(181,140,255,.12)';x.fillRect(x0,T,w+.6,Pb-T);x.fillStyle='rgba(181,140,255,.8)';x.fillRect(x0,Pb-4,w+.6,4)}
+  }
+  x.restore();
+  /* grid + price axis (right) */
+  x.font='11px system-ui';x.textAlign='left';x.fillStyle='#9aa0b8';x.strokeStyle='rgba(160,170,210,.12)';x.lineWidth=1;
+  var vlo=log?Math.exp(tl):tl,vhi=log?Math.exp(th):th;
+  niceTicks(vlo,vhi,7).forEach(function(v){var y=Y(v);if(y<T-4||y>Pb)return;x.beginPath();x.moveTo(L,y);x.lineTo(W-R,y);x.stroke();x.fillText(px(v),W-R+6,y+4)});
+  /* time axis */
+  x.textAlign='center';var labs=Math.max(3,Math.floor(PW/110));
+  for(var k=0;k<=labs;k++){var bi=V.start+V.count*k/labs,t=biToTime(B,bi),d=new Date(t),txt=V.tf==='M'?d.toISOString().slice(0,7):(spanDays>400?d.toISOString().slice(0,7):d.toISOString().slice(5,10));
+    var xx=XB(bi);x.strokeStyle='rgba(160,170,210,.10)';x.beginPath();x.moveTo(xx,T);x.lineTo(xx,Pb);x.stroke();x.fillStyle='#9aa0b8';x.fillText(txt,xx,H-8)}
+  /* zodiac band */
+  if($('lZod').checked){
+    var moonMode=spanDays<=200,arr=moonMode?D.ms:D.ss,by=Pb+2,bh=20,j=jS;
+    x.save();x.beginPath();x.rect(L,by,PW,bh);x.clip();
+    while(j<=jE){var s=arr[j],j2=j;while(j2+1<=jE&&arr[j2+1]===s)j2++;
+      var xa=XT(D.t[j]),xb=XT(D.t[j2]+DAY);x.fillStyle=ELCOL[s%4]+'40';x.fillRect(xa,by,xb-xa,bh);x.strokeStyle=ELCOL[s%4]+'99';x.strokeRect(xa+.5,by+.5,xb-xa-1,bh-1);
+      var cw=xb-xa;if(cw>=16){x.fillStyle=ELCOL[s%4];x.font='14px '+SG;x.textAlign='center';x.fillText(SIGNS[s][1],(xa+xb)/2-(cw>70?22:0),by+15);if(cw>70){x.font='11px system-ui';x.fillStyle='#cfd3e6';x.fillText(SIGNS[s][0],(xa+xb)/2+10,by+14)}}
+      j=j2+1}
+    x.restore();x.font='10px system-ui';x.fillStyle='#9aa0b8';x.textAlign='left';x.fillText(moonMode?'☽ Moon sign':'☉ Sun sign',L+4,by+bh+10-1);
+  }
+  /* markers: new/full moons and eclipses */
+  x.save();x.beginPath();x.rect(L,0,PW,H);x.clip();
+  var eclOn=$('lEcl').checked,markOn=$('lMark').checked,ecs={};
+  if(eclOn)ECL.forEach(function(e){if(e.t>=tS&&e.t<=tE)ecs[Math.round(e.t/DAY)]=e});
+  if(markOn||eclOn)NF.forEach(function(e){
+    if(e.t<tS||e.t>tE)return;var xx=XT(e.t),ec=eclOn&&ecs[Math.round(e.t/DAY)],ey=T-16;
+    if(ec){var col=ec.type==='solar'?'#ff9f43':'#ff6b6b';x.strokeStyle=col+'77';x.setLineDash([3,4]);x.beginPath();x.moveTo(xx,ey+8);x.lineTo(xx,Pb);x.stroke();x.setLineDash([]);
+      x.beginPath();x.arc(xx,ey,7,0,7);x.fillStyle=ec.type==='solar'?'#000':'#5a1b1b';x.fill();x.lineWidth=2.2;x.strokeStyle=col;x.stroke();x.lineWidth=1;return}
+    if(!markOn)return;
+    x.strokeStyle=e.full?'rgba(241,210,122,.25)':'rgba(154,160,184,.22)';x.beginPath();x.moveTo(xx,ey+6);x.lineTo(xx,Pb);x.stroke();
+    x.beginPath();x.arc(xx,ey,4.2,0,7);x.fillStyle=e.full?'#f6f1dc':'#05060c';x.fill();x.strokeStyle=e.full?'#d9b44a':'#9aa0b8';x.stroke()});
+  x.restore();
+  /* price series */
+  x.save();x.beginPath();x.rect(L,T-24,PW,Pb-T+24);x.clip();
+  var sw=PW/V.count;
+  if(V.mode==='candle'&&D.hasOHLC){
+    for(var q=i0;q<=i1;q++){var b=B[q],cx=XB(q+.5),up=b.c>=b.o,col=up?'#26a69a':'#ef5350';x.strokeStyle=col;x.fillStyle=col;
+      x.beginPath();x.moveTo(cx,Y(b.h));x.lineTo(cx,Y(b.l));x.lineWidth=1;x.stroke();
+      if(sw>=3){var bw=Math.max(2,sw*.7),y1=Y(b.o),y2=Y(b.c);x.fillRect(cx-bw/2,Math.min(y1,y2),bw,Math.max(1,Math.abs(y2-y1)))}}
+  }else{
+    var g=x.createLinearGradient(0,T,0,Pb);g.addColorStop(0,'rgba(240,236,222,.22)');g.addColorStop(1,'rgba(240,236,222,0)');
+    x.beginPath();for(var q2=i0;q2<=i1;q2++){var cx2=XB(q2+.5);if(q2===i0)x.moveTo(cx2,Y(B[q2].c));else x.lineTo(cx2,Y(B[q2].c))}
+    x.strokeStyle='#ece9df';x.lineWidth=1.6;x.stroke();x.lineTo(XB(i1+.5),Pb);x.lineTo(XB(i0+.5),Pb);x.closePath();x.fillStyle=g;x.fill();
+  }
+  x.restore();
+  /* last price tag */
+  var lastB=B[n-1],ly=Y(lastB.c);if(ly>T&&ly<Pb){var lc=lastB.c>=lastB.o?'#26a69a':'#ef5350';x.strokeStyle=lc;x.setLineDash([2,3]);x.beginPath();x.moveTo(L,ly);x.lineTo(W-R,ly);x.stroke();x.setLineDash([]);x.fillStyle=lc;x.fillRect(W-R,ly-9,R-2,18);x.fillStyle='#fff';x.textAlign='left';x.font='11px system-ui';x.fillText(px(lastB.c),W-R+5,ly+4)}
+  setOHLC(n-1);
+}
+function setOHLC(i){
+  var B=bars(),b=B[i];if(!b)return;var up=b.c>=b.o,ch=(b.c/b.o-1)*100,col=up?'#26a69a':'#ef5350',tf={D:'1D',W:'1W',M:'1M'}[V.tf];
+  $('ohlc').innerHTML='<b>'+esc(D.name)+' · '+tf+'</b> &nbsp; '+fd(b.t)+' &nbsp; O <span style="color:'+col+'">'+px(b.o)+'</span> H <span style="color:'+col+'">'+px(b.h)+'</span> L <span style="color:'+col+'">'+px(b.l)+'</span> C <span style="color:'+col+'">'+px(b.c)+'</span> <span style="color:'+col+'">'+pc(ch)+'</span>';
+}
+/* interaction */
+var cw=$('cw1'),drag=null,raf=0;
+function redraw(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;drawMain()})}
+function zoom(fac,anchor){var oc=V.count;V.count=Math.max(12,Math.min(bars().length+6,V.count*fac));V.start+=(oc-V.count)*anchor;redraw()}
+cw.addEventListener('wheel',function(e){if(!G)return;e.preventDefault();var r=$('c1').getBoundingClientRect(),a=Math.max(0,Math.min(1,(e.clientX-r.left-G.L)/G.PW));zoom(e.deltaY>0?1.15:1/1.15,a)},{passive:false});
+cw.addEventListener('pointerdown',function(e){if(!G)return;drag={x:e.clientX,s:V.start};try{cw.setPointerCapture(e.pointerId)}catch(_){}});
+cw.addEventListener('pointerup',function(){drag=null});
+cw.addEventListener('dblclick',function(){if(D.t.length)setTF(V.tf,true)});
+var hoverT=0;
+cw.addEventListener('pointermove',function(e){
+  if(!G)return;var r=$('c1').getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  if(drag){V.start=drag.s-(e.clientX-drag.x)/G.PW*V.count;redraw();return}
+  crosshair(mx,my);
+});
+cw.addEventListener('pointerleave',function(){var ov=$('c1o'),x=ov.getContext('2d');x.clearRect(0,0,ov.width,ov.height);if(bars().length)setOHLC(bars().length-1);showSky(Date.now())});
+function crosshair(mx,my){
+  var ov=$('c1o'),dpr=window.devicePixelRatio||1,x=ov.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,G.W,G.H);
+  if(mx<G.L||mx>G.W-G.R||my<G.T-24||my>G.Pb+24)return;
+  var B=G.B,bi=Math.floor(V.start+(mx-G.L)/G.PW*V.count);if(bi<0||bi>=B.length)return;
+  var cx=G.XB(bi+.5);x.strokeStyle='rgba(236,233,223,.45)';x.setLineDash([4,4]);x.beginPath();x.moveTo(cx,G.T-24);x.lineTo(cx,G.Pb+22);x.moveTo(G.L,my);x.lineTo(G.W-G.R,my);x.stroke();x.setLineDash([]);
+  if(my>=G.T&&my<=G.Pb){var v=G.log?Math.exp(G.tl+(1-(my-G.T)/(G.Pb-G.T))*(G.th-G.tl)):G.tl+(1-(my-G.T)/(G.Pb-G.T))*(G.th-G.tl);x.fillStyle='#2a2e44';x.fillRect(G.W-G.R,my-9,G.R-2,18);x.fillStyle='#ece9df';x.font='11px system-ui';x.textAlign='left';x.fillText(px(v),G.W-G.R+5,my+4)}
+  var b=B[bi];setOHLC(bi);
+  var j=Math.min(D.t.length-1,b.b),p=PH[D.ph[j]],tip=[];
+  tip.push('<b>'+fd(b.t)+(V.tf==='D'?'':' → '+fd(b.e-DAY))+'</b>');
+  tip.push(p.e+' '+p.n+' ('+(illumE(D.age[j]/SYN*360)*100).toFixed(0)+'% lit)');
+  tip.push('☽ Moon in <span style="color:'+ELCOL[D.ms[j]%4]+'">'+SIGNS[D.ms[j]][1]+' '+SIGNS[D.ms[j]][0]+'</span> · ☉ Sun in '+SIGNS[D.ss[j]][1]+' '+SIGNS[D.ss[j]][0]);
+  if(D.retro[j])tip.push('<span style="color:#b58cff">☿ Mercury retrograde</span>');
+  var ev=ECL.filter(function(e){return e.t>=b.t&&e.t<b.e});if(ev.length)tip.push('<span style="color:#ff9f43">'+(ev[0].type==='solar'?'☀ Solar':'☾ Lunar')+' eclipse · '+ev[0].kind+'</span>');
+  var tp=$('tip');if(!tp){tp=document.createElement('div');tp.id='tip';cw.appendChild(tp)}
+  tp.innerHTML=tip.join('<br>');tp.style.display='block';var tx=cx+16;if(tx>G.W-G.R-230)tx=cx-230;tp.style.left=Math.max(4,tx)+'px';tp.style.top='40px';
+  var now=Date.now();if(now-hoverT>90){hoverT=now;showSky(b.t+DAY/2)}
+}
+
+/* ---------- stats ---------- */
+function mstat(vals){var n=vals.length;if(n<2)return{n:n,m:0,sd:0,t:0,pos:0};var s=0,q=0,p=0,m;vals.forEach(function(v){s+=v});m=s/n;vals.forEach(function(v){q+=(v-m)*(v-m);if(v>0)p++});var sd=Math.sqrt(q/(n-1));return{n:n,m:m,sd:sd,t:sd>0?m/(sd/Math.sqrt(n)):0,pos:p/n}}
+function bucketsFor(shift,fn){var g={};for(var i=1;i<D.t.length;i++){var a=(D.age[i]+shift)%SYN,s=shift?Math.floor(w360(D.mlon[i]+13.1764*shift)/30):D.ms[i],k=fn(a,s,i);if(k<0)continue;(g[k]=g[k]||[]).push(D.r[i])}return g}
+var SHIFTS=[];for(var sh=1.5;sh<=SYN-1.5;sh+=.25)SHIFTS.push(sh);
+function flagTest(flags){ /* offset-shifted calendar test for a boolean day flag */
+  var A1=[],B1=[];for(var i=1;i<D.t.length;i++)(flags[i]?A1:B1).push(D.r[i]);
+  var a=mstat(A1),b=mstat(B1),diff=a.m-b.m,ge=0,tot=0,N=D.t.length;
+  for(var off=20;off<=400;off+=10){tot++;var a2=[],b2=[];for(var i2=1;i2<N;i2++){var jx=(i2+off)%N;(flags[jx]?a2:b2).push(D.r[i2])}if(Math.abs(mstat(a2).m-mstat(b2).m)>=Math.abs(diff))ge++}
+  return{A:a,B:b,diff:diff,p:(ge+1)/(tot+1)}}
+function barChart(id,labels,vals,glyphs,colors){
+  var o=setup(id),x=o.x,W=o.w,H=o.h,L=50,R=10,T=14,Bt=glyphs?48:44,mx=Math.max.apply(null,vals.map(Math.abs))*1.25||.1,n=vals.length,bw=(W-L-R)/n;
+  var Y=function(v){return T+(1-(v+mx)/(2*mx))*(H-T-Bt)};
+  x.font='11px system-ui';x.fillStyle='#9aa0b8';x.strokeStyle='rgba(160,170,210,.15)';x.textAlign='right';
+  for(var g=-2;g<=2;g++){var v=mx*g/2,y=Y(v);x.beginPath();x.moveTo(L,y);x.lineTo(W-R,y);x.stroke();x.fillText(v.toFixed(2)+'%',L-5,y+4)}
+  vals.forEach(function(v,i){x.fillStyle=v>=0?'#26a69a':'#ef5350';var y0=Y(0),y1=Y(v);x.fillRect(L+i*bw+bw*.15,Math.min(y0,y1),bw*.7,Math.max(1,Math.abs(y1-y0)));
+    x.textAlign='center';x.fillStyle='#9aa0b8';x.font='10px system-ui';if(n<=8)x.fillText(labels[i],L+i*bw+bw/2,H-28);
+    x.font='16px '+SG;x.fillStyle=colors?colors[i]:'#9aa0b8';x.fillText(glyphs[i],L+i*bw+bw/2,H-8)});
+}
+function lineChart(id,series,xs,opt){
+  opt=opt||{};var o=setup(id),x=o.x,W=o.w,H=o.h,L=58,R=12,T=12,Bt=26,lo=Infinity,hi=-Infinity;
+  series.forEach(function(s){s.y.forEach(function(v,i){var a=s.e?v-s.e[i]:v,b=s.e?v+s.e[i]:v;if(a<lo)lo=a;if(b>hi)hi=b})});
+  if(opt.zero){lo=Math.min(lo,0);hi=Math.max(hi,0)}var pd=(hi-lo)*.08||1;lo-=pd;hi+=pd;
+  var x0=xs[0],x1=xs[xs.length-1],X=function(v){return L+(v-x0)/(x1-x0)*(W-L-R)},Y=function(v){return T+(1-(v-lo)/(hi-lo))*(H-T-Bt)};
+  x.font='11px system-ui';x.fillStyle='#9aa0b8';x.strokeStyle='rgba(160,170,210,.15)';x.lineWidth=1;x.textAlign='right';
+  for(var g=0;g<=4;g++){var v=lo+(hi-lo)*g/4,y=Y(v);x.beginPath();x.moveTo(L,y);x.lineTo(W-R,y);x.stroke();x.fillText(opt.yf(v),L-6,y+4)}
+  x.textAlign='center';for(var k=0;k<=5;k++){var xv=x0+(x1-x0)*k/5;x.fillText(opt.xf(xv),X(xv),H-8)}
+  if(opt.zero){x.strokeStyle='rgba(154,160,184,.5)';x.setLineDash([4,4]);x.beginPath();x.moveTo(L,Y(0));x.lineTo(W-R,Y(0));x.stroke();x.setLineDash([])}
+  if(opt.vx!=null){x.strokeStyle='rgba(217,180,74,.4)';x.beginPath();x.moveTo(X(opt.vx),T);x.lineTo(X(opt.vx),H-Bt);x.stroke()}
+  series.forEach(function(s){
+    if(s.e){x.fillStyle=s.c+'33';x.beginPath();s.y.forEach(function(v,i){var p=X(xs[i]),q=Y(v+s.e[i]);if(i)x.lineTo(p,q);else x.moveTo(p,q)});for(var i=s.y.length-1;i>=0;i--)x.lineTo(X(xs[i]),Y(s.y[i]-s.e[i]));x.fill()}
+    x.strokeStyle=s.c;x.lineWidth=s.w||1.8;x.beginPath();s.y.forEach(function(v,i){var p=X(xs[i]),q=Y(v);if(i)x.lineTo(p,q);else x.moveTo(p,q)});x.stroke()});
+}
+function eventStudy(times){
+  var n=D.t.length,W=10,paths=[];
+  times.forEach(function(ms){if(ms<D.t[0]||ms>D.t[n-1])return;var ix=lb(D.t,ms-DAY+1);while(ix<n&&D.t[ix]+DAY<=ms)ix++;if(ix-W<0||ix+W>=n)return;var p=[];for(var j=-W;j<=W;j++)p.push((D.c[ix+j]/D.c[ix]-1)*100);paths.push(p)});
+  var m=[],e=[];for(var j=0;j<=2*W;j++){var v=paths.map(function(p){return p[j]}),s=mstat(v.map(function(q){return q/100}));m.push(s.m*100);e.push(paths.length>1?s.sd*100/Math.sqrt(paths.length):0)}
+  return{m:m,e:e,n:paths.length};
+}
+function analyze(){
+  if(D.t.length<120)return;
+  var g=bucketsFor(0,function(a){return phaseIdx(a)}),st=PH.map(function(_,k){return mstat(g[k]||[])});
+  var h='<tr><th class="l">Phase</th><th>Days</th><th>Avg daily</th><th>% up days</th><th>t-stat</th></tr>';
+  PH.forEach(function(p,k){var s=st[k];h+='<tr><td class="l">'+p.e+' '+p.n+'</td><td>'+s.n+'</td><td class="'+cls(s.m)+'">'+pc(s.m*100,3)+'</td><td>'+(s.pos*100).toFixed(1)+'%</td><td class="'+(Math.abs(s.t)>=2?'gold':'mut')+'">'+s.t.toFixed(2)+'</td></tr>'});
+  $('ptab').innerHTML=h;barChart('c2',PH.map(function(p){return p.s}),st.map(function(s){return s.m*100}),PH.map(function(p){return p.e}));
+  /* moon signs */
+  var gs=bucketsFor(0,function(a,s){return s}),ss=SIGNS.map(function(_,k){return mstat(gs[k]||[])});
+  h='<tr><th class="l">Moon in</th><th class="l">Element</th><th>Days</th><th>Avg daily</th><th>% up</th><th>t-stat</th></tr>';
+  SIGNS.forEach(function(s,k){var q=ss[k];h+='<tr><td class="l"><span class="sg" style="color:'+ELCOL[k%4]+'">'+s[1]+'</span> '+s[0]+'</td><td class="l mut">'+ELN[k%4]+'</td><td>'+q.n+'</td><td class="'+cls(q.m)+'">'+pc(q.m*100,3)+'</td><td>'+(q.pos*100).toFixed(1)+'%</td><td class="'+(Math.abs(q.t)>=2?'gold':'mut')+'">'+q.t.toFixed(2)+'</td></tr>'});
+  $('stab').innerHTML=h;barChart('c6',SIGNS.map(function(s){return s[0]}),ss.map(function(q){return q.m*100}),SIGNS.map(function(s){return s[1]}),SIGNS.map(function(_,k){return ELCOL[k%4]}));
+  /* comparisons */
+  var comps=[
+   {n:'Waxing (new → full) vs waning',fn:function(a){return a<SYN/2?0:1}},
+   {n:'Around FULL moon (±1.5 d) vs other days',fn:function(a){return Math.abs(a-SYN/2)<=1.5?0:1}},
+   {n:'Around NEW moon (±1.5 d) vs other days',fn:function(a){return(a<=1.5||a>=SYN-1.5)?0:1}}
+  ];
+  [0,1,2,3].forEach(function(el){comps.push({n:'Moon in '+ELN[el]+' signs vs other days',fn:function(a,s){return s%4===el?0:1}})});
+  var rows='<tr><th class="l">Comparison</th><th>Group A</th><th>Avg A</th><th>Group B</th><th>Avg B</th><th>A − B / day</th><th>Random-calendar p</th></tr>',notes=[];
+  function row(nm,A1,B1,diff,pv){rows+='<tr><td class="l">'+nm+'</td><td>'+A1.n+' d</td><td class="'+cls(A1.m)+'">'+pc(A1.m*100,3)+'</td><td>'+B1.n+' d</td><td class="'+cls(B1.m)+'">'+pc(B1.m*100,3)+'</td><td class="'+cls(diff)+'">'+pc(diff*100,3)+'</td><td class="'+(pv<.05?'gold':'mut')+'">'+pv.toFixed(2)+'</td></tr>';notes.push({n:nm,p:pv})}
+  comps.forEach(function(c){
+    var gg=bucketsFor(0,c.fn),A1=mstat(gg[0]||[]),B1=mstat(gg[1]||[]),diff=A1.m-B1.m,ge=0;
+    SHIFTS.forEach(function(sh){var q=bucketsFor(sh,c.fn),d2=mstat(q[0]||[]).m-mstat(q[1]||[]).m;if(Math.abs(d2)>=Math.abs(diff))ge++});
+    row(c.n,A1,B1,diff,(ge+1)/(SHIFTS.length+1));
+  });
+  var ft=flagTest(D.retro.map(Number));row('☿ Mercury retrograde vs direct',ft.A,ft.B,ft.diff,ft.p);
+  var fe=flagTest(D.ecl);row('Within 2½ days of an eclipse vs other days',fe.A,fe.B,fe.diff,fe.p);
+  $('cmp').innerHTML=rows;
+  var hits=notes.filter(function(z){return z.p<.05});
+  $('cmpV').innerHTML=hits.length?'<div class="verdict y"><b>Worth a closer look:</b> '+hits.map(function(z){return esc(z.n)}).join('; ')+' beat at least 95% of the random calendars. With '+notes.length+' tests running, one or two passing is normal by luck alone. Check it on another asset and another date range before trusting it.</div>'
+   :'<div class="verdict"><b>Nothing stands out.</b> For '+esc(D.name)+', none of these splits beat random calendars at the usual 5% bar. The differences are the size you would expect from chance.</div>';
+  /* event studies */
+  var xs=[];for(var j=-10;j<=10;j++)xs.push(j);var o={zero:true,vx:0,yf:function(v){return v.toFixed(1)+'%'},xf:function(v){return(v>0?'+':'')+Math.round(v)+'d'}};
+  var en=eventStudy(NF.filter(function(e){return!e.full}).map(function(e){return e.t})),ef=eventStudy(NF.filter(function(e){return e.full}).map(function(e){return e.t}));
+  lineChart('c3',[{c:'#9aa0b8',y:en.m,e:en.e},{c:'#f1d27a',y:ef.m,e:ef.e}],xs,o);
+  $('evN').textContent='Based on '+en.n+' new moons and '+ef.n+' full moons. If the bands overlap zero the whole way, the average move is indistinguishable from noise.';
+  var es=eventStudy(ECL.filter(function(e){return e.type==='solar'}).map(function(e){return e.t})),el=eventStudy(ECL.filter(function(e){return e.type==='lunar'}).map(function(e){return e.t}));
+  lineChart('c7',[{c:'#ff9f43',y:es.m,e:es.e},{c:'#ff6b6b',y:el.m,e:el.e}],xs,o);
+  $('evE').textContent='Based on '+es.n+' solar and '+el.n+' lunar eclipses inside this price history (small samples, so expect wide bands).';
+}
+
+/* ---------- back-test ---------- */
+(function(){
+  var h='';PH.forEach(function(p,k){h+='<label><input type="checkbox" data-k="'+k+'"'+(k<4?' checked':'')+'>'+p.e+' '+p.n+'</label>'});$('phSel').innerHTML=h;
+  h='';SIGNS.forEach(function(s,k){h+='<label><input type="checkbox" data-k="'+k+'" checked><span class="sg" style="color:'+ELCOL[k%4]+'">'+s[1]+'</span> '+s[0]+'</label>'});$('sgSel').innerHTML=h;
+})();
+function checked(id){var a=[];document.querySelectorAll('#'+id+' input').forEach(function(c){a[+c.getAttribute('data-k')]=c.checked});return a}
+function preset(sel,list){document.querySelectorAll(sel+' input').forEach(function(c){c.checked=list.indexOf(+c.getAttribute('data-k'))>=0});runBT()}
+document.querySelectorAll('.pre').forEach(function(b){b.onclick=function(){preset('#phSel',b.getAttribute('data-p').split(',').map(Number))}});
+document.querySelectorAll('.sp').forEach(function(b){b.onclick=function(){preset('#sgSel',b.getAttribute('data-s').split(',').map(Number))}});
+$('phSel').onchange=runBT;$('sgSel').onchange=runBT;['cap','dFrom','dTo','fee','rOff','eOff'].forEach(function(id){$(id).addEventListener('change',runBT)});$('bt').onclick=runBT;
+function strat(o,i0,i1,shift,keep){
+  var eq=o.cap,prev=0,peak=o.cap,mdd=0,trades=[],entry=0,inM=0,nTr=0,rets=[],E=keep?new Float64Array(i1-i0+1):null;if(keep)E[0]=o.cap;
+  for(var i=i0+1;i<=i1;i++){
+    var ph=shift?phaseIdx((D.age[i]+shift)%SYN):D.ph[i],sg=shift?Math.floor(w360(D.mlon[i]+13.1764*shift)/30):D.ms[i];
+    var pos=(o.al[ph]&&o.sg[sg]&&!(o.ro&&D.retro[i])&&!(o.eo&&D.ecl[i]))?1:0,e0=eq;
+    if(pos!==prev){eq*=1-o.fee;if(pos)entry=eq;else trades.push(eq/entry-1);nTr++}
+    if(pos){eq*=1+D.r[i];inM++}
+    rets.push(eq/e0-1);prev=pos;if(eq>peak)peak=eq;var dd=eq/peak-1;if(dd<mdd)mdd=dd;if(keep)E[i-i0]=eq}
+  if(prev)trades.push(eq/entry-1);
+  var days=Math.max(1,(D.t[i1]-D.t[i0])/DAY),ms=mstat(rets),w=trades.filter(function(v){return v>0}).length;
+  return{eq:eq,ret:eq/o.cap-1,cagr:Math.pow(Math.max(eq/o.cap,1e-9),365/days)-1,mdd:mdd,inM:inM/Math.max(1,i1-i0),trades:trades.length,win:trades.length?w/trades.length:0,
+    avgTr:trades.length?trades.reduce(function(a,b){return a+b},0)/trades.length:0,sharpe:ms.sd>0?ms.m/ms.sd*Math.sqrt(365):0,E:E}
+}
+function idxOf(s,d){var ms=Date.parse(s);if(isNaN(ms))return d;return Math.min(D.t.length-1,lb(D.t,ms))}
+function runBT(){
+  if(D.t.length<120){$('btOut').innerHTML='<div class="note">Load an asset first.</div>';return}
+  var i0=idxOf($('dFrom').value,0),i1=idxOf($('dTo').value,D.t.length-1);
+  if(i1-i0<30){$('btOut').innerHTML='<div class="verdict y">Pick a longer date range (at least 30 days).</div>';return}
+  var o={cap:Math.max(1,parseFloat($('cap').value)||10000),fee:Math.max(0,parseFloat($('fee').value)||0)/100,al:checked('phSel'),sg:checked('sgSel'),ro:$('rOff').checked,eo:$('eOff').checked};
+  if(!o.al.some(Boolean)||!o.sg.some(Boolean)){$('btOut').innerHTML='<div class="verdict y">Tick at least one phase and one sign to be invested in.</div>';return}
+  var all=[1,1,1,1,1,1,1,1],all12=[1,1,1,1,1,1,1,1,1,1,1,1],S=strat(o,i0,i1,0,true),BH=strat({cap:o.cap,fee:o.fee,al:all,sg:all12,ro:false,eo:false},i0,i1,0,true);
+  function k(t,v,s,c){return '<div class="kpi"><div class="t">'+t+'</div><div class="v '+(c||'')+'">'+v+'</div><div class="s">'+s+'</div></div>'}
+  $('btOut').innerHTML='<div class="kpis">'+k('Moon strategy ends with',usd(S.eq),pc(S.ret*100,1)+' · '+pc(S.cagr*100,1)+'/yr',cls(S.ret))+k('Buy &amp; hold ends with',usd(BH.eq),pc(BH.ret*100,1)+' · '+pc(BH.cagr*100,1)+'/yr',cls(BH.ret))+
+   k('Worst drop (strategy)',pc(S.mdd*100,1),'buy &amp; hold: '+pc(BH.mdd*100,1),'dn')+k('Time invested',(S.inM*100).toFixed(0)+'%',S.trades+' trades · '+(S.win*100).toFixed(0)+'% winners')+
+   k('Avg trade',pc(S.avgTr*100,2),'after fees')+k('Sharpe (annualised)',S.sharpe.toFixed(2),'buy &amp; hold: '+BH.sharpe.toFixed(2))+'</div>';
+  lineChartLog('c4',[{c:'#9aa0b8',y:Array.from(BH.E)},{c:'#d9b44a',y:Array.from(S.E),w:2.2}],i0,i1);
+  var res=[],beat=0;SHIFTS.forEach(function(sh){var r=strat(o,i0,i1,sh,false);res.push(r.ret*100);if(r.ret<S.ret)beat++});
+  var pB=beat/SHIFTS.length*100;histo('c5',res,S.ret*100);
+  $('c5n').innerHTML='<b>Real or luck?</b> The same strategy was re-run '+SHIFTS.length+' times on the same prices with the moon and sign calendar slid forward (a fake sky each time). Bars = how the fake-sky versions ended. The gold line is your real-sky result, which beat <b class="'+(pB>=95?'gold':'')+'">'+pB.toFixed(0)+'%</b> of them. '+
+   (pB>=95?'That is interesting, but neighbouring fake calendars overlap a lot (they are only a few days apart), so it is weaker evidence than it looks. Re-test on another asset and date range before trusting it.':pB>=75?'Better than average, but not strong enough to rule out luck.':'That is within what random calendars produce, so the timing added no clear edge.');
+}
+function lineChartLog(id,series,i0,i1){
+  var o=setup(id),x=o.x,W=o.w,H=o.h,L=62,R=12,T=12,Bt=26,lo=Infinity,hi=-Infinity,n=i1-i0+1;
+  series.forEach(function(s){s.y.forEach(function(v){if(v<lo)lo=v;if(v>hi)hi=v})});
+  lo=Math.log(Math.max(lo,1e-6));hi=Math.log(hi);var pd=(hi-lo)*.06||.1;lo-=pd;hi+=pd;
+  var X=function(i){return L+i/(n-1)*(W-L-R)},Y=function(v){return T+(1-(Math.log(Math.max(v,1e-6))-lo)/(hi-lo))*(H-T-Bt)};
+  x.font='11px system-ui';x.fillStyle='#9aa0b8';x.strokeStyle='rgba(160,170,210,.15)';x.lineWidth=1;x.textAlign='right';
+  for(var g=0;g<=4;g++){var v=lo+(hi-lo)*g/4,y=Y(Math.exp(v));x.beginPath();x.moveTo(L,y);x.lineTo(W-R,y);x.stroke();x.fillText(usd(Math.exp(v)),L-6,y+4)}
+  x.textAlign='center';for(var k=0;k<=5;k++){var ii=Math.round((n-1)*k/5);x.fillText(fd(D.t[i0+ii]).slice(0,7),X(ii),H-8)}
+  series.forEach(function(s){x.strokeStyle=s.c;x.lineWidth=s.w||1.6;x.beginPath();var st=Math.max(1,Math.floor(n/((W-L-R)*1.5)));for(var i=0;i<s.y.length;i+=st){var p=X(i),q=Y(s.y[i]);if(i)x.lineTo(p,q);else x.moveTo(p,q)}x.lineTo(X(s.y.length-1),Y(s.y[s.y.length-1]));x.stroke()});
+}
+function histo(id,vals,mine){
+  var o=setup(id),x=o.x,W=o.w,H=o.h,L=12,R=12,T=8,Bt=30,bins=30,s=vals.concat([mine]).slice().sort(function(a,b){return a-b}),lo=s[0],hi=s[s.length-1];if(hi-lo<1e-6){lo-=1;hi+=1}
+  var c=new Array(bins).fill(0);vals.forEach(function(v){c[Math.min(bins-1,Math.floor((v-lo)/(hi-lo)*bins))]++});var mx=Math.max.apply(null,c)||1,bw=(W-L-R)/bins;
+  for(var i=0;i<bins;i++){var h=c[i]/mx*(H-T-Bt);x.fillStyle='#4a5070';x.fillRect(L+i*bw+1,H-Bt-h,bw-2,h)}
+  var z=L+(mine-lo)/(hi-lo)*(W-L-R);x.strokeStyle='#d9b44a';x.lineWidth=2.5;x.beginPath();x.moveTo(z,T);x.lineTo(z,H-Bt);x.stroke();
+  x.fillStyle='#9aa0b8';x.font='11px system-ui';x.textAlign='center';for(var k=0;k<=4;k++){var v=lo+(hi-lo)*k/4;x.fillText(Math.round(v)+'%',L+(W-L-R)*k/4,H-10)}
+}
+var rzT;window.addEventListener('resize',function(){clearTimeout(rzT);rzT=setTimeout(function(){showSky(Date.now());if(D.t.length){drawMain();analyze();runBT()}},200)});
+window.__moon={D:function(){return D},ECL:ECL,NF:NF};
+loadAsset();
+})();
+</script>
+</body>
+</html>

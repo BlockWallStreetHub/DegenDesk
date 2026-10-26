@@ -138,8 +138,8 @@ footer{border-top:1px solid var(--line);padding:22px 5vw 40px;font-size:12.5px;c
     Degen Desk Course
   </a>
   <span class="sp"></span>
-  <div class="prog"><span id="progTxt">0 of 13</span><div class="bar"><i id="progBar"></i></div></div>
-  <a class="tl" href="deskbwsddp.html">Open the desk</a>
+  <div class="prog"><span id="progTxt">0 of 16</span><div class="bar"><i id="progBar"></i></div></div>
+  <a class="tl" href="accountbwsddp.html" style="margin-right:12px">Account</a><a class="tl" href="deskbwsddp.html">Open the desk</a>
 </header>
 
 <div class="wrap">
@@ -384,6 +384,56 @@ var L=[
  },
  quiz:{q:'What does borrowing at 30% LTV mean?',o:['You pay 30% interest','The loan is 30% of the value of your collateral','You must repay in 30 days','Your collateral is locked for 30 months'],a:1,why:'LTV is debt divided by collateral value. Lower LTV means a bigger buffer before a price drop can cause liquidation.'}},
 
+{id:'lp',code:'LP',title:'LP Scout: finding and testing liquidity pools',tool:null,link:['lpscoutbwsddp.html','Open LP Scout'],
+ body:'<p>A <b>liquidity pool</b> (LP) position means you put two coins into a pool so other people can trade against it. In return you earn a share of the trading fees (the <b>base APR</b>) and sometimes extra reward tokens (the <b>bonus APR</b>). LP Scout lists pools across every chain and lets you filter them.</p><p>Filter in this order: pick the <b>chain</b> you actually use, set a <b>minimum TVL</b> (total value locked, so you are not in a tiny pool), then compare <b>base APR</b> against <b>bonus APR</b>. Base APR comes from real trading and tends to last. Bonus APR is paid in a token that can fall in price and often shrinks over time. <b>Est. fees per day</b> shows what all LPs together earn. <b>Debt</b> only shows on lending markets, where it means the total borrowed.</p><p>Click a pool to open the simulator. It runs a bear, flat and bull price case, then 1,000 random price paths, so you see a range of outcomes instead of one hopeful number. The risk it models is <b>impermanent loss</b>: when one coin moves a lot, you end up holding less of the winner than if you had simply held both coins.</p><p><b>Red flags:</b> APR above 200%, almost all of the APR coming from bonus rewards, a very small TVL, and any leverage you cannot explain.</p>',
+ widget:function(el){
+  el.innerHTML='<div class="lab"><h4>Fees vs impermanent loss</h4><p class="hint">You put $10,000 in a pool, half in a volatile coin and half in a stable coin. Move the sliders (made-up numbers).</p>'+rangeRow('lq1','Volatile coin price change',-80,300,5,100,function(v){return pct(+v,0)})+rangeRow('lq2','Pool APR (fees + bonus)',0,200,5,30,function(v){return v+'%'})+rangeRow('lq3','Days in the pool',7,365,1,90,function(v){return v+' days'})+'<div class="stat" id="lqs"></div><div class="verdict" id="lqv"></div></div>';
+  function calc(){
+   var ch=+$('lq1').value,apr=+$('lq2').value,d=+$('lq3').value;$('lq1o').textContent=pct(ch,0);$('lq2o').textContent=apr+'%';$('lq3o').textContent=d+' days';
+   var r=Math.max(.01,1+ch/100),hold=10000*(1+r)/2,lp=10000*Math.sqrt(r),il=2*Math.sqrt(r)/(1+r)-1,fees=(10000+lp)/2*apr/100*d/365,net=lp+fees;
+   $('lqs').innerHTML='<div><small>Just holding</small><b>'+money(hold)+'</b></div><div><small>Pool position (no fees)</small><b>'+money(lp)+'</b></div><div><small>Impermanent loss</small><b class="dn">'+(il*100).toFixed(1)+'%</b></div><div><small>Fees earned</small><b class="up">'+money(fees)+'</b></div><div><small>Pool + fees</small><b class="'+(net>=hold?'up':'dn')+'">'+money(net)+'</b></div>';
+   $('lqv').className='verdict'+(net>=hold?' good':'');
+   $('lqv').textContent=net>=hold?'Fees beat impermanent loss here, so the pool finished ahead of holding by '+money(net-hold)+'.':'Impermanent loss was bigger than the fees, so simply holding finished ahead by '+money(hold-net)+'.';
+  }
+  el.querySelectorAll('input').forEach(function(i){i.oninput=calc});calc();
+ },
+ quiz:{q:'A pool shows 400% APR, but 380% of it is bonus tokens and the TVL is tiny. What is the sensible reading?',o:['Free money, put everything in','Very likely a short-lived reward that can crash with the token price, so treat it as high risk','The base APR must be 400%','TVL does not matter'],a:1,why:'Bonus APR is paid in a reward token that can lose value, and big numbers in tiny pools tend to fade fast. Look at base APR, TVL and how long the rate has lasted.'}},
+
+{id:'moon',code:'MOON',title:'Moon Desk: the sky behind the chart',tool:null,link:['moonbwsddp.html','Open Moon Desk'],
+ body:'<p>Moon Desk lays astrology behind a price chart: the <b>moon phase</b>, the <b>zodiac sign</b> the moon and sun are in, <b>eclipses</b> and <b>Mercury retrograde</b>. You can view the chart as daily, weekly or monthly candles, zoom in and out, and hover any candle to see the sky on that day.</p><p>Below the chart, the tool measures what price actually did under each phase and each moon sign, and a back-test lets you try a rule such as &ldquo;only be invested while the moon is waxing.&rdquo; Many serious traders and funds watch cycles of all kinds. A saying often credited to J.P. Morgan claims that billionaires use astrologers, but nobody has confirmed he said it, so treat it as lore.</p><p>The honest part is the <b>random-calendar test</b>. The tool re-runs your idea on the same prices with a fake sky. If the real calendar does not clearly beat the fake ones, the pattern is probably luck. Test many ideas and a few will look good by chance alone, so confirm anything promising on a second coin and a different date range.</p>',
+ widget:function(el){
+  el.innerHTML='<div class="lab"><h4>Pattern hunter (made-up coins)</h4><p class="hint">Each fake coin is pure random noise with no moon effect at all. We compare its average return in waxing vs waning weeks. Watch how often a &ldquo;pattern&rdquo; appears anyway.</p><div class="row"><button class="btn" id="ph1">Generate 20 fake coins</button></div><div class="stat" id="phs"></div><div class="verdict" id="phv">Press the button.</div></div>';
+  var run=4;
+  $('ph1').onclick=function(){
+   run++;var r=rng(run*7919+13),hits=0,rows=[];
+   for(var c=0;c<20;c++){
+    var a=[],b=[];for(var i=0;i<1000;i++){var ret=(r()+r()+r()+r()-2)*.04;((i%30)<15?a:b).push(ret)}
+    var ma=a.reduce(function(x,y){return x+y},0)/a.length,mb=b.reduce(function(x,y){return x+y},0)/b.length;
+    function va(z,m){return z.reduce(function(x,y){return x+(y-m)*(y-m)},0)/(z.length-1)}
+    var t=(ma-mb)/Math.sqrt(va(a,ma)/a.length+va(b,mb)/b.length);if(Math.abs(t)>2){hits++;rows.push('coin '+(c+1)+' (t = '+t.toFixed(1)+')')}
+   }
+   $('phs').innerHTML='<div><small>Fake coins tested</small><b>20</b></div><div><small>Showed a &ldquo;pattern&rdquo;</small><b class="'+(hits?'gold':'')+'">'+hits+'</b></div>';
+   $('phv').className='verdict'+(hits?' good':'');
+   $('phv').innerHTML=hits?'<b>'+hits+' of 20</b> pure-noise coins looked like they had a waxing-vs-waning pattern ('+rows.join(', ')+'). Run it again and the winners change. That is why one good-looking result is not proof.':'None passed this time. Run it again: about one in twenty usually does, even though nothing real is there.';
+  };
+ },
+ quiz:{q:'You test 20 moon ideas and exactly one looks statistically significant at the usual 5% level. What should you conclude?',o:['The moon drives that coin','Roughly one in twenty passes by chance, so test it on another coin and another time period before trusting it','Bet big right away','Significance tests are useless'],a:1,why:'At a 5% threshold, about one test in twenty looks significant even with no real effect. Confirming on new data is what separates a real pattern from a lucky one.'}},
+
+{id:'pf',code:'PF',title:'Portfolio: track what you own and set alerts',tool:null,link:['portfoliobwsddp.html','Open Portfolio'],
+ body:'<p>The Portfolio page is your personal tracker, like the portfolio tab on a coin site. You record each <b>buy</b> and <b>sell</b> (coin, amount, price, date, fee) and it works out what you hold, your <b>average buy price</b>, today&rsquo;s value, your <b>profit or loss</b>, your 24-hour change and how much of the total each coin is.</p><p>Two numbers matter most. <b>Average buy price</b> is what you paid per coin across all buys. <b>Profit or loss</b> compares today&rsquo;s value with what you put in. When you sell, the page keeps <b>realized profit</b> separate, so a sale does not disappear from your history.</p><p><b>Alerts</b> watch a price, a 24-hour move, your profit on one position, or the whole portfolio&rsquo;s value. When a rule is met the alert goes to Telegram, email, phone push, WhatsApp or Discord, whichever you set up. They are checked every minute <b>while the page is open in a browser tab</b>, so keep a tab open if you rely on them. Your holdings and keys stay in your own browser.</p>',
+ widget:function(el){
+  el.innerHTML='<div class="lab"><h4>Average price and profit (made-up numbers)</h4><p class="hint">You bought a coin twice. Move the sliders and watch your average price change.</p>'+rangeRow('pf1','First buy price',10,100,1,40,function(v){return '$'+v})+rangeRow('pf2','Second buy price',10,100,1,80,function(v){return '$'+v})+rangeRow('pf3','Price today',10,150,1,70,function(v){return '$'+v})+'<div class="stat" id="pfs"></div><div class="verdict" id="pfv"></div></div>';
+  function calc(){
+   var a=+$('pf1').value,b=+$('pf2').value,t=+$('pf3').value;$('pf1o').textContent='$'+a;$('pf2o').textContent='$'+b;$('pf3o').textContent='$'+t;
+   var coins=200,cost=100*a+100*b,avg=cost/coins,val=coins*t,pl=val-cost;
+   $('pfs').innerHTML='<div><small>You hold</small><b>200 coins</b></div><div><small>Put in</small><b>'+money(cost)+'</b></div><div><small>Average buy price</small><b>$'+avg.toFixed(2)+'</b></div><div><small>Worth today</small><b>'+money(val)+'</b></div><div><small>Profit / loss</small><b class="'+(pl>=0?'up':'dn')+'">'+money(pl)+' ('+pct(pl/cost*100)+')</b></div>';
+   $('pfv').className='verdict'+(pl>=0?' good':'');
+   $('pfv').textContent=t>=avg?'The price today is above your average buy price of $'+avg.toFixed(2)+', so you are in profit.':'The price today is below your average buy price of $'+avg.toFixed(2)+', so this position is at a loss on paper.';
+  }
+  el.querySelectorAll('input').forEach(function(i){i.oninput=calc});calc();
+ },
+ quiz:{q:'You bought 100 coins at $40 and 100 coins at $80. What is your average buy price?',o:['$40','$60','$80','$120'],a:1,why:'Average cost is total money spent divided by total coins: (100 x $40 + 100 x $80) / 200 = $60. The portfolio page does this for you on every buy and sell.'}},
+
 {id:'final',code:'DONE',title:'Set up safely, then earn your certificate',tool:null,
  body:'<p>Before you rely on the desk, run through this checklist once. Then finish any lessons you skipped and your certificate will unlock here.</p>',
  widget:function(el){
@@ -421,6 +471,7 @@ function show(){
   var m=$('main');
   m.innerHTML='<article class="lesson"><div class="code">'+l.code+' &middot; Lesson '+(cur+1)+' of '+L.length+'</div><h1>'+l.title+'</h1>'+l.body
    +(l.tool?'<div class="openrow"><a class="btn" href="deskbwsddp.html#'+l.tool+'" target="_blank" rel="noopener">Open this tool in the desk</a><span class="note">Opens in a new tab so you can follow along.</span></div>':'')
+   +(l.link?'<div class="openrow"><a class="btn" href="'+l.link[0]+'" target="_blank" rel="noopener">'+l.link[1]+'</a><span class="note">Opens in a new tab so you can follow along.</span></div>':'')
    +'<div id="wg"></div>'
    +'<div class="quiz"><h3>Check yourself</h3><p><b>'+l.quiz.q+'</b></p><div class="opts" id="qo">'+l.quiz.o.map(function(o,i){return '<button data-a="'+i+'">'+o+'</button>'}).join('')+'</div><div class="why" id="qw"></div></div>'
    +'<div class="nav"><button class="btn ghost" id="pv" '+(cur===0?'disabled':'')+'>Back</button><button class="btn" id="nx" '+(prog.done[l.id]?'':'disabled')+'>'+(cur===L.length-1?'Finish':'Next lesson')+'</button></div></article>';

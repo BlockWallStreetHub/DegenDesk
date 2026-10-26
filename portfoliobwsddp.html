@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BWS Portfolio — Track Holdings &amp; Set Alerts</title>
+<script>/* members only: index.html sets dd_access when a valid code is entered */
+(function(){try{var a=JSON.parse(localStorage.getItem('dd_access')||'null');if(a&&a.exp&&Date.now()<((a.exp.length>10&&a.exp.indexOf('T')>-1)?Date.parse(a.exp):Date.parse(a.exp+'T23:59:59-06:00')))return}catch(e){}document.documentElement.style.display='none';location.replace('index.html?go=portfolio')})();</script>
+<style>
+:root{--bg:#090a0e;--panel:#121419;--panel2:#1a1d25;--line:#272b36;--tx:#e9e7e1;--mut:#8f93a3;--gold:#d9b44a;--gold2:#f1d27a;--up:#2ecc71;--dn:#ff5c5c;--blue:#5aa9ff}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+a{color:var(--gold2)}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:16px 20px;max-width:1300px;margin:auto}
+h1{margin:0;font-size:24px;letter-spacing:.04em;text-transform:uppercase}h1 b{color:var(--gold)}
+.nav a{margin-left:14px;text-decoration:none;color:var(--mut)}.nav a:hover{color:var(--gold2)}
+main{max-width:1300px;margin:auto;padding:0 20px 60px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.card h2{margin:0 0 12px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.card h2 small{font-weight:400;letter-spacing:0;text-transform:none;color:var(--mut)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .t{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.kpi .v{font-size:24px;font-weight:700;margin:2px 0}.kpi .s{font-size:12px;color:var(--mut)}
+.up{color:var(--up)}.dn{color:var(--dn)}.mut{color:var(--mut)}.gold{color:var(--gold2)}
+input,select,button,textarea{font:inherit;color:var(--tx)}
+input[type=text],input[type=number],input[type=date],input[type=password],select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;outline:none;color-scheme:dark}
+input:focus,select:focus{border-color:var(--gold)}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+.btn:hover{border-color:var(--gold)}.btn.on{border-color:var(--gold);color:var(--gold2)}
+.btn.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:700}
+.btn.sm{padding:3px 8px;font-size:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-items:end}
+.tw{overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);background:#15171e;position:sticky;top:0}
+th.l,td.l{text-align:left}
+tbody tr:hover{background:#171a22}
+.sym{font-weight:700}
+canvas{width:100%;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:10px}
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.note{font-size:12px;color:var(--mut);margin-top:8px}
+.empty{padding:26px;text-align:center;color:var(--mut)}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;border:1px solid var(--line);color:var(--mut)}
+.badge.on{color:var(--up);border-color:#1f6a43}.badge.off{color:var(--mut)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;margin-top:8px;color:var(--mut)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.cfg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.chk{display:flex;align-items:center;gap:6px;font-size:12.5px}.chk input{accent-color:var(--gold)}
+#toast{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:50;max-width:340px}
+.tst{background:#1d2027;border:1px solid var(--gold);border-radius:10px;padding:10px 12px;box-shadow:0 8px 30px #0009;font-size:13px}
+#status{font-size:12px;color:var(--mut)}#status.err{color:var(--dn)}
+details summary{cursor:pointer;color:var(--gold2)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div><h1><b>BWS</b> Portfolio</h1><div id="status">Loading prices…</div></div>
+  <div class="nav"><a href="deskbwsddp.html">Desk</a><a href="accountbwsddp.html">Account</a><a href="coursebwsddp.html">Course</a></div>
+</div>
+<main>
+<div class="kpis" id="kpis"></div>
+
+<div class="grid2">
+  <section class="card">
+    <h2>Portfolio value <span class="row"><button class="btn sm rg on" data-d="30">30D</button><button class="btn sm rg" data-d="90">90D</button><button class="btn sm rg" data-d="365">1Y</button></span></h2>
+    <canvas id="c1" style="height:260px"></canvas>
+    <div class="legend"><span><i style="background:#d9b44a"></i>Value</span><span><i style="background:#5aa9ff"></i>Money you put in</span></div>
+  </section>
+  <section class="card">
+    <h2>Allocation</h2>
+    <canvas id="c2" style="height:260px"></canvas>
+    <div class="legend" id="alLg"></div>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Holdings <small>Click Edit or the coin name to change a transaction</small></h2>
+  <div class="tw"><table><thead><tr><th class="l">Coin</th><th>Amount</th><th>Avg buy</th><th>Price</th><th>24h</th><th>Value</th><th>Profit / loss</th><th>% of portfolio</th><th>Realized</th><th></th></tr></thead><tbody id="hb"></tbody></table></div>
+</section>
+
+<section class="card">
+  <h2 id="fh">Add a transaction</h2>
+  <div class="form">
+    <label class="f">Coin symbol<input type="text" id="fs" list="symlist" placeholder="BTC" autocomplete="off"></label>
+    <label class="f">Type<select id="ft"><option value="buy">Buy</option><option value="sell">Sell</option></select></label>
+    <label class="f">Amount<input type="number" id="fa" step="any" min="0" placeholder="0.5"></label>
+    <label class="f">Price per coin ($)<input type="number" id="fp" step="any" min="0" placeholder="65000"></label>
+    <label class="f">Date<input type="date" id="fd"></label>
+    <label class="f">Fee ($)<input type="number" id="ffee" step="any" min="0" value="0"></label>
+    <label class="f">Note<input type="text" id="fn" placeholder="optional" maxlength="60"></label>
+    <div class="row"><button class="btn gold" id="fadd">Add</button><button class="btn" id="fcur" title="Fill price with today's price">Use today's price</button><button class="btn" id="fcancel" style="display:none">Cancel edit</button></div>
+  </div>
+  <datalist id="symlist"></datalist>
+  <div id="fmsg" class="note"></div>
+  <details style="margin-top:12px"><summary>Import / export / backup</summary>
+    <div class="row" style="margin-top:8px"><button class="btn" id="exp">Download my transactions (CSV)</button><input type="file" id="imp" accept=".csv,.txt"><span class="note">CSV columns: symbol, type, amount, price, date (YYYY-MM-DD), fee</span></div>
+  </details>
+</section>
+
+<section class="card">
+  <h2>Transactions</h2>
+  <div class="tw"><table><thead><tr><th class="l">Date</th><th class="l">Coin</th><th class="l">Type</th><th>Amount</th><th>Price</th><th>Total</th><th>Fee</th><th class="l">Note</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+</section>
+
+<section class="card">
+  <h2>Alerts <small>Sent to your channels below while this page is open</small></h2>
+  <div class="form">
+    <label class="f">Coin (or PORTFOLIO)<input type="text" id="as" list="symlist" placeholder="BTC" autocomplete="off"></label>
+    <label class="f">When
+      <select id="ak">
+        <option value="pabove">Price goes above ($)</option><option value="pbelow">Price falls below ($)</option>
+        <option value="cabove">24h change above (%)</option><option value="cbelow">24h change below (%)</option>
+        <option value="gabove">Profit on my position above (%)</option><option value="gbelow">Profit on my position below (%)</option>
+        <option value="vabove">Portfolio value above ($)</option><option value="vbelow">Portfolio value below ($)</option>
+      </select></label>
+    <label class="f">Value<input type="number" id="av" step="any" placeholder="70000"></label>
+    <label class="f">Repeat
+      <select id="ar"><option value="0">Only once</option><option value="1">At most once an hour</option><option value="6">At most every 6 hours</option><option value="24">At most once a day</option></select></label>
+    <div class="row"><button class="btn gold" id="aadd">Add alert</button></div>
+  </div>
+  <div id="amsg" class="note"></div>
+  <div class="tw" style="margin-top:12px"><table><thead><tr><th class="l">Alert</th><th class="l">Status</th><th class="l">Repeat</th><th class="l">Last sent</th><th></th></tr></thead><tbody id="ab"></tbody></table></div>
+  <h2 style="margin-top:18px">Recent alert history</h2>
+  <div class="tw"><table><thead><tr><th class="l">When</th><th class="l">Message</th><th class="l">Delivered to</th></tr></thead><tbody id="hh"></tbody></table></div>
+</section>
+
+<section class="card" id="channels">
+  <h2>Where alerts go <small>Saved on this device. The same settings are used by the Desk's alerts</small></h2>
+  <div class="cfg">
+    <label class="f">Telegram bot token<input type="password" id="tgToken" placeholder="123456:ABC…" autocomplete="off"></label>
+    <label class="f">Telegram chat ID<input type="text" id="tgChat" placeholder="123456789"></label>
+    <label class="f">Email: your Web3Forms access key<input type="password" id="wfKey" placeholder="paste your key" autocomplete="off"></label>
+    <label class="f">Phone push: ntfy topic<input type="text" id="ntfyTopic" placeholder="bws-alerts-8f3k29xq7z"></label>
+    <label class="f">WhatsApp phone (with country code)<input type="text" id="waPhone" placeholder="+13125551234"></label>
+    <label class="f">WhatsApp CallMeBot key<input type="password" id="waKey" autocomplete="off"></label>
+    <label class="f">Discord webhook URL<input type="password" id="discord" placeholder="https://discord.com/api/webhooks/…" autocomplete="off"></label>
+  </div>
+  <div class="row" style="margin-top:12px"><button class="btn gold" id="csave">Save</button><button class="btn" id="ctest">Send a test alert</button><span id="cmsg" class="note"></span></div>
+  <details style="margin-top:10px"><summary>How to set each one up (free)</summary>
+    <div class="note" style="line-height:1.6">
+    <b>Telegram:</b> message @BotFather, send /newbot, paste the token it gives you. Message your new bot once, open <code>api.telegram.org/bot&lt;token&gt;/getUpdates</code> in a browser and copy the number after "chat":{"id":.<br>
+    <b>Email:</b> go to web3forms.com, enter the email that should receive alerts, and paste the access key they send you. Each person uses their own key, so alerts go to their own inbox.<br>
+    <b>Phone:</b> install the free <b>ntfy</b> app, subscribe to a long random topic name, and type the same name above. Alerts arrive as push notifications. <b>WhatsApp:</b> follow CallMeBot's one-time setup to get a key for your number.<br>
+    <b>Text messages (SMS):</b> normal SMS needs a paid service, so it isn't built in. Phone push, WhatsApp and Telegram all reach your phone for free.<br>
+    <b>Important:</b> alerts are checked every minute while this page is open in a browser tab. If the tab is closed, nothing is checked. Keys are stored only in this browser.</div>
+  </details>
+</section>
+</main>
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+var KEY='avaxLiqWatch.v1',PKEY='bws_pf_v1',STABLES={USDT:1,USDC:1,DAI:1,FDUSD:1,TUSD:1,USDE:1,USD:1,BUSD:1,PYUSD:1};
+/* ---------- storage ---------- */
+var S={tx:[],alerts:[],hist:[]};
+try{var r=JSON.parse(localStorage.getItem(PKEY)||'null');if(r){S.tx=r.tx||[];S.alerts=r.alerts||[];S.hist=r.hist||[]}}catch(e){}
+function save(){try{localStorage.setItem(PKEY,JSON.stringify(S))}catch(e){}}
+function chanGet(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){return{}}}
+function chanSet(o){var c=chanGet();Object.keys(o).forEach(function(k){c[k]=o[k]});try{localStorage.setItem(KEY,JSON.stringify(c))}catch(e){}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+/* ---------- formatting ---------- */
+function usd(n,d){if(n==null||isNaN(n))return '—';var s=n<0?'-':'';n=Math.abs(n);return s+'$'+n.toLocaleString('en-US',{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d})}
+function px(n){if(n==null||isNaN(n))return '—';var a=Math.abs(n);if(a>=1000)return '$'+n.toLocaleString('en-US',{maximumFractionDigits:2});if(a>=1)return '$'+n.toFixed(2);if(a>=.01)return '$'+n.toFixed(4);return '$'+n.toPrecision(3)}
+function amt(n){var a=Math.abs(n);return a>=1000?n.toLocaleString('en-US',{maximumFractionDigits:2}):a>=1?n.toFixed(4).replace(/\.?0+$/,''):n.toPrecision(4).replace(/\.?0+$/,'')}
+function cmp(n){var a=Math.abs(n);return a>=1e9?'$'+(n/1e9).toFixed(1)+'B':a>=1e6?'$'+(n/1e6).toFixed(1)+'M':a>=1e4?'$'+(n/1e3).toFixed(0)+'K':a>=1e3?'$'+(n/1e3).toFixed(1)+'K':'$'+n.toFixed(0)}
+function pc(n,d){if(n==null||isNaN(n))return '—';return (n>=0?'+':'')+n.toFixed(d==null?2:d)+'%'}
+function cls(n){return n>=0?'up':'dn'}
+function toast(t){var d=document.createElement('div');d.className='tst';d.textContent=t;$('toast').appendChild(d);setTimeout(function(){d.remove()},9000)}
+function status(t,err){$('status').textContent=t;$('status').className=err?'err':''}
+/* ---------- prices ---------- */
+var P={},BIN={},PSRC='';
+function getJ(u){return fetch(u).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})}
+function needSyms(){var s={};S.tx.forEach(function(t){s[t.sym]=1});S.alerts.forEach(function(a){if(a.sym!=='PORTFOLIO')s[a.sym]=1});return Object.keys(s)}
+function fetchBinance(){
+  return getJ('https://data-api.binance.vision/api/v3/ticker/24hr?type=MINI').then(function(a){
+    if(!Array.isArray(a))throw new Error('bad');
+    a.forEach(function(t){if(/USDT$/.test(t.symbol)){var s=t.symbol.slice(0,-4),l=+t.lastPrice,o=+t.openPrice;if(l>0){BIN[s]={p:l,ch:o>0?(l/o-1)*100:0}}}});
+    return true})}
+function fetchCC(syms){
+  if(!syms.length)return Promise.resolve();
+  return getJ('https://min-api.cryptocompare.com/data/pricemultifull?fsyms='+syms.join(',')+'&tsyms=USD').then(function(j){
+    var raw=j.RAW||{};syms.forEach(function(s){var q=raw[s]&&raw[s].USD;if(q&&q.PRICE>0)P[s]={p:q.PRICE,ch:q.CHANGEPCT24HOUR||0,src:'cc'}})})}
+function refresh(){
+  status('Updating prices…');
+  return fetchBinance().then(function(){PSRC='Binance'},function(){PSRC=''}).then(function(){
+    var need=needSyms(),miss=[];
+    need.forEach(function(s){if(STABLES[s]){P[s]={p:1,ch:0,src:'fix'}}else if(BIN[s]){P[s]={p:BIN[s].p,ch:BIN[s].ch,src:'bin'}}else miss.push(s)});
+    return fetchCC(miss.filter(function(s){return !P[s]||true})).catch(function(){})}).then(function(){
+    var bad=needSyms().filter(function(s){return !P[s]});
+    var dl=$('symlist');if(!dl.children.length&&Object.keys(BIN).length){dl.innerHTML=Object.keys(BIN).sort().map(function(s){return '<option value="'+s+'">'}).join('')}
+    status((Object.keys(P).length?'Prices updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'No prices yet')+(bad.length?' · no price for '+bad.join(', '):''),!Object.keys(P).length&&needSyms().length>0);
+    render();checkAlerts();
+  });
+}
+/* ---------- positions ---------- */
+function positions(){
+  var pos={},tx=S.tx.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0});
+  tx.forEach(function(t){
+    var p=pos[t.sym]||(pos[t.sym]={sym:t.sym,amt:0,cost:0,real:0,invested:0});
+    if(t.type==='buy'){p.cost+=t.amt*t.price+(t.fee||0);p.amt+=t.amt;p.invested+=t.amt*t.price+(t.fee||0)}
+    else{var avg=p.amt>0?p.cost/p.amt:0,q=Math.min(t.amt,p.amt);p.real+=q*t.price-(t.fee||0)-q*avg;p.cost-=q*avg;p.amt-=q}
+  });
+  return Object.keys(pos).map(function(k){return pos[k]});
+}
+function totals(){
+  var ps=positions(),val=0,cost=0,real=0,ch24=0,best=null,worst=null;
+  ps.forEach(function(p){var q=P[p.sym],v=q?p.amt*q.p:0;p.price=q?q.p:null;p.ch=q?q.ch:null;p.value=v;p.pl=q?v-p.cost:null;p.plp=q&&p.cost>0?(v/p.cost-1)*100:null;
+    val+=v;cost+=p.cost;real+=p.real;if(q){ch24+=v-v/(1+q.ch/100);if(p.amt>1e-12&&p.plp!=null){if(!best||p.plp>best.plp)best=p;if(!worst||p.plp<worst.plp)worst=p}}});
+  return{ps:ps,val:val,cost:cost,real:real,ch24:ch24,best:best,worst:worst};
+}
+/* ---------- render ---------- */
+var COL=['#d9b44a','#5aa9ff','#2ecc71','#b58cff','#ff8a4c','#4dd0e1','#ff6b81','#9ccc65','#f06292','#90a4ae'];
+function render(){
+  var T=totals(),ps=T.ps.filter(function(p){return p.amt>1e-12}).sort(function(a,b){return b.value-a.value});
+  var pl=T.val-T.cost,plp=T.cost>0?pl/T.cost*100:0,chp=T.val>0?T.ch24/(T.val-T.ch24)*100:0;
+  $('kpis').innerHTML=
+   k('Portfolio value',usd(T.val),ps.length+' coin'+(ps.length===1?'':'s'),'')+
+   k('Profit / loss (open)',usd(pl),T.cost>0?pc(plp)+' on '+usd(T.cost)+' cost':'add a buy to start',cls(pl))+
+   k('Last 24 hours',usd(T.ch24),pc(chp),cls(T.ch24))+
+   k('Best / worst',T.best?esc(T.best.sym)+' '+pc(T.best.plp,1):'—',T.worst?'worst: '+esc(T.worst.sym)+' '+pc(T.worst.plp,1):'',T.best?cls(T.best.plp):'')+
+   k('Realized profit (sold)',usd(T.real),'from sells',cls(T.real));
+  function k(t,v,s,c){return '<div class="kpi"><div class="t">'+t+'</div><div class="v '+(c||'')+'">'+v+'</div><div class="s">'+s+'</div></div>'}
+  $('hb').innerHTML=ps.length?ps.map(function(p,i){return '<tr><td class="l"><span class="sym" style="color:'+COL[i%COL.length]+'">'+esc(p.sym)+'</span></td><td>'+amt(p.amt)+'</td><td>'+(p.amt>0?px(p.cost/p.amt):'—')+'</td><td>'+(p.price==null?'<span class="mut">no price</span>':px(p.price))+'</td><td class="'+cls(p.ch||0)+'">'+(p.ch==null?'—':pc(p.ch))+'</td><td>'+usd(p.value)+'</td><td class="'+cls(p.pl||0)+'">'+(p.pl==null?'—':usd(p.pl)+' ('+pc(p.plp,1)+')')+'</td><td>'+(T.val>0?(p.value/T.val*100).toFixed(1)+'%':'—')+'</td><td class="'+cls(p.real)+'">'+(p.real?usd(p.real):'—')+'</td><td><button class="btn sm" data-add="'+esc(p.sym)+'">+ Add</button></td></tr>'}).join(''):'<tr><td colspan="10" class="empty">No holdings yet. Add your first buy below.</td></tr>';
+  var txs=S.tx.slice().sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0});
+  $('tb').innerHTML=txs.length?txs.map(function(t){return '<tr><td class="l">'+esc(t.date)+'</td><td class="l sym">'+esc(t.sym)+'</td><td class="l '+(t.type==='buy'?'up':'dn')+'">'+t.type+'</td><td>'+amt(t.amt)+'</td><td>'+px(t.price)+'</td><td>'+usd(t.amt*t.price)+'</td><td>'+(t.fee?usd(t.fee):'—')+'</td><td class="l mut">'+esc(t.note||'')+'</td><td><button class="btn sm" data-edit="'+t.id+'">Edit</button> <button class="btn sm" data-del="'+t.id+'">Delete</button></td></tr>'}).join(''):'<tr><td colspan="9" class="empty">Nothing here yet.</td></tr>';
+  donut(ps,T.val);drawChart();renderAlerts();
+}
+function donut(ps,total){
+  var c=$('c2'),dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;var x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  var cx=w/2,cy=h/2,R=Math.min(w,h)/2-10,a0=-Math.PI/2;
+  if(!ps.length||total<=0){x.fillStyle='#8f93a3';x.textAlign='center';x.fillText('No holdings yet',cx,cy);$('alLg').innerHTML='';return}
+  ps.forEach(function(p,i){var a=p.value/total*Math.PI*2;x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,R,a0,a0+a);x.closePath();x.fillStyle=COL[i%COL.length];x.fill();a0+=a});
+  x.beginPath();x.arc(cx,cy,R*.58,0,7);x.fillStyle='#1a1d25';x.fill();x.fillStyle='#e9e7e1';x.textAlign='center';x.font='600 15px system-ui';x.fillText(usd(total,0),cx,cy+5);
+  $('alLg').innerHTML=ps.slice(0,10).map(function(p,i){return '<span><i style="background:'+COL[i%COL.length]+'"></i>'+esc(p.sym)+' '+(p.value/total*100).toFixed(1)+'%</span>'}).join('');
+}
+/* ---------- history chart ---------- */
+var HIST={},rangeD=30;
+function loadHist(sym){
+  if(HIST[sym]!==undefined)return Promise.resolve();HIST[sym]=null;
+  return getJ('https://data-api.binance.vision/api/v3/klines?symbol='+sym+'USDT&interval=1d&limit=400').then(function(a){HIST[sym]=a.map(function(k){return[k[0],+k[4]]})})
+   .catch(function(){return getJ('https://min-api.cryptocompare.com/data/v2/histoday?fsym='+sym+'&tsym=USD&limit=400').then(function(j){HIST[sym]=((j.Data&&j.Data.Data)||[]).map(function(q){return[q.time*1000,q.close]})})}).catch(function(){HIST[sym]=null});
+}
+function drawChart(){
+  var c=$('c1'),dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;var x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  var syms=Object.keys(S.tx.reduce(function(o,t){o[t.sym]=1;return o},{}));
+  if(!syms.length){x.fillStyle='#8f93a3';x.textAlign='center';x.fillText('Add a transaction to see your value over time',w/2,h/2);return}
+  var need=syms.filter(function(s){return HIST[s]===undefined&&!STABLES[s]});
+  if(need.length){Promise.all(need.map(loadHist)).then(drawChart);x.fillStyle='#8f93a3';x.textAlign='center';x.fillText('Loading price history…',w/2,h/2);return}
+  var DAY=864e5,now=Math.floor(Date.now()/DAY)*DAY,days=[];for(var d=rangeD;d>=0;d--)days.push(now-d*DAY);
+  var tx=S.tx.slice().sort(function(a,b){return a.date<b.date?-1:1}),val=[],inv=[];
+  days.forEach(function(t){
+    var end=t+DAY,hold={},cost=0;
+    tx.forEach(function(q){var tt=Date.parse(q.date+'T00:00:00Z');if(tt>=end)return;hold[q.sym]=(hold[q.sym]||0)+(q.type==='buy'?q.amt:-q.amt);cost+=q.type==='buy'?q.amt*q.price+(q.fee||0):-q.amt*q.price});
+    var v=0;Object.keys(hold).forEach(function(s){if(hold[s]<=1e-12)return;if(STABLES[s]){v+=hold[s];return}var H=HIST[s];if(!H)return;var px0=null;for(var i=H.length-1;i>=0;i--){if(H[i][0]<=t){px0=H[i][1];break}}if(px0==null&&H.length)px0=H[0][1];if(px0!=null)v+=hold[s]*px0});
+    val.push(v);inv.push(Math.max(0,cost))});
+  var L=58,R=10,T=10,B=24,lo=Math.min.apply(null,val.concat(inv)),hi=Math.max.apply(null,val.concat(inv));if(hi<=lo){hi=lo+1}var pd=(hi-lo)*.1;lo=Math.max(0,lo-pd);hi+=pd;
+  var X=function(i){return L+i/(days.length-1)*(w-L-R)},Y=function(v){return T+(1-(v-lo)/(hi-lo))*(h-T-B)};
+  x.font='11px system-ui';x.fillStyle='#8f93a3';x.strokeStyle='#272b36';x.textAlign='right';
+  for(var g=0;g<=4;g++){var v=lo+(hi-lo)*g/4,y=Y(v);x.beginPath();x.moveTo(L,y);x.lineTo(w-R,y);x.stroke();x.fillText(cmp(v),L-6,y+4)}
+  x.textAlign='center';for(var k=0;k<=4;k++){var ii=Math.round((days.length-1)*k/4);x.fillText(new Date(days[ii]).toISOString().slice(5,10),X(ii),h-7)}
+  function line(a,col,wd){x.strokeStyle=col;x.lineWidth=wd;x.beginPath();a.forEach(function(v,i){i?x.lineTo(X(i),Y(v)):x.moveTo(X(i),Y(v))});x.stroke()}
+  line(inv,'#5aa9ff',1.4);line(val,'#d9b44a',2.2);
+}
+document.querySelectorAll('.rg').forEach(function(b){b.onclick=function(){rangeD=+b.getAttribute('data-d');document.querySelectorAll('.rg').forEach(function(x){x.classList.toggle('on',x===b)});drawChart()}});
+/* ---------- transactions form ---------- */
+var editing=null;
+$('fd').value=new Date().toISOString().slice(0,10);
+function msg(t,err){$('fmsg').textContent=t;$('fmsg').style.color=err?'#ff5c5c':''}
+$('fcur').onclick=function(){var s=$('fs').value.trim().toUpperCase(),q=P[s]||(BIN[s]&&{p:BIN[s].p});if(q)$('fp').value=q.p;else msg('No live price for '+(s||'that coin')+' yet. Type the price yourself.',true)};
+$('fadd').onclick=function(){
+  var s=$('fs').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''),a=parseFloat($('fa').value),p=parseFloat($('fp').value),d=$('fd').value,f=parseFloat($('ffee').value)||0;
+  if(!s)return msg('Type a coin symbol, like BTC.',true);if(!(a>0))return msg('Enter an amount above zero.',true);if(!(p>=0))return msg('Enter the price per coin.',true);if(!d)return msg('Pick a date.',true);
+  if($('ft').value==='sell'){var have=positions().filter(function(q){return q.sym===s})[0];var cur=have?have.amt:0;if(editing){var old=S.tx.filter(function(q){return q.id===editing})[0];if(old&&old.sym===s&&old.type==='sell')cur+=old.amt;if(old&&old.sym===s&&old.type==='buy')cur-=old.amt}if(a>cur+1e-9)return msg('You only hold '+amt(Math.max(0,cur))+' '+s+' to sell.',true)}
+  var t={id:editing||uid(),sym:s,type:$('ft').value,amt:a,price:p,date:d,fee:f,note:$('fn').value.trim()};
+  if(editing){S.tx=S.tx.map(function(q){return q.id===editing?t:q})}else S.tx.push(t);
+  save();clearForm();msg('Saved '+t.type+' of '+amt(a)+' '+s+'.');HIST[s]=undefined;refresh();
+};
+function clearForm(){editing=null;['fs','fa','fp','fn'].forEach(function(i){$(i).value=''});$('ffee').value='0';$('ft').value='buy';$('fd').value=new Date().toISOString().slice(0,10);$('fh').textContent='Add a transaction';$('fadd').textContent='Add';$('fcancel').style.display='none'}
+$('fcancel').onclick=function(){clearForm();msg('')};
+document.addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.edit){var t=S.tx.filter(function(q){return q.id===b.dataset.edit})[0];if(!t)return;editing=t.id;$('fs').value=t.sym;$('ft').value=t.type;$('fa').value=t.amt;$('fp').value=t.price;$('fd').value=t.date;$('ffee').value=t.fee||0;$('fn').value=t.note||'';$('fh').textContent='Edit transaction';$('fadd').textContent='Save changes';$('fcancel').style.display='';$('fs').scrollIntoView({behavior:'smooth',block:'center'})}
+  if(b.dataset.del){if(confirm('Delete this transaction?')){S.tx=S.tx.filter(function(q){return q.id!==b.dataset.del});save();render()}}
+  if(b.dataset.add){$('fs').value=b.dataset.add;$('ft').value='buy';$('fa').focus();$('fs').scrollIntoView({behavior:'smooth',block:'center'})}
+  if(b.dataset.adel){S.alerts=S.alerts.filter(function(q){return q.id!==b.dataset.adel});save();renderAlerts()}
+  if(b.dataset.atog){S.alerts.forEach(function(q){if(q.id===b.dataset.atog){q.on=!q.on;if(q.on)q.fired=false}});save();renderAlerts()}
+});
+$('exp').onclick=function(){var rows=['symbol,type,amount,price,date,fee,note'].concat(S.tx.map(function(t){return [t.sym,t.type,t.amt,t.price,t.date,t.fee||0,'"'+(t.note||'').replace(/"/g,'""')+'"'].join(',')}));
+  var bl=new Blob([rows.join('\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='bws-portfolio.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},400)};
+$('imp').onchange=function(){var f=this.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){
+  var lines=rd.result.replace(/\r/g,'').split('\n').filter(function(l){return l.trim()}),n=0;
+  lines.forEach(function(l,i){var p=l.split(',');if(i===0&&/symbol/i.test(p[0]))return;var s=(p[0]||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''),ty=(p[1]||'').trim().toLowerCase(),a=parseFloat(p[2]),pr=parseFloat(p[3]),d=(p[4]||'').trim(),fe=parseFloat(p[5])||0;
+    if(s&&(ty==='buy'||ty==='sell')&&a>0&&pr>=0&&/^\d{4}-\d{2}-\d{2}$/.test(d)){S.tx.push({id:uid(),sym:s,type:ty,amt:a,price:pr,date:d,fee:fe,note:(p[6]||'').replace(/"/g,'').trim()});n++}});
+  save();msg('Imported '+n+' transactions.');refresh()};rd.readAsText(f)};
+/* ---------- alerts ---------- */
+var KN={pabove:'price above',pbelow:'price below',cabove:'24h change above',cbelow:'24h change below',gabove:'position profit above',gbelow:'position profit below',vabove:'portfolio value above',vbelow:'portfolio value below'};
+$('ak').onchange=function(){var k=$('ak').value;if(k[0]==='v'&&!$('as').value)$('as').value='PORTFOLIO'};
+$('aadd').onclick=function(){
+  var k=$('ak').value,s=$('as').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''),v=parseFloat($('av').value),m=$('amsg');m.style.color='';
+  if(k[0]==='v')s='PORTFOLIO';else if(!s){m.textContent='Type a coin symbol.';m.style.color='#ff5c5c';return}
+  if(isNaN(v)){m.textContent='Enter the number for the alert.';m.style.color='#ff5c5c';return}
+  S.alerts.push({id:uid(),sym:s,kind:k,val:v,rep:+$('ar').value,on:true,last:0,fired:false});save();m.textContent='Alert added.';$('av').value='';refresh();
+};
+function alertText(a){var u=(a.kind==='pabove'||a.kind==='pbelow'||a.kind[0]==='v')?'$':'%';return esc(a.sym)+' '+KN[a.kind]+' '+(u==='$'?usd(a.val,a.val<10?4:2):a.val+'%')}
+function renderAlerts(){
+  $('ab').innerHTML=S.alerts.length?S.alerts.map(function(a){return '<tr><td class="l">'+alertText(a)+'</td><td class="l"><span class="badge '+(a.on?'on':'off')+'">'+(a.on?'Watching':(a.fired?'Sent (once)':'Paused'))+'</span></td><td class="l">'+(a.rep?'every '+a.rep+'h at most':'once')+'</td><td class="l mut">'+(a.last?new Date(a.last).toLocaleString():'never')+'</td><td><button class="btn sm" data-atog="'+a.id+'">'+(a.on?'Pause':'Resume')+'</button> <button class="btn sm" data-adel="'+a.id+'">Delete</button></td></tr>'}).join(''):'<tr><td colspan="5" class="empty">No alerts yet.</td></tr>';
+  $('hh').innerHTML=S.hist.length?S.hist.slice(0,30).map(function(h){return '<tr><td class="l mut">'+new Date(h.t).toLocaleString()+'</td><td class="l">'+esc(h.m)+'</td><td class="l mut">'+esc(h.to||'this page only')+'</td></tr>'}).join(''):'<tr><td colspan="3" class="empty">Nothing sent yet.</td></tr>';
+}
+function condMet(a,T){
+  var q=P[a.sym];
+  if(a.kind[0]==='v'){return a.kind==='vabove'?T.val>=a.val:T.val<=a.val}
+  if(!q)return null;
+  if(a.kind==='pabove')return q.p>=a.val;if(a.kind==='pbelow')return q.p<=a.val;
+  if(a.kind==='cabove')return q.ch>=a.val;if(a.kind==='cbelow')return q.ch<=a.val;
+  var pos=T.ps.filter(function(p){return p.sym===a.sym&&p.amt>1e-12})[0];if(!pos||pos.plp==null)return null;
+  return a.kind==='gabove'?pos.plp>=a.val:pos.plp<=a.val;
+}
+function describe(a,T){var q=P[a.sym];
+  if(a.kind[0]==='v')return 'Portfolio is worth '+usd(T.val)+' ('+KN[a.kind]+' '+usd(a.val,0)+')';
+  if(a.kind[0]==='p')return a.sym+' is '+px(q.p)+' ('+KN[a.kind]+' '+px(a.val)+')';
+  if(a.kind[0]==='c')return a.sym+' moved '+pc(q.ch)+' in 24h ('+KN[a.kind]+' '+a.val+'%)';
+  var pos=T.ps.filter(function(p){return p.sym===a.sym})[0];return 'Your '+a.sym+' position is '+pc(pos.plp,1)+' ('+KN[a.kind]+' '+a.val+'%)'}
+var chk=false;
+function checkAlerts(){
+  if(chk||!S.alerts.length)return;chk=true;var T=totals(),now=Date.now(),fire=[];
+  S.alerts.forEach(function(a){if(!a.on)return;var m=condMet(a,T);if(m!==true)return;
+    if(a.rep&&a.last&&now-a.last<a.rep*3600*1000)return;fire.push(a)});
+  Promise.all(fire.map(function(a){var text='BWS Portfolio alert: '+describe(a,T)+'.';a.last=now;if(!a.rep){a.on=false;a.fired=true}
+    return sendAll(text).then(function(res){S.hist.unshift({t:now,m:text,to:res.length?res.map(function(r){return r.name+(r.ok?'':' (failed)')}).join(', '):'this page only'});S.hist=S.hist.slice(0,50);toast(text)})})).then(function(){if(fire.length){save();renderAlerts()}chk=false},function(){chk=false});
+}
+/* ---------- channels (same settings as the Desk) ---------- */
+function loadChan(){var c=chanGet();['tgToken','tgChat','wfKey','ntfyTopic','waPhone','waKey','discord'].forEach(function(k){$(k).value=c[k]||''})}
+function readChan(){var o={};['tgToken','tgChat','wfKey','ntfyTopic','waPhone','waKey','discord'].forEach(function(k){o[k]=$(k).value.trim()});return o}
+$('csave').onclick=function(){chanSet(readChan());$('cmsg').textContent='Saved on this device.'};
+function beep(){try{var C=window.AudioContext||window.webkitAudioContext,a=new C(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.06;o.start();setTimeout(function(){o.stop();a.close()},220)}catch(e){}}
+function sendAll(msg){
+  var c=chanGet(),out=[],jobs=[],subject=msg.split(': ').slice(1).join(': ').slice(0,100)||msg.slice(0,100);
+  try{if('Notification' in window&&Notification.permission==='granted')new Notification('BWS Portfolio',{body:msg})}catch(e){}beep();
+  function job(name,fn){jobs.push((async function(){try{out.push({name:name,ok:!!(await fn())})}catch(e){out.push({name:name,ok:false})}})())}
+  if(c.discord)job('Discord',async function(){return(await fetch(c.discord,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:msg})})).ok});
+  if(c.waPhone&&c.waKey)job('WhatsApp',async function(){await fetch('https://api.callmebot.com/whatsapp.php?phone='+encodeURIComponent(c.waPhone.replace(/\s/g,''))+'&text='+encodeURIComponent(msg)+'&apikey='+encodeURIComponent(c.waKey),{mode:'no-cors'});return true});
+  if(c.tgToken&&c.tgChat)job('Telegram',async function(){return(await fetch('https://api.telegram.org/bot'+c.tgToken+'/sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:c.tgChat,text:msg})})).ok});
+  if(c.wfKey)job('Email',async function(){var r=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({access_key:c.wfKey,subject:'BWS Portfolio: '+subject,from_name:'BWS Portfolio',message:msg})});var j=await r.json();return j.success});
+  if(c.ntfyTopic)job('Phone push',async function(){return(await fetch('https://ntfy.sh/',{method:'POST',body:JSON.stringify({topic:c.ntfyTopic,title:'BWS Portfolio',message:msg,priority:4})})).ok});
+  return Promise.all(jobs).then(function(){return out});
+}
+$('ctest').onclick=function(){chanSet(readChan());$('cmsg').textContent='Sending…';try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}
+  sendAll('BWS Portfolio: this is a test alert. If you can read this, your channel works.').then(function(res){$('cmsg').textContent=res.length?res.map(function(r){return r.name+': '+(r.ok?'delivered':'FAILED, check the key or name')}).join(' | '):'No channel is set up yet, so only the sound and desktop popup fired.'})};
+/* ---------- boot ---------- */
+loadChan();render();refresh();
+setInterval(refresh,60000);
+window.addEventListener('resize',function(){render()});
+window.__pf={S:S,P:P,totals:totals,positions:positions,checkAlerts:checkAlerts};
+})();
+</script>
+</body>
+</html>

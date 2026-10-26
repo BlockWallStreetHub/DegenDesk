@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BWS Account — Your Sign-up Info &amp; Settings</title>
+<script>/* members only */
+(function(){try{var a=JSON.parse(localStorage.getItem('dd_access')||'null');if(a&&a.exp&&Date.now()<((a.exp.length>10&&a.exp.indexOf('T')>-1)?Date.parse(a.exp):Date.parse(a.exp+'T23:59:59-06:00')))return}catch(e){}document.documentElement.style.display='none';location.replace('index.html?go=account')})();</script>
+<style>
+:root{--bg:#090a0e;--panel:#121419;--panel2:#1a1d25;--line:#272b36;--tx:#e9e7e1;--mut:#8f93a3;--gold:#d9b44a;--gold2:#f1d27a;--up:#2ecc71;--dn:#ff5c5c}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+a{color:var(--gold2)}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:16px 20px;max-width:900px;margin:auto}
+h1{margin:0;font-size:24px;letter-spacing:.04em;text-transform:uppercase}h1 b{color:var(--gold)}
+.nav a{margin-left:14px;text-decoration:none;color:var(--mut)}.nav a:hover{color:var(--gold2)}
+main{max-width:900px;margin:auto;padding:0 20px 60px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.card h2{margin:0 0 12px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+dl{display:grid;grid-template-columns:minmax(130px,200px) 1fr;gap:8px 16px;margin:0}
+dt{color:var(--mut)}dd{margin:0;word-break:break-word}
+.up{color:var(--up)}.dn{color:var(--dn)}.mut{color:var(--mut)}
+.badge{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;border:1px solid var(--line)}
+.badge.ok{color:var(--up);border-color:#1f6a43}.badge.bad{color:var(--dn);border-color:#7a2d36}.badge.n{color:var(--mut)}
+input,textarea,button{font:inherit;color:var(--tx)}
+input[type=email],input[type=text],textarea{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;outline:none}
+input:focus,textarea:focus{border-color:var(--gold)}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;color:var(--tx);display:inline-block}
+.btn:hover{border-color:var(--gold)}.btn.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:700}
+.btn.red{border-color:#7a2d36;color:#ff8a8a}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.note{font-size:12px;color:var(--mut);margin-top:8px}
+#msg{margin-top:10px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="top"><h1><b>BWS</b> Account</h1><div class="nav"><a href="deskbwsddp.html">Desk</a><a href="portfoliobwsddp.html">Portfolio</a><a href="coursebwsddp.html">Course</a></div></div>
+<main>
+
+<section class="card"><h2>Your sign-up</h2>
+  <dl id="info"></dl>
+  <div class="row" style="margin-top:14px"><a class="btn gold" id="renew" href="#" target="_blank" rel="noopener" hidden>Get or renew full access</a><a class="btn" id="portal" href="#" target="_blank" rel="noopener" hidden>Manage billing</a></div>
+</section>
+
+<section class="card"><h2>Update your email</h2>
+  <div class="row"><input type="email" id="newEm" placeholder="new email address" style="flex:1;min-width:220px"><button class="btn gold" id="saveEm">Save new email</button></div>
+  <div class="note">This changes the email saved on this device and sends Block Wall Street a short note so our member list stays correct.</div>
+</section>
+
+<section class="card"><h2>Alert channels</h2>
+  <dl id="chan"></dl>
+  <div class="row" style="margin-top:12px"><a class="btn" href="portfoliobwsddp.html#channels">Change channels</a><button class="btn red" id="clrChan">Remove all saved keys</button></div>
+  <div class="note">Keys and tokens live only in this browser. They are never sent to Block Wall Street.</div>
+</section>
+
+<section class="card"><h2>Your data on this device</h2>
+  <dl id="data"></dl>
+  <div class="row" style="margin-top:12px"><button class="btn" id="dl">Download my data</button><button class="btn red" id="wipe">Delete portfolio &amp; alerts from this device</button></div>
+</section>
+
+<section class="card"><h2>Message Block Wall Street</h2>
+  <textarea id="mtxt" rows="4" placeholder="Question, billing problem, or a request to remove your email from our list" maxlength="1500"></textarea>
+  <div class="row" style="margin-top:10px"><button class="btn gold" id="send">Send message</button></div>
+  <div id="msg"></div>
+</section>
+
+<section class="card"><h2>Sign out</h2>
+  <div class="row"><button class="btn" id="out">Sign out on this device</button></div>
+  <div class="note">Signing out does not restart a free trial. Your trial clock keeps running.</div>
+</section>
+
+<section class="card"><h2>What we collect</h2>
+  <div class="note" style="margin-top:0;line-height:1.6">When you sign up with an access code we receive your <b>email address</b>, the <b>code you used</b> and the <b>time</b>, sent through Web3Forms to Block Wall Street. We use it to run the member list and to contact you about the Degen Desk. Your portfolio, alerts and keys stay in this browser and are not uploaded. To be removed from our list, send a message above.</div>
+</section>
+</main>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var W3F_KEY="cbde23f6-f617-4b16-953f-7b0aab0e9f58",JOIN_URL="https://buy.stripe.com/5kQ28t4vu3mvfPEabe2sM0y",PORTAL_URL="";  /* paste your Stripe customer-portal link here to show a Manage billing button */
+var PLANS={"d5928e9755858f44262658e63b66018191d238ae49c870465d724a86197f643b":"Member free trial (4 days)","660ae5657730f2071da61e346233eeb4d56346fe348a11bee3e5be2a7930c470":"Owner","52e71e659a57bb374b413ad23a8f0fdca8820afeb98b31bba5f9ad127fef2d2c":"New Money Matrix Discord trial (7 days)"};
+var OWNER_H="660ae5657730f2071da61e346233eeb4d56346fe348a11bee3e5be2a7930c470";
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){return null}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function expMs(a){return a.exp.length>10&&a.exp.indexOf('T')>-1?Date.parse(a.exp):Date.parse(a.exp+'T23:59:59-06:00')}
+function fmt(ms){return new Date(ms).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
+function left(ms){var d=ms-Date.now();if(d<=0)return 'expired';var days=Math.floor(d/864e5),h=Math.floor(d%864e5/36e5);return days>0?days+' day'+(days===1?'':'s')+' '+h+' h':h+' h '+Math.floor(d%36e5/6e4)+' min'}
+function draw(){
+  var a=null;try{a=JSON.parse(ls('dd_access')||'null')}catch(e){}
+  var em=ls('dd_email'),owner=a&&a.h===OWNER_H,plan=a?(PLANS[a.h]||'Subscriber (full access)'):'—',ex=a?expMs(a):0,rows=[];
+  /* trial start */
+  var start=0;if(a){var v=ls('dd_trial_'+a.h+(em?'_'+em:''))||ls('dd_trial_'+a.h);start=parseInt(v||'0',10)||0}
+  var sentKey=null;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf('dd_sent_')===0&&(!em||k.indexOf('dd_sent_'+em+'_')===0))sentKey=k}
+  rows.push(['Email',owner?'<span class="mut">Owner account, no email needed</span>':(em?esc(em):'<span class="mut">not saved on this device</span>')]);
+  rows.push(['Plan',esc(plan)]);
+  if(start)rows.push(['Joined',fmt(start)]);
+  rows.push(['Access ends',a?fmt(ex):'—']);
+  rows.push(['Time left',a?esc(left(ex)):'—']);
+  rows.push(['Status',a&&ex>Date.now()?'<span class="badge ok">Active</span>':'<span class="badge bad">Expired</span>']);
+  if(!owner)rows.push(['Sign-up sent to Block Wall Street',sentKey?'<span class="badge ok">Yes</span>':'<span class="badge n">Not confirmed</span>']);
+  $('info').innerHTML=rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>'}).join('');
+  if(JOIN_URL){$('renew').href=JOIN_URL;$('renew').hidden=false}if(PORTAL_URL){$('portal').href=PORTAL_URL;$('portal').hidden=false}
+  /* channels */
+  var c={};try{c=JSON.parse(ls('avaxLiqWatch.v1')||'{}')||{}}catch(e){}
+  function m(v){return v?'<span class="badge ok">Set</span> <span class="mut">'+esc(String(v).slice(0,3))+'••••</span>':'<span class="badge n">Not set</span>'}
+  $('chan').innerHTML=[['Telegram',c.tgToken&&c.tgChat?m(c.tgToken):m('')],['Email alerts',m(c.wfKey)],['Phone push (ntfy)',c.ntfyTopic?'<span class="badge ok">Set</span> <span class="mut">'+esc(c.ntfyTopic.slice(0,4))+'••••</span>':m('')],['WhatsApp',c.waPhone&&c.waKey?'<span class="badge ok">Set</span> <span class="mut">'+esc(c.waPhone.slice(0,4))+'••••</span>':m('')],['Discord',m(c.discord)]].map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>'}).join('');
+  /* data */
+  var pf={};try{pf=JSON.parse(ls('bws_pf_v1')||'{}')||{}}catch(e){}
+  var course={};try{course=JSON.parse(ls('dd_course')||'{}')||{}}catch(e){}
+  $('data').innerHTML='<dt>Portfolio transactions</dt><dd>'+((pf.tx||[]).length)+'</dd><dt>Portfolio alerts</dt><dd>'+((pf.alerts||[]).length)+'</dd><dt>Course lessons finished</dt><dd>'+Object.keys(course.done||{}).length+'</dd>';
+}
+function post(subject,message,extra){
+  var body={access_key:W3F_KEY,subject:subject,from_name:'Degen Desk account',message:message};
+  Object.keys(extra||{}).forEach(function(k){body[k]=extra[k]});
+  return fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json()}).then(function(j){return !!j.success});
+}
+function say(t,bad){var m=$('msg');m.textContent=t;m.style.color=bad?'#ff5c5c':'#2ecc71'}
+$('saveEm').onclick=function(){
+  var n=$('newEm').value.trim(),old=ls('dd_email')||'(none)';
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(n)){say('Enter a valid email address.',true);return}
+  var a=null;try{a=JSON.parse(ls('dd_access')||'null')}catch(e){}
+  post('Degen Desk email update','Email changed from '+old+' to '+n+'. Plan: '+(a&&PLANS[a.h]||'subscriber'),{email:n}).then(function(ok){
+    if(ok){ls('dd_email',n);$('newEm').value='';draw();say('Email updated.')}else say('Could not reach the server. Your email was not changed. Try again.',true)}).catch(function(){say('Could not reach the server. Your email was not changed. Try again.',true)});
+};
+$('send').onclick=function(){
+  var t=$('mtxt').value.trim();if(t.length<5){say('Write your message first.',true);return}
+  var em=ls('dd_email'),a=null;try{a=JSON.parse(ls('dd_access')||'null')}catch(e){}
+  post('Degen Desk account message',t+'\n\nPlan: '+(a&&PLANS[a.h]||'subscriber'),em?{email:em}:{}).then(function(ok){if(ok){$('mtxt').value='';say('Sent. We will reply to '+(em||'you')+'.')}else say('Could not send right now. Please try again.',true)}).catch(function(){say('Could not send right now. Please try again.',true)});
+};
+$('clrChan').onclick=function(){if(!confirm('Remove all saved alert keys from this device?'))return;var c={};try{c=JSON.parse(ls('avaxLiqWatch.v1')||'{}')||{}}catch(e){}['tgToken','tgChat','wfKey','ntfyTopic','waPhone','waKey','discord'].forEach(function(k){c[k]=''});ls('avaxLiqWatch.v1',JSON.stringify(c));draw()};
+$('wipe').onclick=function(){if(!confirm('Delete your portfolio and alerts from this device? This cannot be undone.'))return;ls('bws_pf_v1',null);draw()};
+$('dl').onclick=function(){
+  var out={email:ls('dd_email'),access:(function(){try{return JSON.parse(ls('dd_access')||'null')}catch(e){return null}})(),portfolio:(function(){try{return JSON.parse(ls('bws_pf_v1')||'null')}catch(e){return null}})(),course:(function(){try{return JSON.parse(ls('dd_course')||'null')}catch(e){return null}})()};
+  var b=new Blob([JSON.stringify(out,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='my-bws-data.json';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},400)};
+$('out').onclick=function(){ls('dd_access',null);ls('dd_intro_seen',null);location.href='index.html'};
+draw();
+})();
+</script>
+</body>
+</html>
