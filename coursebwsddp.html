@@ -141,7 +141,7 @@ footer{border-top:1px solid var(--line);padding:22px 5vw 40px;font-size:12.5px;c
     Degen Desk Course
   </a>
   <span class="sp"></span>
-  <div class="prog"><span id="progTxt">0 of 19</span><div class="bar"><i id="progBar"></i></div></div>
+  <div class="prog"><span id="progTxt">0 of 20</span><div class="bar"><i id="progBar"></i></div></div>
 </header>
 
 <div class="wrap">
@@ -445,6 +445,17 @@ var L=[
   $('cnU').oninput=go;go();
  },
  quiz:{q:'Where do the videos in Degen Cinema actually play from?',o:['They are stored on the Desk','YouTube, shown on the theater screen','Your computer','A paid streaming service'],a:1,why:'Cinema only holds links. The videos play from YouTube, so nothing is stored on the Desk and nothing has to be downloaded.'}},
+{id:'whale',code:'WHALE',title:'Whale Scanner: follow the big buys',tool:null,link:['whalebwsddp.html','Open the Whale Scanner'],
+ body:'<p>A <b>whale</b> is a wallet that moves a lot of money. The <b>Whale Scanner</b> looks at the hottest trading pools on a network and lists every <b>single buy of $1,000 or more</b> in alt coins. Bitcoin look-alikes and stablecoins are left out on purpose.</p><p>Each buy shows the wallet that made it. <b>Tap the wallet</b> and a box pops up asking if you want to track it. You can also paste any wallet address by hand. In <b>Tracked wallets</b> you see what that wallet holds, what it is worth, and what changed since you last looked: new positions, sold-out positions and big changes in size.</p><p>The third tab, <b>Top buyers of a coin</b>, takes a ticker or a contract address and shows the biggest single buys in the last 5 minutes, hour, day, week and month. The free data only reaches back about 24 hours, so weekly and monthly lists fill in over time as you keep checking, and the page tells you how much of each window it has really seen.</p><p>Be careful: a wallet may be a bot, an exchange or a market maker, and a big buy is not a reason to copy it. Use it to learn who moves a coin, not as advice.</p>',
+ widget:function(el){
+  el.innerHTML='<div class="lab"><h4>Would the scanner flag it? Is the wallet readable?</h4><p class="hint">Set the size of one buy and the minimum, then paste a wallet to see which kind it is.</p><input id="whM" type="range" min="100" max="20000" step="100" value="1000" style="width:100%"><div class="stat" id="whS"></div><input id="whA" type="text" placeholder="Paste a wallet address (0x... or Solana)" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:inherit;margin-top:8px"><div class="verdict" id="whV"></div></div>';
+  function go(){var min=+$('whM').value;
+   $('whS').innerHTML='<div><small>Minimum buy</small><b>$'+min.toLocaleString()+'</b></div><div><small>A $2,500 buy</small><b>'+(2500>=min?'flagged':'ignored')+'</b></div><div><small>A $400 buy</small><b>'+(400>=min?'flagged':'ignored')+'</b></div>';
+   var a=$('whA').value.trim(),k=/^0x[0-9a-fA-F]{40}$/.test(a)?'An Ethereum-style wallet. The tracker reads it on Ethereum, Base, Optimism, Arbitrum and Polygon.':(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a)?'A Solana wallet. The tracker reads it from a public Solana node.':null);
+   var v=$('whV');v.className='verdict'+(k?' good':'');v.textContent=k||(a?'That does not look like a wallet address.':'Paste an address to check it.');}
+  $('whM').oninput=go;$('whA').oninput=go;go();
+ },
+ quiz:{q:'You see a $12,000 buy from a wallet in the scanner. What is the sensible next step?',o:['Copy it right away','Track the wallet and watch what it does over time','Ignore the scanner','Send it money'],a:1,why:'A single buy tells you very little. The wallet could be a bot or market maker, and whales sell too. Tracking it shows its holdings and how they change, which is far more useful than reacting to one trade.'}},
 {id:'moon',code:'MOON',title:'Moon Desk: the sky behind the chart',tool:null,link:['moonbwsddp.html','Open Moon Desk'],
  body:'<p>Moon Desk lays astrology behind a price chart: the <b>moon phase</b>, the <b>zodiac sign</b> the moon and sun are in, <b>eclipses</b> and <b>Mercury retrograde</b>. You can view the chart as daily, weekly or monthly candles, zoom in and out, and hover any candle to see the sky on that day.</p><p>Below the chart, the tool measures what price actually did under each phase and each moon sign, and a back-test lets you try a rule such as &ldquo;only be invested while the moon is waxing.&rdquo; Many serious traders and funds watch cycles of all kinds. A saying often credited to J.P. Morgan claims that billionaires use astrologers, but nobody has confirmed he said it, so treat it as lore.</p><p>The honest part is the <b>random-calendar test</b>. The tool re-runs your idea on the same prices with a fake sky. If the real calendar does not clearly beat the fake ones, the pattern is probably luck. Test many ideas and a few will look good by chance alone, so confirm anything promising on a second coin and a different date range.</p>',
  widget:function(el){
@@ -638,15 +649,16 @@ show();
 <script id="cmpJs">
 (function(){
 'use strict';
-var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
+var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',WH='whalebwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
 var ITEMS=[
- {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'19 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
+ {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'20 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
  {id:'desk',n:'Overview',h:D+'#desk',g:'Watch',lv:'b',d:'Prices, your alerts, positions, pegs and news on one screen.',kw:'home dashboard summary today prices market'},
  {id:'cinema',n:'Degen Cinema',h:'cinemabwsddp.html',g:'Watch',lv:'b',d:'Movies, shows and podcasts to watch right inside the Desk, in a movie-theater setting.',kw:'cinema movies movie shows podcasts videos youtube watch theater film documentary'},
  {id:'news',n:'News',h:D+'#news',g:'Watch',lv:'b',d:'Headlines that could move prices, scored by how big they might be.',kw:'headlines fed cpi hack listing sec'},
  {id:'heat',n:'Heat Map',h:D+'#heat',g:'Find',lv:'b',d:'A colour map of which coins and sectors are up or down right now.',kw:'heatmap sectors green red gainers losers'},
  {id:'trend',n:'Trending Coins',h:D+'#trend',g:'Find',lv:'b',d:'New and fast-moving coins people are looking at today.',kw:'trending new tokens dexscreener geckoterminal'},
  {id:'pegs',n:'Stablecoin Pegs',h:D+'#pegs',g:'Protect',lv:'b',d:'Checks whether USDT, USDC, DAI and others still trade at $1.',kw:'depeg usdt usdc dai safe stable'},
+ {id:'whale',n:'Whale Scanner & Tracker',h:WH,g:'Track',lv:'m',d:'Spot single buys of $1,000 or more in alt coins, tap a wallet to follow it, see what it holds, and look up who made the biggest buys of any coin.',kw:'whale whales scanner tracker wallet big buys large orders smart money top buyers contract address ticker copy trade alt coins'},
  {id:'pf',n:'Portfolio',h:P,g:'Track',lv:'b',d:'Log what you bought and see your value, profit and loss. Set price alerts.',kw:'holdings profit loss track coingecko invest'},
  {id:'acct',n:'Account',h:A,g:'Account',lv:'b',d:'Your sign-up info, access time, alert channels and renewal.',kw:'settings email subscription renew billing login'},
  {id:'biz',n:'Business Bitcoin Time Machine',h:D+'#biz',g:'Business',lv:'b',d:'For merchants and business owners: what setting aside part of sales or profit into Bitcoin could have built.',kw:'business merchant owner shop store sales profit treasury small business bitcoin time machine'},
@@ -669,6 +681,7 @@ var GOALS=[
  {i:'🛡️',q:'I have a loan and do not want to be liquidated',w:'The Lending Account Manager watches your health factor. Add alerts so you hear about trouble early.',to:['risk','ind','pegs']},
  {i:'💼',q:'Track what I own and my profit',w:'Log your buys in Portfolio. It works out your profit, loss and value over time.',to:['pf','port']},
  {i:'🔔',q:'Get alerts on Telegram, email or my phone',w:'Set up your channels once in Account. Every alert on the desk and in Portfolio uses them.',to:['acct','pf','ind']},
+ {i:'🐋',q:'See what the whales are buying',w:'The Whale Scanner lists single buys of $1,000 or more in alt coins. Tap a wallet to follow it and see its holdings, or type in any coin to see who made the biggest buys in the last 5 minutes up to a month.',to:['whale','trend']},
  {i:'🔎',q:'Find coins that are moving',w:'Trending shows what is new and hot. The heat map shows the big picture. Signals add a technical view.',to:['trend','heat','sig']},
  {i:'💧',q:'Find a pool to earn trading fees (LP)',w:'LP Scout lets you filter thousands of pools, then simulate what could happen to your money.',to:['lp','rh']},
  {i:'🎯',q:'My LP went out of range. Hold, rebalance or close?',w:'The LP Manager reads your wallet, shows where each position leaves its range, and a meter reads the market to say hold, rebalance or close.',to:['lpm','lp']},
