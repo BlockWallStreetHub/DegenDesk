@@ -165,6 +165,7 @@ tr.fresh td{background:rgba(217,180,74,.08)}
 <label class="f" style="margin-top:12px">Nickname (optional)<input type="text" id="mdLab" maxlength="40" placeholder="e.g. Early WIF buyer"></label>
 <div class="acts"><button class="btn" id="mdGo" type="button">Track this wallet</button>
 <button class="btn sec" id="mdCopy" type="button">Copy address</button>
+<a class="btn sec" id="mdCh" target="_blank" rel="noopener" style="display:none;align-items:center;text-decoration:none">Chart ↗</a>
 <a class="btn sec" id="mdEx" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none">Explorer</a>
 <button class="btn sec" id="mdX" type="button">Close</button></div>
 </div>
@@ -189,6 +190,7 @@ var NETS={
  arbitrum:{n:'Arbitrum',tx:'https://arbiscan.io/tx/',ac:'https://arbiscan.io/address/'},
  polygon_pos:{n:'Polygon',tx:'https://polygonscan.com/tx/',ac:'https://polygonscan.com/address/'},
  avax:{n:'Avalanche',tx:'https://snowtrace.io/tx/',ac:'https://snowtrace.io/address/'},
+ robinhood:{n:'Robinhood Chain',tx:'',ac:''},
  optimism:{n:'Optimism',tx:'https://optimistic.etherscan.io/tx/',ac:'https://optimistic.etherscan.io/address/'}
 };
 var DS2GT={solana:'solana',ethereum:'eth',base:'base',bsc:'bsc',arbitrum:'arbitrum',polygon:'polygon_pos',avalanche:'avax',optimism:'optimism'};
@@ -274,7 +276,8 @@ function walletBtn(w,i,src){
  var t=findW(w);
  return '<button class="wb'+(t?' tr':'')+'" type="button" data-w="'+esc(w)+'" data-src="'+src+'" data-i="'+i+'" title="'+esc(w)+'">'+(t?'👁 '+esc(t.l||short(w)):'👛 '+esc(short(w)))+'</button>'
 }
-function exUrl(addr,net){return net==='solana'||isSol(addr)&&!isEvm(addr)?'https://solscan.io/account/'+addr:(NETS[net]&&isEvm(addr)?NETS[net].ac+addr:'https://etherscan.io/address/'+addr)}
+function chartUrl(net,pool){return 'https://www.geckoterminal.com/'+((net==='robinhood'&&rhId)||net)+'/pools/'+pool}
+function exUrl(addr,net){return net==='solana'||isSol(addr)&&!isEvm(addr)?'https://solscan.io/account/'+addr:(NETS[net]&&NETS[net].ac&&isEvm(addr)?NETS[net].ac+addr:isEvm(addr)?'https://debank.com/profile/'+addr:'https://etherscan.io/address/'+addr)}
 function openModal(w,ctx){
  mdCtx={w:w,ctx:ctx||{}};var t=findW(w);
  $('mdT').textContent=t?'Already tracking this wallet':'Track this wallet?';
@@ -284,6 +287,7 @@ function openModal(w,ctx){
  $('mdInfo').textContent=info;$('mdAddr').textContent=w;$('mdLab').value=t?t.l:'';
  $('mdGo').textContent=t?'Save nickname':'Track this wallet';
  $('mdEx').href=exUrl(w,ctx&&ctx.n);
+ var ch=$('mdCh');if(ctx&&ctx.p&&ctx.n){ch.href=chartUrl(ctx.n,ctx.p);ch.style.display='inline-flex'}else ch.style.display='none';
  $('md').hidden=false;$('mdLab').focus();
 }
 function closeModal(){$('md').hidden=true;mdCtx=null}
@@ -306,12 +310,22 @@ document.addEventListener('click',function(e){
 });
 function rerender(){renderFeed();renderTok();renderWallets()}
 
+var rhId=ls('whale_rhid',null);
+async function gtId(net){
+ if(net!=='robinhood')return net;if(rhId)return rhId;
+ var c=['robinhood-chain','robinhood','robinhood_chain'];
+ for(var i=0;i<c.length&&!rhId;i++){try{await gt('/networks/'+c[i]+'/trending_pools?page=1',300000);rhId=c[i]}catch(e){}}
+ for(var pg=1;pg<=12&&!rhId;pg++){var j=await gt('/networks?page='+pg,3600000),d=j.data||[];if(!d.length)break;
+  d.forEach(function(n){if(!rhId&&/robinhood/i.test(n.id+' '+((n.attributes||{}).name||'')))rhId=n.id});if(d.length<20)break}
+ if(!rhId)throw new Error('Robinhood Chain is not listed on GeckoTerminal yet.');
+ ss('whale_rhid',rhId);return rhId}
+
 /* ---------- SCANNER ---------- */
 var viewRows=[],scanning=false,freshKeys={};
 (function initCtl(){
  var sel=$('cChain');
  sel.innerHTML=ALL_NETS.map(function(n){return '<option value="'+n+'">'+NETS[n].n+'</option>'}).join('')
-  +['arbitrum','polygon_pos','avax','optimism'].map(function(n){return '<option value="'+n+'">'+NETS[n].n+'</option>'}).join('')
+  +['robinhood','arbitrum','polygon_pos','avax','optimism'].map(function(n){return '<option value="'+n+'">'+NETS[n].n+'</option>'}).join('')
   +'<option value="all">Top 4 networks (slower)</option>';
  sel.value=cfg.chain;if(sel.value!==cfg.chain)sel.value='solana';
  $('cMin').value=cfg.min;$('cPools').value=String(cfg.pools);$('cAge').value=String(cfg.age);$('cSort').value=cfg.sort;
@@ -335,16 +349,16 @@ async function scan(){
   for(var ni=0;ni<nets.length;ni++){
    var net=nets[ni];
    status(st,'Finding hot pools on '+NETS[net].n+'…',false,true);
-   var tr;
-   try{tr=await gt('/networks/'+net+'/trending_pools?page=1',300000)}catch(e){errs++;lastErr=e.message;continue}
+   var tr,gid;
+   try{gid=await gtId(net);tr=await gt('/networks/'+gid+'/trending_pools?page=1',300000)}catch(e){errs++;lastErr=e.message;continue}
    var pools=(tr.data||[]).filter(function(p){
     var sym=String(p.attributes.name||'').split(' / ')[0].trim();return !blocked(sym,cfg.maj)}).slice(0,cfg.pools);
    for(var pi=0;pi<pools.length;pi++){
     var p=pools[pi],at=p.attributes,sym=String(at.name||'').split(' / ')[0].trim();
-    var tid=(((p.relationships||{}).base_token||{}).data||{}).id||'';var tok=tid.replace(net+'_','');
+    var tid=(((p.relationships||{}).base_token||{}).data||{}).id||'';var tok=tid.replace(gid+'_','');
     status(st,NETS[net].n+': checking '+sym+' ('+(pi+1)+' of '+pools.length+')…',false,true);
     try{
-     var j=await gt('/networks/'+net+'/pools/'+at.address+'/trades?trade_volume_in_usd_greater_than='+cfg.min,45000);
+     var j=await gt('/networks/'+gid+'/pools/'+at.address+'/trades?trade_volume_in_usd_greater_than='+cfg.min,45000);
      (j.data||[]).forEach(function(d){var a=d.attributes;
       if(a.kind!=='buy'||!(+a.volume_in_usd>=cfg.min))return;
       var e=tradeToEntry(a,net,sym,tok,at.address);if(!e.t||!e.w)return;
@@ -382,7 +396,7 @@ function renderFeed(){
    +'<td><b>'+esc(e.s)+'</b></td><td><span class="badge">'+esc((NETS[e.n]||{}).n||e.n)+'</span></td>'
    +'<td class="r"><b class="up">'+usd(e.u)+'</b>'+(e.u>=25000?' 🐋':'')+'</td><td class="r mut">'+px(e.x)+'</td>'
    +'<td>'+walletBtn(e.w,i,'feed')+(n>1?' <span class="badge y">×'+n+'</span>':'')+'</td>'
-   +'<td><button class="btn sec sm" type="button" data-top="'+i+'">Top buyers</button> <a class="mut" target="_blank" rel="noopener" href="'+esc((NETS[e.n]||{}).tx+e.h)+'">tx ↗</a></td></tr>'}).join('')
+   +'<td><a class="btn sec sm" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener" href="'+esc(chartUrl(e.n,e.p))+'">Chart ↗</a> <button class="btn sec sm" type="button" data-top="'+i+'">Top buyers</button> '+((NETS[e.n]||{}).tx?'<a class="mut" target="_blank" rel="noopener" href="'+esc(NETS[e.n].tx+e.h)+'">tx ↗</a>':'')+'</td></tr>'}).join('')
   +'</tbody></table>';
 }
 $('feed').addEventListener('click',function(e){
@@ -401,7 +415,7 @@ async function pullToken(tok){
  var seen={};h.e.forEach(function(r){seen[r[3]+'|'+r[4]]=1});
  var want=normA(tok.addr);
  for(var i=0;i<Math.min(3,tok.pools.length);i++){
-  var j=await gt('/networks/'+tok.net+'/pools/'+tok.pools[i]+'/trades?trade_volume_in_usd_greater_than=100',45000);
+  var j=await gt('/networks/'+(await gtId(tok.net))+'/pools/'+tok.pools[i]+'/trades?trade_volume_in_usd_greater_than=100',45000);
   var d=j.data||[];
   if(d.length>=290){var o=Infinity;d.forEach(function(x){var t=Date.parse(x.attributes.block_timestamp);if(t<o)o=t});if(isFinite(o))liveStart=Math.max(liveStart,o)}
   d.forEach(function(x){var a=x.attributes;
@@ -439,7 +453,7 @@ async function resolveToken(qs){
  var j=await jf(addr?'https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(qs):'https://api.dexscreener.com/latest/dex/search?q='+encodeURIComponent(qs));
  var map={},up=qs.toUpperCase();
  (j.pairs||[]).forEach(function(p){
-  var net=DS2GT[p.chainId];if(!net)return;var liq=(p.liquidity&&+p.liquidity.usd)||0;
+  var net=DS2GT[p.chainId]||(/robinhood/i.test(p.chainId)?'robinhood':null);if(!net)return;var liq=(p.liquidity&&+p.liquidity.usd)||0;
   [p.baseToken,p.quoteToken].forEach(function(s,idx){
    if(!s)return;
    var ok=addr?normA(s.address)===normA(qs):(idx===0&&String(s.symbol||'').toUpperCase()===up);
@@ -497,13 +511,13 @@ function renderTok(cands){
  var wn=WINS.filter(function(w){return w[0]===curWin})[0],rows=ranks[curWin];tokRows=rows;
  var cv=coverage(t,wn[2]);
  html+='<div class="tw">'+(rows.length?'<table><thead><tr><th>#</th><th class="r">Single buy</th><th>Wallet (tap to track)</th><th class="r">Wallet total in window</th><th>When</th><th></th></tr></thead><tbody>'
-  +rows.map(function(e,i){return '<tr><td>'+(i+1)+'</td><td class="r"><b class="up">'+usd(e.u)+'</b></td><td>'+walletBtn(e.w,i,'tok')+'</td><td class="r mut">'+usd(e.tot)+'</td><td title="'+esc(new Date(e.t).toLocaleString())+'">'+ago(e.t)+'</td><td><a class="mut" target="_blank" rel="noopener" href="'+esc(NETS[e.n].tx+e.h)+'">tx ↗</a></td></tr>'}).join('')+'</tbody></table>'
+  +rows.map(function(e,i){return '<tr><td>'+(i+1)+'</td><td class="r"><b class="up">'+usd(e.u)+'</b></td><td>'+walletBtn(e.w,i,'tok')+'</td><td class="r mut">'+usd(e.tot)+'</td><td title="'+esc(new Date(e.t).toLocaleString())+'">'+ago(e.t)+'</td><td>'+(NETS[e.n].tx?'<a class="mut" target="_blank" rel="noopener" href="'+esc(NETS[e.n].tx+e.h)+'">tx ↗</a>':'')+'</td></tr>'}).join('')+'</tbody></table>'
   :'<div class="empty">No buys of $100 or more found in this window.</div>')+'</div>';
  if(cv<0.98)html+='<div class="chg" style="margin-top:12px"><b>Heads up:</b> the free trade feed only reaches back about 24 hours (and fewer for very busy coins), so this window is only '+Math.round(cv*100)+'% checked. '
   +(wn[2]>DAY?'Weekly and monthly lists fill in as you keep checking: tap <b>Watch this coin</b> and leave the scanner running (auto-scan) and each pass adds to this coin\'s history.':'')+'</div>';
  html+='<div class="acts"><button class="btn'+(watched?' sec':'')+'" id="wBtn" type="button">'+(watched?'Stop watching this coin':'Watch this coin in the scanner')+'</button>'
   +'<button class="btn sec" id="rBtn" type="button">Refresh</button>'
-  +'<a class="btn sec" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center" href="https://www.geckoterminal.com/'+esc(t.net)+'/pools/'+esc(t.pools[0]||'')+'">Chart ↗</a></div></div>';
+  +'<a class="btn sec" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center" href="'+esc(chartUrl(t.net,t.pools[0]||''))+'">Chart on GeckoTerminal ↗</a></div></div>';
  out.innerHTML=html;
 }
 $('qOut').addEventListener('click',function(e){
