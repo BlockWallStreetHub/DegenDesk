@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BWS Cinema | Block Wall Street</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#070d1c; --navy2:#0d1730; --navy3:#13213f; --gold:#d4a843; --gold2:#f0cd73;
+  --text:#e9ecf4; --muted:#8c97b3; --red:#9b1c2c; --line:rgba(212,168,67,.25);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(ellipse at top,#122046 0%,var(--navy) 60%);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh}
+a{color:inherit}
+
+/* ===== Header / marquee ===== */
+header{text-align:center;padding:34px 16px 18px;position:relative}
+.marquee{display:inline-block;padding:14px 38px;border:3px solid var(--gold);border-radius:10px;
+  background:linear-gradient(180deg,#1a2a52,#0b1430);box-shadow:0 0 0 6px var(--navy),0 0 0 8px var(--gold),0 0 40px rgba(212,168,67,.35);}
+.marquee h1{font-family:'Bebas Neue';font-size:clamp(38px,7vw,74px);letter-spacing:.12em;color:var(--gold2);
+  text-shadow:0 0 14px rgba(240,205,115,.6);line-height:1}
+.marquee small{font-family:'DM Mono';letter-spacing:.35em;font-size:12px;color:var(--muted);text-transform:uppercase}
+.bulbs{display:flex;justify-content:center;gap:14px;margin-top:20px}
+.bulbs i{width:9px;height:9px;border-radius:50%;background:var(--gold2);box-shadow:0 0 10px var(--gold);animation:blink 2s infinite}
+.bulbs i:nth-child(even){animation-delay:1s}
+@keyframes blink{50%{opacity:.25}}
+.backlink{position:absolute;left:18px;top:18px;font-family:'DM Mono';font-size:12px;color:var(--muted);text-decoration:none}
+.backlink:hover{color:var(--gold)}
+
+/* ===== Layout ===== */
+.tabs{display:none}
+main{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:26px;max-width:1500px;margin:10px auto 60px;padding:0 22px}
+section{min-width:0}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:18px}
+.sec-head h2{font-family:'Bebas Neue';font-size:34px;letter-spacing:.1em;color:var(--gold)}
+.sec-head span{font-family:'DM Mono';font-size:11px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+
+/* ===== Cinema (movies) ===== */
+.posters{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:22px}
+.poster{position:relative;cursor:pointer;border-radius:8px;overflow:hidden;background:var(--navy2);
+  border:1px solid var(--line);transition:.25s;aspect-ratio:2/3;box-shadow:0 10px 25px rgba(0,0,0,.5)}
+.poster:hover{transform:translateY(-8px) scale(1.03);border-color:var(--gold);box-shadow:0 18px 40px rgba(212,168,67,.25)}
+.poster img{width:100%;height:100%;object-fit:cover;display:block}
+.poster .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,13,28,0) 45%,rgba(7,13,28,.95) 100%)}
+.poster .meta{position:absolute;left:0;right:0;bottom:0;padding:14px 12px}
+.poster h3{font-family:'Bebas Neue';font-size:25px;letter-spacing:.05em;line-height:1.05}
+.poster p{font-size:12px;color:var(--muted);margin-top:3px}
+.play{position:absolute;top:50%;left:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;
+  background:rgba(212,168,67,.92);display:grid;place-items:center;opacity:0;transition:.25s}
+.play:after{content:"";border-left:18px solid var(--navy);border-top:11px solid transparent;border-bottom:11px solid transparent;margin-left:5px}
+.poster:hover .play,.ep:hover .play{opacity:1}
+.badge{position:absolute;top:8px;left:8px;font-family:'DM Mono';font-size:10px;letter-spacing:.15em;background:var(--gold);color:var(--navy);padding:3px 7px;border-radius:3px;text-transform:uppercase;font-weight:500}
+
+/* ===== Side shows ===== */
+aside .show{background:linear-gradient(180deg,var(--navy3),var(--navy2));border:1px solid var(--line);border-radius:10px;margin-bottom:18px;overflow:hidden}
+.show-title{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line)}
+.show-title img{width:46px;height:64px;object-fit:cover;border-radius:4px;border:1px solid var(--gold)}
+.show-title h3{font-family:'Bebas Neue';font-size:24px;letter-spacing:.06em;color:var(--gold2);line-height:1}
+.show-title small{font-family:'DM Mono';font-size:10px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase}
+.show-title .chev{margin-left:auto;transition:.2s;color:var(--gold)}
+.show.closed .chev{transform:rotate(-90deg)}
+.show.closed .eps{display:none}
+.ep{display:flex;gap:12px;padding:10px 14px;cursor:pointer;position:relative;transition:.15s;border-bottom:1px solid rgba(255,255,255,.04)}
+.ep:last-child{border-bottom:0}
+.ep:hover{background:rgba(212,168,67,.08)}
+.ep .thumb{position:relative;flex:0 0 118px;aspect-ratio:16/9;border-radius:5px;overflow:hidden;background:#000}
+.ep .thumb img{width:100%;height:100%;object-fit:cover}
+.ep .play{width:34px;height:34px;margin:-17px 0 0 -17px}
+.ep .play:after{border-left-width:11px;border-top-width:7px;border-bottom-width:7px;margin-left:3px}
+.ep b{font-weight:600;font-size:14px;line-height:1.25;display:block}
+.ep span{font-family:'DM Mono';font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.empty{color:var(--muted);padding:30px;text-align:center;border:1px dashed var(--line);border-radius:10px;font-size:14px}
+
+/* ===== Theater modal ===== */
+.theater{position:fixed;inset:0;background:rgba(2,5,12,.96);z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.theater.on{display:flex;animation:fade .35s}
+@keyframes fade{from{opacity:0}}
+.curtain{position:absolute;top:0;bottom:0;width:50%;background:repeating-linear-gradient(90deg,#5c0f1c 0 18px,#7a1526 18px 36px);z-index:-1;transition:transform .9s}
+.curtain.l{left:0;transform:translateX(-82%);box-shadow:8px 0 30px #000}
+.curtain.r{right:0;transform:translateX(82%);box-shadow:-8px 0 30px #000}
+.screen{width:min(1100px,100%);aspect-ratio:16/9;background:#000;border:3px solid var(--gold);border-radius:6px;box-shadow:0 0 60px rgba(212,168,67,.35)}
+.screen iframe{width:100%;height:100%;border:0;display:block}
+.now{width:min(1100px,100%);display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:12px}
+.now h4{font-family:'Bebas Neue';font-size:30px;letter-spacing:.08em;color:var(--gold2)}
+.now small{font-family:'DM Mono';color:var(--muted);font-size:11px;letter-spacing:.15em;text-transform:uppercase}
+.btn{background:var(--gold);color:var(--navy);border:0;font-family:'Bebas Neue';letter-spacing:.1em;font-size:18px;padding:8px 20px;border-radius:5px;cursor:pointer}
+.btn:hover{background:var(--gold2)}
+.btn.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+
+/* ===== Manage panel ===== */
+.manage-toggle{position:fixed;right:16px;bottom:16px;z-index:40;font-family:'DM Mono';font-size:11px;letter-spacing:.12em;background:var(--navy2);color:var(--muted);border:1px solid var(--line);padding:9px 13px;border-radius:30px;cursor:pointer}
+.manage-toggle:hover{color:var(--gold);border-color:var(--gold)}
+.panel{position:fixed;right:16px;bottom:60px;width:min(380px,calc(100vw - 32px));max-height:80vh;overflow:auto;background:var(--navy2);border:1px solid var(--gold);border-radius:10px;padding:18px;z-index:40;display:none;box-shadow:0 20px 50px rgba(0,0,0,.7)}
+.panel.on{display:block}
+.panel h3{font-family:'Bebas Neue';font-size:26px;letter-spacing:.08em;color:var(--gold);margin-bottom:10px}
+.panel label{display:block;font-family:'DM Mono';font-size:10px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin:10px 0 4px}
+.panel input,.panel select,.panel textarea{width:100%;background:var(--navy);border:1px solid var(--line);color:var(--text);padding:9px;border-radius:5px;font-family:'Barlow';font-size:14px}
+.panel .row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.panel .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.4}
+.panel textarea{height:90px;font-family:'DM Mono';font-size:11px}
+.mine-item{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.mine-item button{background:none;border:0;color:#e25b6b;cursor:pointer;font-size:13px}
+
+body:not(.owner) .manage-toggle,body:not(.owner) .panel{display:none!important}
+/* ===== Mobile ===== */
+@media(max-width:900px){
+  main{grid-template-columns:1fr}
+  .tabs{display:flex;gap:10px;justify-content:center;margin:14px 0 6px}
+  .tabs button{font-family:'Bebas Neue';letter-spacing:.1em;font-size:20px;padding:8px 22px;border-radius:30px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer}
+  .tabs button.on{background:var(--gold);color:var(--navy)}
+  main section{display:none}
+  main section.on{display:block}
+  .posters{grid-template-columns:repeat(2,1fr);gap:14px}
+  .backlink{position:static;display:block;margin-bottom:14px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="backlink" href="https://blockwallstreet.biz">← blockwallstreet.biz</a>
+  <div class="marquee">
+    <small>Block Wall Street Presents</small>
+    <h1>BWS CINEMA</h1>
+  </div>
+  <div class="bulbs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</header>
+
+<div class="tabs">
+  <button class="on" data-tab="cinema">🎬 Cinema</button>
+  <button data-tab="side">📺 Side Shows</button>
+</div>
+
+<main>
+  <section id="cinema" class="on">
+    <div class="sec-head"><h2>Now Showing</h2><span>Movies &amp; Documentaries</span></div>
+    <div class="posters" id="posters"></div>
+  </section>
+  <aside>
+    <section id="side" style="display:contents">
+      <div class="sec-head"><h2>Side Shows</h2><span>Shows &amp; Podcasts</span></div>
+      <div id="shows"></div>
+    </section>
+  </aside>
+</main>
+
+<!-- Theater -->
+<div class="theater" id="theater">
+  <div class="curtain l"></div><div class="curtain r"></div>
+  <div class="screen"><iframe id="frame" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+  <div class="now">
+    <div><h4 id="nowTitle"></h4><small id="nowSub"></small></div>
+    <button class="btn" id="closeTheater">Exit Theater ✕</button>
+  </div>
+</div>
+
+<!-- Manage -->
+<button class="manage-toggle" id="mToggle">+ ADD VIDEO</button>
+<div class="panel" id="panel">
+  <h3>Add To The Lineup</h3>
+  <label>YouTube share link</label>
+  <input id="fUrl" placeholder="https://youtu.be/xxxxxxxxxxx">
+  <label>Title</label>
+  <input id="fTitle" placeholder="Title of the movie / episode">
+  <label>Type</label>
+  <select id="fType">
+    <option value="movie">Movie (Cinema side)</option>
+    <option value="show">Show episode (Side Shows)</option>
+    <option value="podcast">Podcast episode (Side Shows)</option>
+  </select>
+  <div id="showWrap">
+    <label>Show / Podcast name</label>
+    <input id="fShow" placeholder="e.g. Coffee & Crypto">
+  </div>
+  <label>Poster image URL (optional)</label>
+  <input id="fPoster" placeholder="Leave blank to use the YouTube thumbnail">
+  <div class="row">
+    <button class="btn" id="fAdd">Add</button>
+    <button class="btn ghost" id="fCopy">Copy permanent code</button>
+  </div>
+  <p class="hint">“Add” shows it in this browser right away. To make it appear for <b>everyone</b>, click “Copy permanent code” and paste it into the <code>LINEUP</code> list near the top of this file's script.</p>
+  <div id="mine"></div>
+</div>
+
+<script>
+/* =========================================================
+   LINEUP — edit this list to change what everyone sees.
+   type: "movie" | "show" | "podcast"
+   show: name of the show/podcast (for show & podcast only)
+   url: any YouTube share / watch / embed link
+   poster: optional image link (blank = YouTube thumbnail)
+   ========================================================= */
+const LINEUP = [
+  { type:"movie", title:"Feature Presentation", url:"https://youtu.be/VtKQxev-k6A", poster:"" },
+  { type:"show", show:"Side Show", title:"Episode 1", url:"https://youtu.be/tcWkTctWhAo", poster:"" },
+  // { type:"movie",   title:"Your Movie Title",  url:"https://youtu.be/XXXXXXXXXXX", poster:"" },
+  // { type:"show",    show:"Coffee & Crypto", title:"Episode 1", url:"https://youtu.be/XXXXXXXXXXX", poster:"" },
+  // { type:"podcast", show:"My Podcast",      title:"Episode 1", url:"https://youtu.be/XXXXXXXXXXX", poster:"" },
+];
+
+/* ---------- helpers ---------- */
+/* owner-only: open the page with ?owner=BBBV once to show the Add Video button on this browser */
+(function(){let ok=false,q=new URLSearchParams(location.search).get("owner")==="BBBV";
+  try{ if(q) localStorage.setItem("bws_owner","1"); ok=localStorage.getItem("bws_owner")==="1"; }catch(e){ ok=q; }
+  if(ok||q) document.body.classList.add("owner");})();
+const $ = s => document.querySelector(s);
+const KEY = "bws_cinema_mine";
+const getMine = () => { try { return JSON.parse(localStorage.getItem(KEY)||"[]"); } catch(e){ return []; } };
+const setMine = a => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch(e){} };
+
+function ytId(u){
+  if(!u) return null;
+  u = u.trim();
+  const m = u.match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/|\/live\/|\/v\/)([A-Za-z0-9_-]{11})/);
+  if(m) return m[1];
+  return /^[A-Za-z0-9_-]{11}$/.test(u) ? u : null;
+}
+function ytStart(u){
+  const m = (u||"").match(/[?&](?:t|start)=(\d+)/); return m ? m[1] : null;
+}
+const thumb = v => v.poster || `https://img.youtube.com/vi/${ytId(v.url)}/hqdefault.jpg`;
+const esc = s => String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function all(){ return [...LINEUP, ...getMine().map(v=>({...v,_mine:true}))].filter(v=>ytId(v.url)); }
+
+/* ---------- render ---------- */
+function render(){
+  const list = all();
+  const movies = list.filter(v=>v.type==="movie");
+  const eps = list.filter(v=>v.type!=="movie");
+
+  $("#posters").innerHTML = movies.length ? movies.map(v=>`
+    <div class="poster" data-u="${esc(v.url)}" data-t="${esc(v.title)}" data-s="Movie">
+      <img src="${esc(thumb(v))}" alt="${esc(v.title)} poster" loading="lazy">
+      <span class="badge">Movie</span>
+      <div class="shade"></div><div class="play"></div>
+      <div class="meta"><h3>${esc(v.title)}</h3><p>Now showing</p></div>
+    </div>`).join("")
+    : `<div class="empty" style="grid-column:1/-1">The screen is dark for now. Tap <b>+ ADD VIDEO</b> to add your first feature.</div>`;
+
+  const groups = {};
+  eps.forEach(v=>{ const k = (v.show||"Untitled Show")+"||"+v.type; (groups[k] = groups[k]||[]).push(v); });
+  const keys = Object.keys(groups);
+  $("#shows").innerHTML = keys.length ? keys.map(k=>{
+    const [name,type] = k.split("||"); const items = groups[k];
+    return `<div class="show">
+      <div class="show-title">
+        <img src="${esc(thumb(items[0]))}" alt="">
+        <div><h3>${esc(name)}</h3><small>${type==="podcast"?"Podcast":"Show"} · ${items.length} episode${items.length>1?"s":""}</small></div>
+        <span class="chev">▼</span>
+      </div>
+      <div class="eps">${items.map((v,i)=>`
+        <div class="ep" data-u="${esc(v.url)}" data-t="${esc(v.title)}" data-s="${esc(name)}">
+          <div class="thumb"><img src="${esc(thumb(v))}" alt="" loading="lazy"><div class="play"></div></div>
+          <div><b>${esc(v.title)}</b><span>${type==="podcast"?"Podcast":"Show"} · Ep ${i+1}</span></div>
+        </div>`).join("")}</div>
+    </div>`;
+  }).join("") : `<div class="empty">No side shows yet. Add a show or podcast episode with <b>+ ADD VIDEO</b>.</div>`;
+
+  renderMine();
+}
+
+/* ---------- theater ---------- */
+function openTheater(url,title,sub){
+  const id = ytId(url), st = ytStart(url);
+  $("#frame").src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1${st?`&start=${st}`:""}`;
+  $("#nowTitle").textContent = title; $("#nowSub").textContent = sub;
+  $("#theater").classList.add("on"); document.body.style.overflow="hidden";
+}
+function closeTheater(){
+  $("#theater").classList.remove("on"); $("#frame").src=""; document.body.style.overflow="";
+}
+document.addEventListener("click", e=>{
+  const card = e.target.closest(".poster,.ep");
+  if(card){ openTheater(card.dataset.u, card.dataset.t, card.dataset.s); return; }
+  const st = e.target.closest(".show-title");
+  if(st){ st.parentElement.classList.toggle("closed"); }
+});
+$("#closeTheater").onclick = closeTheater;
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeTheater(); });
+$("#theater").addEventListener("click", e=>{ if(e.target.id==="theater") closeTheater(); });
+
+/* ---------- tabs (mobile) ---------- */
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  const cin = b.dataset.tab==="cinema";
+  $("#cinema").classList.toggle("on",cin);
+  $("#side").style.display = cin ? "none" : "block";
+});
+function fixSide(){
+  if(window.innerWidth>900){ $("#side").style.display="contents"; $("#cinema").style.display=""; }
+  else { const cin=document.querySelector('.tabs button.on').dataset.tab==="cinema"; $("#side").style.display=cin?"none":"block"; }
+}
+window.addEventListener("resize",fixSide); fixSide();
+
+/* ---------- manage panel ---------- */
+$("#mToggle").onclick = ()=>$("#panel").classList.toggle("on");
+const syncType = ()=>{ $("#showWrap").style.display = $("#fType").value==="movie" ? "none":"block"; };
+$("#fType").onchange = syncType; syncType();
+
+function readForm(){
+  const v = { type:$("#fType").value, title:$("#fTitle").value.trim(), url:$("#fUrl").value.trim(), poster:$("#fPoster").value.trim() };
+  if(v.type!=="movie") v.show = $("#fShow").value.trim() || "Untitled Show";
+  return v;
+}
+$("#fAdd").onclick = ()=>{
+  const v = readForm();
+  if(!ytId(v.url)){ alert("That doesn't look like a YouTube link. Paste the share link (youtu.be/...)."); return; }
+  if(!v.title){ alert("Please add a title."); return; }
+  const m = getMine(); m.push(v); setMine(m);
+  ["fUrl","fTitle","fPoster"].forEach(i=>$("#"+i).value=""); render();
+};
+$("#fCopy").onclick = ()=>{
+  const m = getMine();
+  const src = (m.length?m:[readForm()]).map(v=>"  "+JSON.stringify(v)+",").join("\n");
+  navigator.clipboard.writeText(src).then(()=>alert("Copied! Paste it inside the LINEUP list in the page code."), ()=>prompt("Copy this:",src));
+};
+function renderMine(){
+  const m = getMine();
+  $("#mine").innerHTML = m.length ? `<label>Added in this browser</label>`+m.map((v,i)=>
+    `<div class="mine-item"><span>${esc(v.title)}</span><button data-i="${i}">remove</button></div>`).join("") : "";
+  document.querySelectorAll(".mine-item button").forEach(b=>b.onclick=()=>{
+    const a=getMine(); a.splice(+b.dataset.i,1); setMine(a); render();
+  });
+}
+render();
+</script>
+</body>
+</html>
