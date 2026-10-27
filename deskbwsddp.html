@@ -2379,7 +2379,7 @@ window.DD=window.DD||{};DD.lend=function(){return L.accts.map(function(a){return
 <script id="cmpJs">
 (function(){
 'use strict';
-var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
+var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html',CN='cinemabwsddp.html';
 var ITEMS=[
  {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'16 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
  {id:'desk',n:'Overview',h:D+'#desk',g:'Watch',lv:'b',d:'Prices, your alerts, positions, pegs and news on one screen.',kw:'home dashboard summary today prices market'},
@@ -2389,6 +2389,7 @@ var ITEMS=[
  {id:'pegs',n:'Stablecoin Pegs',h:D+'#pegs',g:'Protect',lv:'b',d:'Checks whether USDT, USDC, DAI and others still trade at $1.',kw:'depeg usdt usdc dai safe stable'},
  {id:'pf',n:'Portfolio',h:P,g:'Track',lv:'b',d:'Log what you bought and see your value, profit and loss. Set price alerts.',kw:'holdings profit loss track coingecko invest'},
  {id:'acct',n:'Account',h:A,g:'Account',lv:'b',d:'Your sign-up info, access time, alert channels and renewal.',kw:'settings email subscription renew billing login'},
+ {id:'cinema',n:'Degen Cinema',h:CN,g:'Watch',lv:'b',d:'Movies on one side, shows and podcast episodes on the other. Pick one and press play.',kw:'movies cinema video watch shows podcasts episodes youtube film'},
  {id:'moon',n:'Moon Desk',h:M,g:'Test',lv:'b',d:'Moon phases, zodiac and eclipses laid behind real price charts, with a back-test.',kw:'astrology zodiac eclipse planetarium lunar full new mercury'},
  {id:'wealth',n:'Accumulation Sim',h:D+'#wealth',g:'Test',lv:'b',d:'See how saving a little each week into BTC and ETH could grow over a year.',kw:'dca save stack feed the machine aave'},
  {id:'risk',n:'Lending Account Manager',h:D+'#risk',g:'Protect',lv:'m',d:'Watches the health factor on your loans (Aave, Morpho, Kamino, Jupiter Lend) so you can act before you are liquidated.',kw:'aave morpho fluid kamino jupiter lend health factor liquidation instadapp loan borrow margin'},
@@ -2411,6 +2412,7 @@ var GOALS=[
  {i:'🧪',q:'Test an idea on past prices',w:'Back-tests show what a rule would have done before. They are lessons, not promises.',to:['bt','moon','sig']},
  {i:'🌙',q:'See if the moon and zodiac line up with price',w:'Moon Desk draws the sky behind the chart, then checks whether any pattern beats luck.',to:['moon']},
  {i:'📈',q:'Plan to build wealth slowly over time',w:'The accumulation sim shows weekly saving. The course explains the idea behind it.',to:['wealth','course']},
+ {i:'🎬',q:'Watch a movie, show or podcast',w:'Degen Cinema has movies on one side and show and podcast episodes on the other.',to:['cinema']},
  {i:'🪙',q:'Check if a stablecoin is safe',w:'The pegs page shows how far each stablecoin has slipped from $1.',to:['pegs']},
  {i:'🔑',q:'Manage my access or renew',w:'Account shows your plan, time left and a renew button.',to:['acct']}
 ];
@@ -2503,7 +2505,7 @@ function placeDrop(){return;
 function openDrop(){drop.innerHTML='<div class="dh"><b>MENU</b><button type="button" data-x="1" aria-label="Close menu">✕</button></div>'+dropHtml();bk.classList.add('on');drop.classList.add('on');if(menuBtn)menuBtn.setAttribute('aria-expanded','true');var f=drop.querySelector('a.here');if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'center'})}catch(e){}}
 function closeDrop(){if(!drop)return;bk.classList.remove('on');drop.classList.remove('on');if(menuBtn)menuBtn.setAttribute('aria-expanded','false')}
 var MODE='links';try{MODE=localStorage.getItem('dd_navmode')||'links'}catch(e){}
-var PILLS=['course','pf','lp','moon','acct'];
+var PILLS=['course','pf','lp','moon','cinema','acct'];
 var onDesk=(file===D.toLowerCase());
 function swLabel(){return MODE==='menu'?'<span>⇄</span><span class="t">Switch to tabs &amp; sidebar</span>':'<span>⇄</span><span class="t">Switch to menu</span>'}
 function renderBar(){
