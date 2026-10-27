@@ -460,9 +460,9 @@ window.__pf={S:S,P:P,totals:totals,positions:positions,checkAlerts:checkAlerts};
 <script id="cmpJs">
 (function(){
 'use strict';
-var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
+var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
 var ITEMS=[
- {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'16 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
+ {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'17 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
  {id:'desk',n:'Overview',h:D+'#desk',g:'Watch',lv:'b',d:'Prices, your alerts, positions, pegs and news on one screen.',kw:'home dashboard summary today prices market'},
  {id:'news',n:'News',h:D+'#news',g:'Watch',lv:'b',d:'Headlines that could move prices, scored by how big they might be.',kw:'headlines fed cpi hack listing sec'},
  {id:'heat',n:'Heat Map',h:D+'#heat',g:'Find',lv:'b',d:'A colour map of which coins and sectors are up or down right now.',kw:'heatmap sectors green red gainers losers'},
@@ -475,6 +475,7 @@ var ITEMS=[
  {id:'risk',n:'Lending Account Manager',h:D+'#risk',g:'Protect',lv:'m',d:'Watches the health factor on your loans (Aave, Morpho, Kamino, Jupiter Lend) so you can act before you are liquidated.',kw:'aave morpho fluid kamino jupiter lend health factor liquidation instadapp loan borrow margin'},
  {id:'ind',n:'Indicators & Alerts',h:D+'#ind',g:'Protect',lv:'m',d:'Alerts for health factor, EMA crosses, divergences and liquidations.',kw:'alerts ema rsi divergence telegram'},
  {id:'lp',n:'LP Scout',h:L,g:'Find',lv:'m',d:'Search liquidity pools on every chain, filter by size and yield, and simulate outcomes.',kw:'liquidity pool yield apr tvl farm uniswap'},
+ {id:'lpm',n:'LP Manager',h:LM,g:'Protect',lv:'m',d:'Add your wallet to see every LP position, the prices where it leaves range, and a Hold / Rebalance / Close meter.',kw:'lp position manager range out of range rebalance impermanent loss uniswap aerodrome raydium orca meteora pancakeswap wallet hold close'},
  {id:'rh',n:'Robinhood Chain stock LPs',h:L+'#rhstock',g:'Find',lv:'m',d:'Only the pools that hold stock tokens such as NVDA, AAPL and TSLA.',kw:'robinhood stock token tsla nvda aapl lp'},
  {id:'sig',n:'Signal Scanner',h:D+'#sig',g:'Find',lv:'m',d:'Trade signals from moving averages and more, with a paper-trading log.',kw:'signals scanner paper trading fibonacci'},
  {id:'bt',n:'EMA Backtester',h:D+'#bt',g:'Test',lv:'m',d:'Test buying and selling on the 20, 50, 100 or 200 EMA for any coin.',kw:'backtest ema strategy history'},
@@ -489,6 +490,7 @@ var GOALS=[
  {i:'🔔',q:'Get alerts on Telegram, email or my phone',w:'Set up your channels once in Account. Every alert on the desk and in Portfolio uses them.',to:['acct','pf','ind']},
  {i:'🔎',q:'Find coins that are moving',w:'Trending shows what is new and hot. The heat map shows the big picture. Signals add a technical view.',to:['trend','heat','sig']},
  {i:'💧',q:'Find a pool to earn trading fees (LP)',w:'LP Scout lets you filter thousands of pools, then simulate what could happen to your money.',to:['lp','rh']},
+ {i:'🎯',q:'My LP went out of range. Hold, rebalance or close?',w:'The LP Manager reads your wallet, shows where each position leaves its range, and a meter reads the market to say hold, rebalance or close.',to:['lpm','lp']},
  {i:'🧪',q:'Test an idea on past prices',w:'Back-tests show what a rule would have done before. They are lessons, not promises.',to:['bt','moon','sig']},
  {i:'🌙',q:'See if the moon and zodiac line up with price',w:'Moon Desk draws the sky behind the chart, then checks whether any pattern beats luck.',to:['moon']},
  {i:'📈',q:'Plan to build wealth slowly over time',w:'The accumulation sim shows weekly saving. The course explains the idea behind it.',to:['wealth','course']},
@@ -584,7 +586,7 @@ function placeDrop(){return;
 function openDrop(){drop.innerHTML='<div class="dh"><b>MENU</b><button type="button" data-x="1" aria-label="Close menu">✕</button></div>'+dropHtml();bk.classList.add('on');drop.classList.add('on');if(menuBtn)menuBtn.setAttribute('aria-expanded','true');var f=drop.querySelector('a.here');if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'center'})}catch(e){}}
 function closeDrop(){if(!drop)return;bk.classList.remove('on');drop.classList.remove('on');if(menuBtn)menuBtn.setAttribute('aria-expanded','false')}
 var MODE='links';try{MODE=localStorage.getItem('dd_navmode')||'links'}catch(e){}
-var PILLS=['course','pf','lp','moon','acct'];
+var PILLS=['course','pf','lp','lpm','moon','acct'];
 var onDesk=(file===D.toLowerCase());
 function swLabel(){return MODE==='menu'?'<span>⇄</span><span class="t">Switch to tabs &amp; sidebar</span>':'<span>⇄</span><span class="t">Switch to menu</span>'}
 function renderBar(){
