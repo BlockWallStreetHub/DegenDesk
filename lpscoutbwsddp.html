@@ -1064,5 +1064,81 @@ if(g('bws_radio_on')==='1'){hi=0;start(true)}
 })();
 </script>
 <!-- /BWS RADIO -->
+<!-- BWS SYNC (shared cloud sync) -->
+<script id="syncJs">
+(function(){
+'use strict';
+var SYNC_URL='https://dd-sync.blockwallstreet638.workers.dev';
+var BLOCK=/^(dd_access|dd_email|dd_intro_seen|dd_sent_|dd_trial_|dd_sync|seeded)/,ALLOW=/^(bws|dd_|avax|lps_|lpm_|degen)/i;
+var SECRET=['discord','tgToken','waPhone','waKey','tgChat','wfKey','ntfyTopic','liqLog','liqScan','refs'];/* alert keys and logs stay on each device */
+var configured=SYNC_URL.indexOf('REPLACE-ME')<0,busy=false,again=false,lastOk=0,lastErr='';
+function g(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function s(k,v){try{if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}
+function jp(k,d){try{var v=JSON.parse(g(k)||'null');return v==null?d:v}catch(e){return d}}
+function sess(){var x=jp('dd_sync',null);return x&&x.token?x:null}
+function api(path,body,tok){
+  var h={'content-type':'application/json'};if(tok)h.authorization='Bearer '+tok;
+  return fetch(SYNC_URL+path,{method:'POST',headers:h,body:JSON.stringify(body||{}),keepalive:true}).then(function(r){return r.json().catch(function(){return{}}).then(function(j){return{ok:r.ok,status:r.status,j:j}})});
+}
+function strip(v){try{var j=JSON.parse(v);if(j&&typeof j==='object'){SECRET.forEach(function(f){delete j[f]});return JSON.stringify(j)}}catch(e){}return v}
+function collect(){
+  var o={};try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!k||!ALLOW.test(k)||BLOCK.test(k))continue;var v=localStorage.getItem(k);if(k==='avaxLiqWatch.v1')v=strip(v);if(v!=null&&v.length<100000)o[k]=v}}catch(e){}return o;
+}
+function union(a,b,id){var seen={},o=[];(a||[]).concat(b||[]).forEach(function(x){var i=id(x);if(!seen[i]){seen[i]=1;o.push(x)}});return o}
+function applyKey(k,v,first){
+  var loc=null,inc=null;try{inc=JSON.parse(v)}catch(e){}
+  try{loc=JSON.parse(g(k)||'null')}catch(e){}
+  if(first&&loc&&inc){/* first sign-in on this device: keep what is here AND bring in what is in the account */
+    if(k==='lps_fav'&&Array.isArray(loc)&&Array.isArray(inc)){s(k,JSON.stringify(union(inc,loc,function(x){return JSON.stringify(x)})));return}
+    if(k==='lpm_v1'&&typeof loc==='object'&&typeof inc==='object'){var m=Object.assign({},loc,inc);m.wallets=union(inc.wallets,loc.wallets,function(x){return String(x).toLowerCase()});m.manual=union(inc.manual,loc.manual,function(x){return x&&x.id});s(k,JSON.stringify(m));return}
+    if(k==='avaxLiqWatch.v1'&&typeof loc==='object'&&typeof inc==='object'){var a=Object.assign({},loc,inc);a.accounts=union(inc.accounts,loc.accounts,function(x){return x&&(x.net+':'+x.addr)});s(k,JSON.stringify(a));return}
+  }
+  if(k==='avaxLiqWatch.v1'&&inc&&typeof inc==='object'){s(k,JSON.stringify(Object.assign(loc&&typeof loc==='object'?loc:{},inc)));return}/* alert keys on this device are kept */
+  s(k,v);
+}
+function run(){
+  var S=sess();if(!configured||!S)return Promise.resolve(false);
+  if(busy){again=true;return Promise.resolve(false)}
+  busy=true;
+  var local=collect(),last=jp('dd_sync_last',null),first=last===null;if(first)last={};
+  var meta=jp('dd_sync_meta',{}),now=Date.now(),changes={};
+  if(!first){Object.keys(local).forEach(function(k){if(local[k]!==last[k]){meta[k]=now;changes[k]={v:local[k],ts:now}}})}
+  return api('/sync',{changes:changes},S.token).then(function(res){
+    if(res.status===401){s('dd_sync',null);lastErr='Signed out. Sign in again to keep syncing.';return false}
+    if(!res.ok){lastErr=(res.j&&res.j.error)||'Could not reach the sync server.';return false}
+    var srv=res.j.data||{},applied=0;
+    Object.keys(srv).forEach(function(k){
+      var sv=srv[k],lt=meta[k]||0;
+      if(!(k in local)||(first&&sv.v!==local[k])||(sv.ts>lt&&sv.v!==local[k])){applyKey(k,sv.v,first);applied++}
+      meta[k]=Math.max(lt,sv.ts);
+    });
+    var cur=collect();Object.keys(srv).forEach(function(k){if(k in cur&&(cur[k]===srv[k].v||!first))last[k]=cur[k]});
+    s('dd_sync_last',JSON.stringify(last));s('dd_sync_meta',JSON.stringify(meta));
+    lastOk=Date.now();lastErr='';s('dd_sync_time',String(lastOk));
+    var more=first&&Object.keys(cur).some(function(k){return !(k in srv)});
+    if(more)again=true;
+    if(applied&&!/account/i.test(location.pathname)&&!sessionStorage.getItem('dd_sync_rl')){try{sessionStorage.setItem('dd_sync_rl','1')}catch(e){}location.reload()}
+    try{window.dispatchEvent(new Event('bwssync'))}catch(e){}
+    return true;
+  }).catch(function(){lastErr='Could not reach the sync server.';return false}).then(function(ok){busy=false;if(again){again=false;setTimeout(run,300)}return ok});
+}
+window.BWSSync={
+  configured:configured,
+  session:sess,
+  status:function(){return {configured:configured,email:(sess()||{}).email||'',last:lastOk||parseInt(g('dd_sync_time')||'0',10)||0,err:lastErr}},
+  start:function(email){return api('/auth/start',{email:email})},
+  verify:function(email,code){return api('/auth/verify',{email:email,code:code}).then(function(r){if(r.ok&&r.j.token){s('dd_sync',JSON.stringify({token:r.j.token,email:r.j.email}));s('dd_sync_last',null);s('dd_sync_meta',null);return run().then(function(){return r})}return r})},
+  signOut:function(){var S=sess();s('dd_sync',null);s('dd_sync_last',null);s('dd_sync_meta',null);s('dd_sync_time',null);if(S&&configured)api('/auth/logout',{},S.token).catch(function(){});try{window.dispatchEvent(new Event('bwssync'))}catch(e){}},
+  now:run
+};
+if(configured&&sess()){
+  setTimeout(run,700);
+  setInterval(function(){if(!document.hidden)run()},20000);
+  document.addEventListener('visibilitychange',function(){if(document.hidden)run();else run()});
+  window.addEventListener('pagehide',function(){run()});
+}
+})();
+</script>
+<!-- /BWS SYNC -->
 </body>
 </html>
