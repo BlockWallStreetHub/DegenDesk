@@ -141,7 +141,7 @@ footer{border-top:1px solid var(--line);padding:22px 5vw 40px;font-size:12.5px;c
     Degen Desk Course
   </a>
   <span class="sp"></span>
-  <div class="prog"><span id="progTxt">0 of 17</span><div class="bar"><i id="progBar"></i></div></div>
+  <div class="prog"><span id="progTxt">0 of 19</span><div class="bar"><i id="progBar"></i></div></div>
 </header>
 
 <div class="wrap">
@@ -417,6 +417,34 @@ var L=[
   el.querySelectorAll('input').forEach(function(i){i.oninput=calc});calc();
  },
  quiz:{q:'Your position is a little below its range, and the coin has been moving sideways in a calm market. What does the meter usually say?',o:['Close it right now','Hold, because price is likely to come back and rebalancing locks in the loss','Always rebalance immediately','Add more to the position'],a:1,why:'In a calm or sideways market, a small miss often returns to range. Rebalancing costs gas and locks in the loss. A strongly bearish market is the case where closing is better.'}},
+{id:'biz',code:'BIZ',title:'Business Bitcoin Time Machine: for owners and merchants',tool:null,link:['deskbwsddp.html#biz','Open the Business Bitcoin Time Machine'],
+ body:'<p>If you run a shop, a service business or any company with steady sales, a fair question is whether some of the cash should sit in Bitcoin instead of a bank account. The <b>Business Bitcoin Time Machine</b> answers it by looking backward. You choose a share of sales or profit to set aside each period, and it shows what that habit would have built next to plain savings, with a chart, a table of every purchase and a CSV you can hand to your accountant.</p><p>Two ideas matter most. First, setting aside the <b>same amount on a schedule</b> means you buy more when price is low and less when it is high, so you never have to guess the bottom. Second, Bitcoin can fall hard, sometimes by half or more, so only set aside money the business can live without. Keep your payroll, taxes and rent in cash.</p><p>Treat the result as a lesson from the past, not a forecast. Past gains do not promise future gains, and tax and accounting rules for a business holding crypto vary, so check with a professional before you start.</p>',
+ widget:function(el){
+  el.innerHTML='<div class="lab"><h4>Set aside a slice each month (made-up prices)</h4><p class="hint">Your business earns $10,000 a month. Bitcoin follows a made-up path with a big climb, a deep crash and a recovery. Savings earn nothing here.</p>'+rangeRow('bz1','Share set aside each month',1,25,1,5,function(v){return v+'%'})+rangeRow('bz2','Months',12,48,1,36,function(v){return v+' mo'})+'<div class="stat" id="bzs"></div><div class="verdict" id="bzv"></div></div>';
+  function px(m){return 20000*(1+m*0.035)*(1+0.25*Math.sin(m/5))*(m>=22&&m<30?0.6:1)}
+  function calc(){
+   var p=+$('bz1').value,n=+$('bz2').value;$('bz1o').textContent=p+'%';$('bz2o').textContent=n+' mo';
+   var put=0,btc=0,low=Infinity,peak=0;
+   for(var m=0;m<n;m++){var a=10000*p/100;put+=a;btc+=a/px(m);var v=btc*px(m);if(v>peak)peak=v;if(peak>0)low=Math.min(low,v/peak-1)}
+   var val=btc*px(n-1),gain=val/put-1;
+   $('bzs').innerHTML='<div><small>Put aside</small><b>'+money(put)+'</b></div><div><small>As savings</small><b>'+money(put)+'</b></div><div><small>As Bitcoin</small><b class="'+(gain>=0?'up':'dn')+'">'+money(val)+'</b></div><div><small>Change</small><b class="'+(gain>=0?'up':'dn')+'">'+pct(gain*100,0)+'</b></div><div><small>Worst dip along the way</small><b class="dn">'+(isFinite(low)?(low*100).toFixed(0):0)+'%</b></div>';
+   var v=$('bzv');v.className='verdict'+(gain>=0?' good':'');
+   v.textContent=gain>=0?'This made-up path ended higher, but look at the worst dip. Along the way the stack was worth much less than you put in. Could your business sit through that?':'This path ended lower than plain savings. That is the risk. Only set aside money the business can live without.';
+  }
+  el.querySelectorAll('input').forEach(function(i){i.oninput=calc});calc();
+ },
+ quiz:{q:'What is the safest way for a business to start with Bitcoin?',o:['Move all cash reserves in at once','Set aside a small fixed share on a schedule, using only money it can live without','Put in payroll and tax money to catch a rise','Wait for a guaranteed low price'],a:1,why:'A small, regular amount limits the damage of bad timing and keeps payroll, taxes and rent safe in cash. Nobody can guarantee a low price, and past results are not a promise.'}},
+{id:'cinema',code:'CINEMA',title:'Degen Cinema: movies and shows inside the Desk',tool:null,link:['cinemabwsddp.html','Open Degen Cinema'],
+ body:'<p><b>Degen Cinema</b> is a movie theater built into the Desk. The big <b>Now Showing</b> side holds movies and documentaries. The <b>Side Shows</b> column holds shows and podcasts, grouped by name, with their episodes underneath. Click any poster or episode and the theater lights up: the curtains frame a big screen and the video plays, with the title underneath. Press <b>Esc</b> or click outside the screen to leave.</p><p>Everything plays from YouTube, so there is nothing to download. Posters come from each video&rsquo;s own YouTube thumbnail unless a custom image was chosen. On a phone, two tabs at the top switch between Cinema and Side Shows.</p><p>Only the owner of the desk can add videos. The owner pastes a YouTube share link, adds a title, picks Movie, Show or Podcast, and the video appears in the lineup.</p><p>Watching is for learning and fun, not advice. Videos are hosted by YouTube and the views in them belong to their creators.</p>',
+ widget:function(el){
+  el.innerHTML='<div class="lab"><h4>How a YouTube link becomes a poster</h4><p class="hint">Paste any YouTube share link. Cinema finds the 11-character video code inside it and uses that to build the poster and the player.</p><input id="cnU" type="text" placeholder="https://youtu.be/VtKQxev-k6A" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:inherit"><div class="stat" id="cnS"></div><div class="verdict" id="cnV"></div></div>';
+  function id(u){var m=(u||'').match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/|\/live\/)([A-Za-z0-9_-]{11})/);return m?m[1]:null}
+  function go(){var u=$('cnU').value.trim(),v=id(u);
+   $('cnS').innerHTML=v?'<div><small>Video code</small><b>'+v+'</b></div><div><small>Poster image</small><b>img.youtube.com/vi/'+v+'</b></div><div><small>Plays in</small><b>the theater screen</b></div>':'<div><small>Video code</small><b>none yet</b></div>';
+   var c=$('cnV');c.className='verdict'+(v?' good':'');c.textContent=v?'Found it. This link would show up as a poster, ready to play.':(u?'That does not look like a YouTube link. Use the Share button on YouTube and paste the youtu.be link.':'Paste a link to try it.');}
+  $('cnU').oninput=go;go();
+ },
+ quiz:{q:'Where do the videos in Degen Cinema actually play from?',o:['They are stored on the Desk','YouTube, shown on the theater screen','Your computer','A paid streaming service'],a:1,why:'Cinema only holds links. The videos play from YouTube, so nothing is stored on the Desk and nothing has to be downloaded.'}},
 {id:'moon',code:'MOON',title:'Moon Desk: the sky behind the chart',tool:null,link:['moonbwsddp.html','Open Moon Desk'],
  body:'<p>Moon Desk lays astrology behind a price chart: the <b>moon phase</b>, the <b>zodiac sign</b> the moon and sun are in, <b>eclipses</b> and <b>Mercury retrograde</b>. You can view the chart as daily, weekly or monthly candles, zoom in and out, and hover any candle to see the sky on that day.</p><p>Below the chart, the tool measures what price actually did under each phase and each moon sign, and a back-test lets you try a rule such as &ldquo;only be invested while the moon is waxing.&rdquo; Many serious traders and funds watch cycles of all kinds. A saying often credited to J.P. Morgan claims that billionaires use astrologers, but nobody has confirmed he said it, so treat it as lore.</p><p>The honest part is the <b>random-calendar test</b>. The tool re-runs your idea on the same prices with a fake sky. If the real calendar does not clearly beat the fake ones, the pattern is probably luck. Test many ideas and a few will look good by chance alone, so confirm anything promising on a second coin and a different date range.</p>',
  widget:function(el){
@@ -488,7 +516,7 @@ function show(){
   cur=idxFromHash();var l=L[cur];
   var m=$('main');
   m.innerHTML='<article class="lesson"><div class="code">'+l.code+' &middot; Lesson '+(cur+1)+' of '+L.length+'</div><h1>'+l.title+'</h1>'+l.body
-   +(l.tool?'<div class="openrow"><a class="btn" href="deskbwsddp.html#'+l.tool+'" target="_blank" rel="noopener">Open this tool in the desk</a><span class="note">Opens in a new tab so you can follow along.</span></div>':'')
+   +(l.tool?'<div class="openrow"><a class="btn" href="desk.html#'+l.tool+'" target="_blank" rel="noopener">Open this tool in the desk</a><span class="note">Opens in a new tab so you can follow along.</span></div>':'')
    +(l.link?'<div class="openrow"><a class="btn" href="'+l.link[0]+'" target="_blank" rel="noopener">'+l.link[1]+'</a><span class="note">Opens in a new tab so you can follow along.</span></div>':'')
    +'<div id="wg"></div>'
    +'<div class="quiz"><h3>Check yourself</h3><p><b>'+l.quiz.q+'</b></p><div class="opts" id="qo">'+l.quiz.o.map(function(o,i){return '<button data-a="'+i+'">'+o+'</button>'}).join('')+'</div><div class="why" id="qw"></div></div>'
@@ -612,14 +640,16 @@ show();
 'use strict';
 var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
 var ITEMS=[
- {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'17 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
+ {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'19 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
  {id:'desk',n:'Overview',h:D+'#desk',g:'Watch',lv:'b',d:'Prices, your alerts, positions, pegs and news on one screen.',kw:'home dashboard summary today prices market'},
+ {id:'cinema',n:'Degen Cinema',h:'cinemabwsddp.html',g:'Watch',lv:'b',d:'Movies, shows and podcasts to watch right inside the Desk, in a movie-theater setting.',kw:'cinema movies movie shows podcasts videos youtube watch theater film documentary'},
  {id:'news',n:'News',h:D+'#news',g:'Watch',lv:'b',d:'Headlines that could move prices, scored by how big they might be.',kw:'headlines fed cpi hack listing sec'},
  {id:'heat',n:'Heat Map',h:D+'#heat',g:'Find',lv:'b',d:'A colour map of which coins and sectors are up or down right now.',kw:'heatmap sectors green red gainers losers'},
  {id:'trend',n:'Trending Coins',h:D+'#trend',g:'Find',lv:'b',d:'New and fast-moving coins people are looking at today.',kw:'trending new tokens dexscreener geckoterminal'},
  {id:'pegs',n:'Stablecoin Pegs',h:D+'#pegs',g:'Protect',lv:'b',d:'Checks whether USDT, USDC, DAI and others still trade at $1.',kw:'depeg usdt usdc dai safe stable'},
  {id:'pf',n:'Portfolio',h:P,g:'Track',lv:'b',d:'Log what you bought and see your value, profit and loss. Set price alerts.',kw:'holdings profit loss track coingecko invest'},
  {id:'acct',n:'Account',h:A,g:'Account',lv:'b',d:'Your sign-up info, access time, alert channels and renewal.',kw:'settings email subscription renew billing login'},
+ {id:'biz',n:'Business Bitcoin Time Machine',h:D+'#biz',g:'Business',lv:'b',d:'For merchants and business owners: what setting aside part of sales or profit into Bitcoin could have built.',kw:'business merchant owner shop store sales profit treasury small business bitcoin time machine'},
  {id:'moon',n:'Moon Desk',h:M,g:'Test',lv:'b',d:'Moon phases, zodiac and eclipses laid behind real price charts, with a back-test.',kw:'astrology zodiac eclipse planetarium lunar full new mercury'},
  {id:'wealth',n:'Accumulation Sim',h:D+'#wealth',g:'Test',lv:'b',d:'See how saving a little each week into BTC and ETH could grow over a year.',kw:'dca save stack feed the machine aave'},
  {id:'risk',n:'Lending Account Manager',h:D+'#risk',g:'Protect',lv:'m',d:'Watches the health factor on your loans (Aave, Morpho, Kamino, Jupiter Lend) so you can act before you are liquidated.',kw:'aave morpho fluid kamino jupiter lend health factor liquidation instadapp loan borrow margin'},
@@ -634,6 +664,7 @@ var ITEMS=[
 ];
 var GOALS=[
  {i:'🌱',q:'I am new. Where do I start?',w:'Take the course first. It is short and every lesson ends with something to try. Then look at the Overview.',to:['course','desk']},
+ {i:'🎬',q:'Watch a movie, show or podcast',w:'Degen Cinema is a movie theater inside the Desk. Pick a movie or a show episode and it plays on the big screen.',to:['cinema']},
  {i:'📰',q:'What is happening in the market today?',w:'Start with the Overview for prices, then check the news and the heat map.',to:['desk','news','heat']},
  {i:'🛡️',q:'I have a loan and do not want to be liquidated',w:'The Lending Account Manager watches your health factor. Add alerts so you hear about trouble early.',to:['risk','ind','pegs']},
  {i:'💼',q:'Track what I own and my profit',w:'Log your buys in Portfolio. It works out your profit, loss and value over time.',to:['pf','port']},
@@ -641,6 +672,7 @@ var GOALS=[
  {i:'🔎',q:'Find coins that are moving',w:'Trending shows what is new and hot. The heat map shows the big picture. Signals add a technical view.',to:['trend','heat','sig']},
  {i:'💧',q:'Find a pool to earn trading fees (LP)',w:'LP Scout lets you filter thousands of pools, then simulate what could happen to your money.',to:['lp','rh']},
  {i:'🎯',q:'My LP went out of range. Hold, rebalance or close?',w:'The LP Manager reads your wallet, shows where each position leaves its range, and a meter reads the market to say hold, rebalance or close.',to:['lpm','lp']},
+ {i:'🏪',q:'I run a business. Should I hold some Bitcoin?',w:'The Business Bitcoin Time Machine shows what setting aside a share of sales or profit into Bitcoin each period would have built, next to plain savings. It is a look back, not a promise.',to:['biz','course']},
  {i:'🧪',q:'Test an idea on past prices',w:'Back-tests show what a rule would have done before. They are lessons, not promises.',to:['bt','moon','sig']},
  {i:'🌙',q:'See if the moon and zodiac line up with price',w:'Moon Desk draws the sky behind the chart, then checks whether any pattern beats luck.',to:['moon']},
  {i:'📈',q:'Plan to build wealth slowly over time',w:'The accumulation sim shows weekly saving. The course explains the idea behind it.',to:['wealth','course']},
@@ -678,8 +710,8 @@ function body(){
     h+='<p style="margin:0 0 4px;color:#93a0c4">Six steps to get comfortable. Each one is ticked off when you open it.</p><div class="cmpBar"><i style="width:'+Math.round(n/PATH.length*100)+'%"></i></div><div style="margin:-6px 0 12px;font-size:13px;color:#93a0c4">'+n+' of '+PATH.length+' done</div><div class="cmpPath">'+PATH.map(function(id){return ln(byId[id])}).join('')+'</div>';
   }else{
     h+='<div class="cmpLeg"><span><em style="color:#7fe3a4">●</em> Beginner: safe to start here</span><span><em style="color:#f1c765">●</em> Next step: needs a little setup</span><span><em style="color:#ff9d8f">●</em> Advanced</span></div>';
-    ['Learn','Watch','Track','Find','Protect','Test','Account'].forEach(function(g){var it=ITEMS.filter(function(t){return t.g===g});if(!it.length)return;
-      var sub={Learn:'Understand the tools',Watch:'See the market',Track:'Know what you own',Find:'Spot opportunities',Protect:'Avoid big losses',Test:'Try ideas safely',Account:'Your access'}[g];
+    ['Learn','Watch','Track','Find','Protect','Test','Business','Account'].forEach(function(g){var it=ITEMS.filter(function(t){return t.g===g});if(!it.length)return;
+      var sub={Learn:'Understand the tools',Watch:'See the market',Track:'Know what you own',Find:'Spot opportunities',Protect:'Avoid big losses',Test:'Try ideas safely',Business:'For merchants and owners',Account:'Your access'}[g];
       h+='<div class="cmpGrp">'+g+' · '+sub+'</div><div class="cmpGrid">'+it.map(function(t){return ln(t)}).join('')+'</div>'});
   }
   return h;
@@ -711,7 +743,7 @@ function close(){ov.classList.remove('on');document.documentElement.style.overfl
 
 /* ===== top navigator: Home button + drop-down menu ===== */
 var HOME={h:D+'#desk',n:'Home'};
-var ORDER=['Learn','Watch','Track','Find','Protect','Test','Account'];
+var ORDER=['Learn','Watch','Track','Find','Protect','Test','Business','Account'];
 var house='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>';
 var burger='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
 var drop,menuBtn,bk;

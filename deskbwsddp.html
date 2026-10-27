@@ -617,13 +617,14 @@ const TOOLS=[
  {id:'heat',n:'Heat Map',g:'Markets',d:'BWS Crypto Heat Map.',url:'srcdoc',doc:'heatmap',kw:'heatmap heat map coingecko sectors'},
  {id:'sig',n:'Signal Scanner',g:'Markets',d:'Signals, paper log and backtest.',url:'srcdoc',doc:'signals',kw:'signals alerts backtest paper trading ema fibonacci divergence'},
  {id:'bt',n:'EMA Backtester',g:'Markets',d:'Buy and sell signal strength gauge plus backtests on the 20, 50, 100 or 200 EMA for any ticker or contract address, 1 hour to monthly.',url:'srcdoc',doc:'backtest',nokey:1,kw:'backtest backtester ema 20 50 100 200 signal strength gauge fear greed buy sell strong weak crossover contract address ticker tradingview timeframe returns'},
+ {id:'cinema',n:'Degen Cinema',g:'Intel',d:'Movies, shows and podcasts in a movie-theater setting.',page:'cinemabwsddp.html',nokey:1,kw:'cinema movies movie shows podcasts videos youtube watch theater film documentary'},
  {id:'news',n:'News',g:'Intel',d:'Stories that may swing price, scored by impact.',kw:'news headlines sec fed cpi hack listing'},
  {id:'wealth',n:'Accumulation Sim',g:'Build',d:'Feed the Machine: Aave accumulation simulator.',url:'srcdoc',doc:'sim',kw:'simulator dca accumulate wealth feed the machine'},
  {id:'biz',n:'Business Bitcoin Time Machine',g:'Business',d:'For merchants and business owners: see what setting aside a share of sales or profit into Bitcoin could have built, versus plain savings.',url:'ext',ext:H+'BusinessInBitcoin/',nokey:1,kw:'business merchant owner shop store sales profit treasury set aside bitcoin time machine small business calculator savings'},
  {id:'hosted',n:'Manager (hosted copy)',g:'Build',d:'The standalone Savings Liquidation Manager page.',url:'srcdoc',doc:'savings',kw:'savings manager hosted standalone'}
 ];
 const byId={}; let kc=0; TOOLS.forEach(t=>{byId[t.id]=t; if(!t.nokey&&kc<10){ t.k=String((kc+1)%10); kc++; }});
-const NAVIC={desk:'🏠',risk:'🛡️',port:'📊',pegs:'⚓',ind:'🔔',trend:'🔥',heat:'🗺️',sig:'📡',bt:'🧪',news:'📰',wealth:'🌱',biz:'🏪',hosted:'💾'};
+const NAVIC={desk:'🏠',risk:'🛡️',port:'📊',pegs:'⚓',ind:'🔔',trend:'🔥',heat:'🗺️',sig:'📡',bt:'🧪',news:'📰',wealth:'🌱',biz:'🏪',cinema:'🎬',hosted:'💾'};
 function buildNav(){
   let h='',g='';
   TOOLS.forEach(t=>{
@@ -645,7 +646,8 @@ function ensureFrame(t){
 let cur='';
 function go(id,noHash){
   const t=byId[id]; if(!t) id='desk';
-  const tool=byId[id]; if(tool.url) ensureFrame(tool);
+  const tool=byId[id]; if(tool.page){ location.href=tool.page; return; }
+  if(tool.url) ensureFrame(tool);
   document.querySelectorAll('#stage > .view').forEach(v=>v.classList.toggle('on',v.id==='v-'+id));
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.go===id));
   cur=id; document.title=tool.n+' | BWS Desk';
@@ -2382,8 +2384,9 @@ window.DD=window.DD||{};DD.lend=function(){return L.accts.map(function(a){return
 'use strict';
 var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
 var ITEMS=[
- {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'18 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
+ {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'19 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
  {id:'desk',n:'Overview',h:D+'#desk',g:'Watch',lv:'b',d:'Prices, your alerts, positions, pegs and news on one screen.',kw:'home dashboard summary today prices market'},
+ {id:'cinema',n:'Degen Cinema',h:'cinemabwsddp.html',g:'Watch',lv:'b',d:'Movies, shows and podcasts to watch right inside the Desk, in a movie-theater setting.',kw:'cinema movies movie shows podcasts videos youtube watch theater film documentary'},
  {id:'news',n:'News',h:D+'#news',g:'Watch',lv:'b',d:'Headlines that could move prices, scored by how big they might be.',kw:'headlines fed cpi hack listing sec'},
  {id:'heat',n:'Heat Map',h:D+'#heat',g:'Find',lv:'b',d:'A colour map of which coins and sectors are up or down right now.',kw:'heatmap sectors green red gainers losers'},
  {id:'trend',n:'Trending Coins',h:D+'#trend',g:'Find',lv:'b',d:'New and fast-moving coins people are looking at today.',kw:'trending new tokens dexscreener geckoterminal'},
@@ -2405,6 +2408,7 @@ var ITEMS=[
 ];
 var GOALS=[
  {i:'🌱',q:'I am new. Where do I start?',w:'Take the course first. It is short and every lesson ends with something to try. Then look at the Overview.',to:['course','desk']},
+ {i:'🎬',q:'Watch a movie, show or podcast',w:'Degen Cinema is a movie theater inside the Desk. Pick a movie or a show episode and it plays on the big screen.',to:['cinema']},
  {i:'📰',q:'What is happening in the market today?',w:'Start with the Overview for prices, then check the news and the heat map.',to:['desk','news','heat']},
  {i:'🛡️',q:'I have a loan and do not want to be liquidated',w:'The Lending Account Manager watches your health factor. Add alerts so you hear about trouble early.',to:['risk','ind','pegs']},
  {i:'💼',q:'Track what I own and my profit',w:'Log your buys in Portfolio. It works out your profit, loss and value over time.',to:['pf','port']},
