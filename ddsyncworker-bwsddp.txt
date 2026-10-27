@@ -1,0 +1,120 @@
+/* Degen Desk sync server (Cloudflare Worker).
+   Emails a 6-digit sign-in code, then saves each member's tracked accounts, positions and watchlists under their verified email.
+   Needs: a KV namespace bound as DD, and a secret named RESEND_API_KEY. */
+const ORIGINS=['https://degendesk.blockwallstreet.biz','https://blockwallstreet.biz','https://www.blockwallstreet.biz','https://blockwallstreethub.github.io'];
+const FROM='Degen Desk <login@degendesk.blockwallstreet.biz>';
+const DAILY_EMAIL_CAP=90;               /* Resend free plan allows 100 emails a day */
+const BLOCK=/^(dd_access|dd_email|dd_intro_seen|dd_sent_|dd_trial_|dd_sync|seeded)/;
+const KEYOK=/^[A-Za-z0-9_.\-]{1,64}$/;
+const EMAIL=/^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
+const OWNER_DEFAULT='blockwallstreet638@gmail.com';   /* sign-up alerts go here; override with a variable named OWNER_EMAIL */
+const SIGNUP_ALERT_CAP=40;              /* alert emails per day (shares Resend's 100 a day with sign-in codes) */
+const enc=new TextEncoder();
+
+function allowed(env){return ORIGINS.concat(String(env.EXTRA_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean))}
+function cors(req,env){
+  const o=req.headers.get('Origin')||'',list=allowed(env);
+  return {'Access-Control-Allow-Origin':list.includes(o)?o:list[0],'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'content-type, authorization','Access-Control-Max-Age':'86400','Vary':'Origin'};
+}
+function json(o,status,h){return new Response(JSON.stringify(o),{status:status||200,headers:Object.assign({'content-type':'application/json'},h||{})})}
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',enc.encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function rnd(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function code6(){const a=new Uint32Array(1);crypto.getRandomValues(a);return String(a[0]%1000000).padStart(6,'0')}
+async function kvJson(env,k){const v=await env.DD.get(k);if(!v)return null;try{return JSON.parse(v)}catch(e){return null}}
+
+async function start(body,env,H,req){
+  const email=String(body.email||'').trim().toLowerCase();
+  if(!EMAIL.test(email))return json({error:'Enter a valid email address.'},400,H);
+  if(await env.DD.get('rl:'+email))return json({error:'A code was just sent. Wait a minute, then try again.'},429,H);
+  const ip=req.headers.get('CF-Connecting-IP')||'x',hr=Math.floor(Date.now()/3600000),ik='ip:'+ip+':'+hr;
+  const n=parseInt(await env.DD.get(ik)||'0',10);
+  if(n>=10)return json({error:'Too many requests from this network. Try again later.'},429,H);
+  const day=new Date().toISOString().slice(0,10),gk='g:'+day,gn=parseInt(await env.DD.get(gk)||'0',10);
+  if(gn>=DAILY_EMAIL_CAP)return json({error:'Sign-in is busy today. Try again tomorrow.'},503,H);
+  const code=code6();
+  const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{'Authorization':'Bearer '+env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({
+    from:FROM,to:[email],subject:'Your Degen Desk sign-in code: '+code,
+    text:'Your Degen Desk sign-in code is '+code+'. It works for 10 minutes. If you did not ask for it, ignore this email.',
+    html:'<div style="font-family:system-ui,Arial,sans-serif;max-width:420px;margin:auto;padding:24px;background:#0d1426;color:#e9e7e1;border-radius:12px"><h2 style="color:#f1d27a;margin:0 0 12px">Degen Desk</h2><p>Your sign-in code is</p><p style="font-size:34px;letter-spacing:.3em;font-weight:800;margin:8px 0;color:#fff">'+code+'</p><p style="color:#8d8b84;font-size:13px">It works for 10 minutes. If you did not ask for it, ignore this email.</p></div>'})});
+  if(!r.ok)return json({error:'Could not send the email. Try again in a moment.'},502,H);
+  await env.DD.put('code:'+email,JSON.stringify({h:await sha(code+':'+email),tries:0}),{expirationTtl:600});
+  await env.DD.put('rl:'+email,'1',{expirationTtl:60});
+  await env.DD.put(ik,String(n+1),{expirationTtl:3600});
+  await env.DD.put(gk,String(gn+1),{expirationTtl:90000});
+  return json({ok:true},200,H);
+}
+async function verify(body,env,H){
+  const email=String(body.email||'').trim().toLowerCase(),code=String(body.code||'').replace(/\D/g,'');
+  if(!EMAIL.test(email)||code.length!==6)return json({error:'Enter the 6-digit code.'},400,H);
+  const rec=await kvJson(env,'code:'+email);
+  if(!rec)return json({error:'That code expired. Ask for a new one.'},400,H);
+  if(rec.tries>=5){await env.DD.delete('code:'+email);return json({error:'Too many wrong tries. Ask for a new code.'},429,H)}
+  if(rec.h!==await sha(code+':'+email)){rec.tries++;await env.DD.put('code:'+email,JSON.stringify(rec),{expirationTtl:600});return json({error:'That code is not right.'},400,H)}
+  await env.DD.delete('code:'+email);
+  const token=rnd(32);
+  await env.DD.put('s:'+await sha(token),email,{expirationTtl:60*60*24*60});
+  return json({token:token,email:email},200,H);
+}
+async function signup(body,env,H,req){
+  const email=String(body.email||'').trim().toLowerCase(),code=String(body.code||'').trim().slice(0,40).replace(/[^A-Za-z0-9_\- ]/g,'');
+  if(!EMAIL.test(email)||!code)return json({error:'Bad sign-up.'},400,H);
+  const ip=req.headers.get('CF-Connecting-IP')||'x',hr=Math.floor(Date.now()/3600000),ik='sip:'+ip+':'+hr;
+  const n=parseInt(await env.DD.get(ik)||'0',10);
+  if(n>=20)return json({error:'Too many requests.'},429,H);
+  await env.DD.put(ik,String(n+1),{expirationTtl:3600});
+  const key='su:'+email+':'+code.toUpperCase();
+  if(await env.DD.get(key))return json({ok:true,dup:true},200,H);
+  const when=new Date().toISOString();
+  await env.DD.put(key,JSON.stringify({email:email,code:code,at:when}));
+  const day=when.slice(0,10),ck='sg:'+day,cn=parseInt(await env.DD.get(ck)||'0',10);
+  let mailed=false;
+  if(cn<SIGNUP_ALERT_CAP&&env.RESEND_API_KEY){
+    await env.DD.put(ck,String(cn+1),{expirationTtl:90000});
+    const to=env.OWNER_EMAIL||OWNER_DEFAULT,last=cn+1===SIGNUP_ALERT_CAP;
+    const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{'Authorization':'Bearer '+env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({
+      from:FROM,to:[to],subject:'Degen Desk signup: '+code+' ('+email+')',
+      text:'New Degen Desk sign-up.\nEmail: '+email+'\nCode used: '+code+'\nTime (UTC): '+when+(last?'\n\nThis was the last alert for today. More sign-ups are still being saved in your KV namespace (keys start with su:).':'')
+    })});
+    mailed=r.ok;
+  }
+  return json({ok:true,mailed:mailed},200,H);
+}
+async function who(req,env){
+  const m=/^Bearer ([a-f0-9]{64})$/.exec(req.headers.get('Authorization')||'');if(!m)return null;
+  return await env.DD.get('s:'+await sha(m[1]));
+}
+async function sync(body,env,H,email){
+  const cur=await kvJson(env,'d:'+email)||{};let changed=false;
+  const ch=body.changes&&typeof body.changes==='object'?body.changes:{};
+  for(const k of Object.keys(ch)){
+    const c=ch[k];
+    if(!KEYOK.test(k)||BLOCK.test(k)||!c||typeof c.v!=='string'||c.v.length>100000||typeof c.ts!=='number')continue;
+    if(!cur[k]||c.ts>cur[k].ts){cur[k]={v:c.v,ts:c.ts};changed=true}
+  }
+  if(changed){
+    if(JSON.stringify(cur).length>500000)return json({error:'Too much saved data.'},413,H);
+    await env.DD.put('d:'+email,JSON.stringify(cur));
+  }
+  return json({data:cur},200,H);
+}
+export default{
+  async fetch(req,env){
+    const H=cors(req,env);
+    if(req.method==='OPTIONS')return new Response(null,{status:204,headers:H});
+    if(req.method!=='POST')return json({error:'POST only'},405,H);
+    const o=req.headers.get('Origin');
+    if(o&&!allowed(env).includes(o))return json({error:'Not allowed from this site.'},403,H);
+    let body;try{body=await req.json()}catch(e){return json({error:'Bad request.'},400,H)}
+    const p=new URL(req.url).pathname;
+    try{
+      if(p==='/auth/start')return await start(body,env,H,req);
+      if(p==='/auth/verify')return await verify(body,env,H);
+      if(p==='/signup')return await signup(body,env,H,req);
+      const email=await who(req,env);
+      if(!email)return json({error:'Signed out.'},401,H);
+      if(p==='/sync')return await sync(body,env,H,email);
+      if(p==='/auth/logout'){const m=/^Bearer ([a-f0-9]{64})$/.exec(req.headers.get('Authorization')||'');await env.DD.delete('s:'+await sha(m[1]));return json({ok:true},200,H)}
+      return json({error:'Not found.'},404,H);
+    }catch(e){return json({error:'Server error. Try again.'},500,H)}
+  }
+};
