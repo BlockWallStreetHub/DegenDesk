@@ -46,6 +46,7 @@ table{border-collapse:collapse;width:100%;min-width:760px}
 th{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:9px 8px;border-bottom:1px solid #1d1d24;white-space:nowrap;vertical-align:middle}
 td.r,th.r{text-align:right}
+th.sortable{cursor:pointer;user-select:none}th.sortable:hover,th.sorted{color:var(--gold2)}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid var(--line);color:var(--mut)}
 .badge.g{color:var(--up);border-color:#1f6a43}.badge.y{color:var(--gold2);border-color:#6d5a1c}
 .dn{color:var(--dn)}.up{color:var(--up)}.mut{color:var(--mut)}
@@ -151,7 +152,7 @@ function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 var K={list:'dd_coin_list',lists:'dd_coin_lists',hist:'dd_coin_hist',cfg:'dd_coin_cfg',chan:'avaxLiqWatch.v1'};
-var list=ls(K.list,[]),lists=ls(K.lists,[]),hist=ls(K.hist,[]),cfg=Object.assign({iv:60,active:'all',bb:true,bbMin:500},ls(K.cfg,{}));
+var list=ls(K.list,[]),lists=ls(K.lists,[]),hist=ls(K.hist,[]),cfg=Object.assign({iv:60,active:'all',bb:true,bbMin:500,sort:null},ls(K.cfg,{}));
 function saveL(){ss(K.lists,lists)}
 var open={};
 function save(){ss(K.list,list)}
@@ -288,10 +289,14 @@ function render(){
  list.forEach(function(it){it.alerts.forEach(function(a){if(a.on)act++})});
  $('sum').innerHTML=[['Coins tracked',list.length],['Active alerts',act],['Alerts fired (24h)',firedToday],['Checking every',cfg.iv>=60?(cfg.iv/60)+' min':cfg.iv+' sec'],['Big-buy alerts',cfg.bb?'$'+cfg.bbMin.toLocaleString()+'+':'Off']].map(function(x){return '<div class="k"><b>'+x[1]+'</b><span>'+x[0]+'</span></div>'}).join('');
  renderChan();
- var vis=visible();renderTabs();
+ var vis=visible().slice();renderTabs();
+ var SK=cfg.sort&&cfg.sort.k;
+ if(SK){var dir=cfg.sort.d==='asc'?1:-1,val=function(it){var l=it.last||{};if(SK==='sym')return String(it.sym||'').toLowerCase();var v={p:l.p,c5:l.c5,c1:l.c1,c6:l.c6,c24:l.c24,mc:l.mc||l.fdv,liq:l.liq}[SK];return v==null||v===''||!isFinite(+v)?null:+v};
+  vis.sort(function(a,b){var x=val(a),y=val(b);if(x===null&&y===null)return 0;if(x===null)return 1;if(y===null)return -1;return x<y?-dir:x>y?dir:0})}
+ function th(k,label,cls){var on=SK===k,ar=on?(cfg.sort.d==='asc'?' ▲':' ▼'):'';return '<th class="'+(cls||'')+' sortable'+(on?' sorted':'')+'" data-sort="'+k+'" tabindex="0" role="button" title="Click to sort high to low, again for low to high, a third time to clear">'+label+ar+'</th>'}
  if(!vis.length){$('tbl').innerHTML='<div class="empty">'+(list.length?'No coins in this list yet. Add a coin above, or open a coin in All and put it in this list.':'No coins yet. Add one above.')+'</div>'}
  else{
-  var h='<table><thead><tr><th>Coin</th><th class="r">Price</th><th class="r">5m</th><th class="r">1h</th><th class="r">6h</th><th class="r">24h</th><th class="r">Market cap</th><th class="r">Liquidity</th><th>Alerts</th><th></th></tr></thead><tbody>';
+  var h='<table><thead><tr>'+th('sym','Coin','')+th('p','Price','r')+th('c5','5m','r')+th('c1','1h','r')+th('c6','6h','r')+th('c24','24h','r')+th('mc','Market cap','r')+th('liq','Liquidity','r')+'<th>Alerts</th><th></th></tr></thead><tbody>';
   vis.forEach(function(it){var l=it.last||{},n=it.alerts.filter(function(a){return a.on}).length,gt=DS2GT[it.ch];
    h+='<tr><td><b>'+esc(it.sym)+'</b> <span class="badge">'+esc(pretty(it.ch))+'</span><br><span class="mut" style="font-size:12px">'+esc(it.name||'')+'</span></td>'
     +'<td class="r"><b>'+px(l.p)+'</b></td><td class="r">'+pc(l.c5)+'</td><td class="r">'+pc(l.c1)+'</td><td class="r">'+pc(l.c6)+'</td><td class="r">'+pc(l.c24)+'</td><td class="r">'+(l.mc?usd(l.mc):(l.fdv?'<span class="mut" title="Market cap not reported. This is the fully diluted value (FDV).">FDV '+usd(l.fdv)+'</span>':'<span class="mut">—</span>'))+'</td><td class="r mut">'+usd(l.liq)+'</td>'
@@ -319,7 +324,11 @@ function panel(it){
 function find1(id){for(var i=0;i<list.length;i++)if(list[i].id===id)return list[i]}
 $('tbl').addEventListener('change',function(e){var m=e.target.getAttribute&&e.target.getAttribute('data-bbm');if(!m)return;
  for(var i=0;i<list.length;i++)if(list[i].id===m){list[i].bbMute=e.target.checked;save();renderBB();break}});
-$('tbl').addEventListener('click',function(e){
+function doSort(e){var t=e.target.closest&&e.target.closest('[data-sort]');if(!t)return false;var k=t.getAttribute('data-sort'),c=cfg.sort;
+ if(!c||c.k!==k)cfg.sort={k:k,d:k==='sym'?'asc':'desc'};else if((k==='sym'&&c.d==='asc')||(k!=='sym'&&c.d==='desc'))cfg.sort={k:k,d:k==='sym'?'desc':'asc'};else cfg.sort=null;
+ ss(K.cfg,cfg);render();return true}
+$('tbl').addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.getAttribute&&e.target.getAttribute('data-sort')){e.preventDefault();doSort(e)}});
+$('tbl').addEventListener('click',function(e){if(doSort(e))return;
  var t=e.target;
  var b=t.closest('[data-tog]');if(b){var id=b.getAttribute('data-tog');open[id]=!open[id];render();return}
  b=t.closest('[data-rm]');if(b){if(b.getAttribute('data-sure')==='1'){var id2=b.getAttribute('data-rm');list=list.filter(function(x){return x.id!==id2});save();render()}else{b.setAttribute('data-sure','1');b.textContent='Tap again';setTimeout(function(){if(b.isConnected){b.removeAttribute('data-sure');b.textContent='Remove'}},3000)}return}
