@@ -97,6 +97,18 @@ td.r,th.r{text-align:right}
 <div class="sum" id="sum"></div>
 
 <div class="card">
+<h2>Big-buy alerts</h2>
+<div class="acts" style="margin-top:0">
+<label class="tg"><input type="checkbox" id="bbOn"> Alert me to every single buy of</label>
+<label class="f" style="flex-direction:row;align-items:center;gap:6px">$<input type="number" id="bbMin" min="100" step="100" style="width:110px;padding:6px 8px"></label>
+<span class="tg">or more, on every coin in my list. The alert includes the buyer's wallet address.</span>
+<button class="btn sec sm" id="bbNow" type="button">Scan now</button>
+</div>
+<div class="status" id="bbStat"></div>
+<div class="disc" style="margin-top:6px">Buys are read from GeckoTerminal's free trade feed, one coin at a time, so a long list takes a minute or two per pass. The first pass on a new coin only learns what already happened and sends nothing. After that, each new buy that size or bigger sends one alert. Works while this page is open. The wallet shown is the address that sent the trade, which can be a bot or router.</div>
+</div>
+
+<div class="card">
 <h2>Your coins</h2>
 <div class="tabs" id="ltabs"></div>
 <div class="acts" id="lbar" style="margin:0 0 10px"></div>
@@ -139,7 +151,7 @@ function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 var K={list:'dd_coin_list',lists:'dd_coin_lists',hist:'dd_coin_hist',cfg:'dd_coin_cfg',chan:'avaxLiqWatch.v1'};
-var list=ls(K.list,[]),lists=ls(K.lists,[]),hist=ls(K.hist,[]),cfg=Object.assign({iv:60,active:'all'},ls(K.cfg,{}));
+var list=ls(K.list,[]),lists=ls(K.lists,[]),hist=ls(K.hist,[]),cfg=Object.assign({iv:60,active:'all',bb:true,bbMin:500},ls(K.cfg,{}));
 function saveL(){ss(K.lists,lists)}
 var open={};
 function save(){ss(K.list,list)}
@@ -173,7 +185,7 @@ async function find(){
    var b=p.baseToken;if(!b||!p.priceUsd)return;
    if(addr?normA(b.address)!==normA(qs):String(b.symbol||'').toUpperCase()!==up)return;
    var liq=(p.liquidity&&+p.liquidity.usd)||0,key=p.chainId+':'+normA(b.address);
-   var c=map[key];if(!c||liq>c.liq)map[key]={ch:p.chainId,addr:b.address,sym:b.symbol,name:b.name,pair:p.pairAddress,url:p.url,price:+p.priceUsd,liq:liq,fdv:p.fdv||p.marketCap||0,c24:p.priceChange&&p.priceChange.h24,dex:p.dexId}});
+   var c=map[key];if(!c||liq>c.liq)map[key]={ch:p.chainId,addr:b.address,sym:b.symbol,name:b.name,pair:p.pairAddress,url:p.url,price:+p.priceUsd,liq:liq,fdv:p.fdv||0,mc:p.marketCap||0,c24:p.priceChange&&p.priceChange.h24,dex:p.dexId}});
   cands=Object.keys(map).map(function(k){return map[k]}).sort(function(a,b){return b.liq-a.liq}).slice(0,6);
   if(!cands.length){status(st,'No coin found for "'+qs+'". Try the contract address, or check the spelling.',true);return}
   if(addr&&cands.length===1){addCoin(cands[0]);return}
@@ -189,7 +201,7 @@ function addCoin(c){
  var ex=list.filter(function(x){return x.ch===c.ch&&normA(x.addr)===normA(c.addr)})[0];
  if(ex){if(activeList()&&(ex.lists||[]).indexOf(cfg.active)<0){ex.lists=(ex.lists||[]).concat([cfg.active]);save();$('cands').innerHTML='';$('qIn').value='';status($('qStat'),c.sym+' was already tracked. Added it to "'+activeList().name+'".');render();return}
   status($('qStat'),c.sym+' is already on your list.',true);$('cands').innerHTML='';return}
- list.unshift({id:uid(),ch:c.ch,addr:c.addr,pair:c.pair,sym:c.sym,name:c.name,url:c.url,added:Date.now(),lists:activeList()?[cfg.active]:[],last:{p:c.price,c24:c.c24,liq:c.liq,fdv:c.fdv,t:Date.now()},alerts:[]});
+ list.unshift({id:uid(),ch:c.ch,addr:c.addr,pair:c.pair,sym:c.sym,name:c.name,url:c.url,added:Date.now(),lists:activeList()?[cfg.active]:[],last:{p:c.price,c24:c.c24,liq:c.liq,fdv:c.fdv,mc:c.mc,t:Date.now()},alerts:[]});
  save();$('cands').innerHTML='';$('qIn').value='';open[list[0].id]=true;
  status($('qStat'),'Added '+c.sym+'. Set an alert below.');render();
 }
@@ -206,7 +218,7 @@ async function poll(){
     var chunk=items.slice(i,i+30);
     try{var j=await jf('https://api.dexscreener.com/latest/dex/pairs/'+encodeURIComponent(ch)+'/'+chunk.map(function(x){return x.pair}).join(','));
      (j.pairs||[]).forEach(function(p){var it=chunk.filter(function(x){return String(x.pair).toLowerCase()===String(p.pairAddress).toLowerCase()})[0];if(!it||!p.priceUsd)return;
-      var c=p.priceChange||{};it.last={p:+p.priceUsd,c5:c.m5,c1:c.h1,c6:c.h6,c24:c.h24,liq:p.liquidity&&p.liquidity.usd,fdv:p.fdv||p.marketCap,t:Date.now()};if(p.url)it.url=p.url});
+      var c=p.priceChange||{};it.last={p:+p.priceUsd,c5:c.m5,c1:c.h1,c6:c.h6,c24:c.h24,liq:p.liquidity&&p.liquidity.usd,fdv:p.fdv,mc:p.marketCap,t:Date.now()};if(p.url)it.url=p.url});
     }catch(e){$('upd').textContent='Last check failed: '+e.message}
    }
   }
@@ -274,22 +286,22 @@ function render(){
  var keep=grab();
  var act=0,firedToday=hist.filter(function(h){return Date.now()-h.t<864e5}).length;
  list.forEach(function(it){it.alerts.forEach(function(a){if(a.on)act++})});
- $('sum').innerHTML=[['Coins tracked',list.length],['Active alerts',act],['Alerts fired (24h)',firedToday],['Checking every',cfg.iv>=60?(cfg.iv/60)+' min':cfg.iv+' sec']].map(function(x){return '<div class="k"><b>'+x[1]+'</b><span>'+x[0]+'</span></div>'}).join('');
+ $('sum').innerHTML=[['Coins tracked',list.length],['Active alerts',act],['Alerts fired (24h)',firedToday],['Checking every',cfg.iv>=60?(cfg.iv/60)+' min':cfg.iv+' sec'],['Big-buy alerts',cfg.bb?'$'+cfg.bbMin.toLocaleString()+'+':'Off']].map(function(x){return '<div class="k"><b>'+x[1]+'</b><span>'+x[0]+'</span></div>'}).join('');
  renderChan();
  var vis=visible();renderTabs();
  if(!vis.length){$('tbl').innerHTML='<div class="empty">'+(list.length?'No coins in this list yet. Add a coin above, or open a coin in All and put it in this list.':'No coins yet. Add one above.')+'</div>'}
  else{
-  var h='<table><thead><tr><th>Coin</th><th class="r">Price</th><th class="r">5m</th><th class="r">1h</th><th class="r">6h</th><th class="r">24h</th><th class="r">Liquidity</th><th>Alerts</th><th></th></tr></thead><tbody>';
+  var h='<table><thead><tr><th>Coin</th><th class="r">Price</th><th class="r">5m</th><th class="r">1h</th><th class="r">6h</th><th class="r">24h</th><th class="r">Market cap</th><th class="r">Liquidity</th><th>Alerts</th><th></th></tr></thead><tbody>';
   vis.forEach(function(it){var l=it.last||{},n=it.alerts.filter(function(a){return a.on}).length,gt=DS2GT[it.ch];
    h+='<tr><td><b>'+esc(it.sym)+'</b> <span class="badge">'+esc(pretty(it.ch))+'</span><br><span class="mut" style="font-size:12px">'+esc(it.name||'')+'</span></td>'
-    +'<td class="r"><b>'+px(l.p)+'</b></td><td class="r">'+pc(l.c5)+'</td><td class="r">'+pc(l.c1)+'</td><td class="r">'+pc(l.c6)+'</td><td class="r">'+pc(l.c24)+'</td><td class="r mut">'+usd(l.liq)+'</td>'
+    +'<td class="r"><b>'+px(l.p)+'</b></td><td class="r">'+pc(l.c5)+'</td><td class="r">'+pc(l.c1)+'</td><td class="r">'+pc(l.c6)+'</td><td class="r">'+pc(l.c24)+'</td><td class="r">'+(l.mc?usd(l.mc):(l.fdv?'<span class="mut" title="Market cap not reported. This is the fully diluted value (FDV).">FDV '+usd(l.fdv)+'</span>':'<span class="mut">—</span>'))+'</td><td class="r mut">'+usd(l.liq)+'</td>'
     +'<td><button class="btn sec sm" type="button" data-tog="'+it.id+'">🔔 '+(n?n+' active':'Set alert')+'</button></td>'
     +'<td><a class="mut" target="_blank" rel="noopener" href="'+esc(it.url||('https://dexscreener.com/'+it.ch+'/'+it.pair))+'">DexScreener ↗</a>'+(gt?' · <a class="mut" target="_blank" rel="noopener" href="https://www.geckoterminal.com/'+gt+'/pools/'+esc(it.pair)+'">GeckoTerminal ↗</a>':'')+' <button class="btn dg sm" type="button" data-rm="'+it.id+'">Remove</button></td></tr>';
-   if(open[it.id])h+='<tr><td colspan="9" style="white-space:normal">'+panel(it)+'</td></tr>'});
+   if(open[it.id])h+='<tr><td colspan="10" style="white-space:normal">'+panel(it)+'</td></tr>'});
   $('tbl').innerHTML=h+'</tbody></table>';
  }
  putBack(keep);
- $('hh').innerHTML=hist.length?hist.slice(0,20).map(function(x){return '<tr><td class="mut" title="'+esc(new Date(x.t).toLocaleString())+'">'+ago(x.t)+'</td><td style="white-space:normal">'+esc(x.m.replace('BWS Coin Tracker alert: ',''))+'</td><td class="mut">'+esc(x.to)+'</td></tr>'}).join(''):'<tr><td colspan="3" class="mut">Nothing yet.</td></tr>';
+ $('hh').innerHTML=hist.length?hist.slice(0,20).map(function(x){return '<tr><td class="mut" title="'+esc(new Date(x.t).toLocaleString())+'">'+ago(x.t)+'</td><td style="white-space:normal">'+esc(x.m.replace(/^BWS Coin Tracker( alert| BIG BUY)?: /,function(m,t){return t&&t.indexOf('BIG')>=0?'BIG BUY: ':''}))+'</td><td class="mut">'+esc(x.to)+'</td></tr>'}).join(''):'<tr><td colspan="3" class="mut">Nothing yet.</td></tr>';
 }
 function panel(it){
  var p=it.last&&it.last.p||0;
@@ -297,6 +309,7 @@ function panel(it){
   +'<div><h4>Move of 10% to 50%+</h4><div class="chips" style="margin:0 0 6px" data-pcts="'+it.id+'">'+[10,20,30,40,50].map(function(n){return '<button class="chip'+(n===20?' on':'')+'" type="button" data-pct="'+n+'">'+n+'%</button>'}).join('')+'<input type="number" min="1" max="1000" step="1" data-f="pm-cust" placeholder="Other %" aria-label="Custom percent" style="width:100px;padding:5px 8px"></div>'
   +'<div class="ar"><select data-f="pm-dir"><option value="either">Up or down</option><option value="up">Up only</option><option value="down">Down only</option></select><label class="tg"><input type="checkbox" data-f="pm-rep"> Keep alerting (reset at each new price)</label></div>'
   +'<div class="ar"><button class="btn sm" type="button" data-addm="'+it.id+'">Add move alert</button><span class="mut" style="font-size:12px">Measured from the price right now: '+px(p)+'</span></div></div></div>';
+  h+='<h4 style="margin-top:12px">Big buys</h4><label class="tg"><input type="checkbox" data-bbm="'+it.id+'"'+(it.bbMute?' checked':'')+'> Don\'t send big-buy alerts for this coin</label>';
  h+='<h4 style="margin-top:12px">Lists</h4><div class="chips" style="margin:0">'+(lists.length?lists.map(function(l){return '<button class="chip'+((it.lists||[]).indexOf(l.id)>=0?' on':'')+'" type="button" data-lt="'+it.id+'|'+l.id+'">'+esc(l.name)+'</button>'}).join(''):'<span class="mut">No lists yet. Make one with the + New list button above the table.</span>')+'</div>';
  if(it.alerts.length)h+='<h4 style="margin-top:12px">Your alerts</h4>'+it.alerts.map(function(a){
   var d=a.type==='above'?'Price above '+px(a.val):a.type==='below'?'Price below '+px(a.val):(a.dir==='either'?'Moves ':a.dir==='up'?'Rises ':'Drops ')+a.val+'% from '+px(a.base)+(a.rep?' (keeps alerting)':'');
@@ -304,6 +317,8 @@ function panel(it){
  return h+'</div>';
 }
 function find1(id){for(var i=0;i<list.length;i++)if(list[i].id===id)return list[i]}
+$('tbl').addEventListener('change',function(e){var m=e.target.getAttribute&&e.target.getAttribute('data-bbm');if(!m)return;
+ for(var i=0;i<list.length;i++)if(list[i].id===m){list[i].bbMute=e.target.checked;save();renderBB();break}});
 $('tbl').addEventListener('click',function(e){
  var t=e.target;
  var b=t.closest('[data-tog]');if(b){var id=b.getAttribute('data-tog');open[id]=!open[id];render();return}
@@ -348,9 +363,9 @@ $('lbar').addEventListener('click',function(e){
  if(id==='dlb'&&a){var b=e.target;if(b.getAttribute('data-sure')==='1'){list.forEach(function(x){x.lists=(x.lists||[]).filter(function(i){return i!==a.id})});lists=lists.filter(function(l){return l.id!==a.id});cfg.active='all';save();saveL();ss(K.cfg,cfg);render()}else{b.setAttribute('data-sure','1');b.textContent='Tap again. Coins stay in All';setTimeout(function(){if(b.isConnected){b.removeAttribute('data-sure');b.textContent='Delete this list'}},3500)}return}
  if(id==='cpb'){var txt=visible().map(function(x){return x.addr}).join('\n');
   try{navigator.clipboard.writeText(txt).then(function(){toast('Copied '+visible().length+' addresses. You can paste them into "Paste a whole list" anywhere.')},function(){toast('Could not copy. Use Download CSV instead.')})}catch(er){toast('Could not copy. Use Download CSV instead.')}return}
- if(id==='csv'){var rows=[['List','Symbol','Name','Chain','Contract address','Pair','Price USD','24h %','Liquidity USD']];
+ if(id==='csv'){var rows=[['List','Symbol','Name','Chain','Contract address','Pair','Price USD','24h %','Market cap USD','FDV USD','Liquidity USD']];
   visible().forEach(function(x){var l=x.last||{},nm=(x.lists||[]).map(function(i){var q=lists.filter(function(z){return z.id===i})[0];return q?q.name:''}).filter(Boolean).join(' | ');
-   rows.push([nm,x.sym,x.name||'',x.ch,x.addr,x.pair,l.p||'',l.c24==null?'':l.c24,l.liq||''])});
+   rows.push([nm,x.sym,x.name||'',x.ch,x.addr,x.pair,l.p||'',l.c24==null?'':l.c24,l.mc||'',l.fdv||'',l.liq||''])});
   var csv='\ufeff'+rows.map(function(r){return r.map(function(c){c=String(c==null?'':c);if(/^[=+\-@]/.test(c))c="'"+c;return '"'+c.replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
   var u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),a2=document.createElement('a');a2.href=u;a2.download='coin-tracker-'+(a?a.name.replace(/[^A-Za-z0-9_-]+/g,'-'):'all')+'.csv';document.body.appendChild(a2);a2.click();a2.remove();setTimeout(function(){URL.revokeObjectURL(u)},2000)}
 });
@@ -366,9 +381,9 @@ $('bulkBtn').onclick=async function(){
   var addrs=items.filter(function(x){return isEvm(x)||isSol(x)}),names=items.filter(function(x){return !(isEvm(x)||isSol(x))});
   function consider(c){var ex=list.filter(function(x){return x.ch===c.ch&&normA(x.addr)===normA(c.addr)})[0];
    if(ex){if(activeList()&&(ex.lists||[]).indexOf(cfg.active)<0)ex.lists=(ex.lists||[]).concat([cfg.active]);already++;return}
-   list.push({id:uid(),ch:c.ch,addr:c.addr,pair:c.pair,sym:c.sym,name:c.name,url:c.url,added:Date.now(),lists:activeList()?[cfg.active]:[],last:{p:c.price,c24:c.c24,liq:c.liq,fdv:c.fdv,t:Date.now()},alerts:[]});added++}
+   list.push({id:uid(),ch:c.ch,addr:c.addr,pair:c.pair,sym:c.sym,name:c.name,url:c.url,added:Date.now(),lists:activeList()?[cfg.active]:[],last:{p:c.price,c24:c.c24,liq:c.liq,fdv:c.fdv,mc:c.mc,t:Date.now()},alerts:[]});added++}
   function best(pairs,match){var map={};(pairs||[]).forEach(function(p){var b=p.baseToken;if(!b||!p.priceUsd||!match(b))return;var liq=(p.liquidity&&+p.liquidity.usd)||0,key=p.chainId+':'+normA(b.address),c=map[key];
-    if(!c||liq>c.liq)map[key]={ch:p.chainId,addr:b.address,sym:b.symbol,name:b.name,pair:p.pairAddress,url:p.url,price:+p.priceUsd,liq:liq,fdv:p.fdv||p.marketCap||0,c24:p.priceChange&&p.priceChange.h24}});
+    if(!c||liq>c.liq)map[key]={ch:p.chainId,addr:b.address,sym:b.symbol,name:b.name,pair:p.pairAddress,url:p.url,price:+p.priceUsd,liq:liq,fdv:p.fdv||0,mc:p.marketCap||0,c24:p.priceChange&&p.priceChange.h24}});
    return Object.keys(map).map(function(k){return map[k]}).sort(function(a,b){return b.liq-a.liq})}
   for(var i=0;i<addrs.length;i+=30){var ch=addrs.slice(i,i+30),j=await jf('https://api.dexscreener.com/latest/dex/tokens/'+ch.map(encodeURIComponent).join(','));
    ch.forEach(function(a){var r=best(j.pairs,function(b){return normA(b.address)===normA(a)});if(r.length)r.forEach(function(c,ix){if(ix===0||(r[0].liq>0&&c.liq>=r[0].liq*0.5))consider(c)});else miss.push(a)})}
@@ -381,6 +396,73 @@ $('bulkBtn').onclick=async function(){
  }catch(e){status(st,e.message,true)}
  finally{$('bulkBtn').disabled=false}
 };
+/* ---------- big-buy watcher ---------- */
+var GAP=window.COIN_GAP||2300,lastCall=0,gcache={},gq=Promise.resolve(),rhId=ls('coin_rhid',null);
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+var GTMAP={solana:'solana',ethereum:'eth',base:'base',bsc:'bsc',arbitrum:'arbitrum',polygon:'polygon_pos',avalanche:'avax',optimism:'optimism',sui:'sui-network',ton:'ton',zksync:'zksync',linea:'linea',blast:'blast',fantom:'ftm',cronos:'cro',pulsechain:'pulsechain',mantle:'mantle',scroll:'scroll'};
+var TXU={solana:'https://solscan.io/tx/',ethereum:'https://etherscan.io/tx/',base:'https://basescan.org/tx/',bsc:'https://bscscan.com/tx/',arbitrum:'https://arbiscan.io/tx/',polygon:'https://polygonscan.com/tx/',avalanche:'https://snowtrace.io/tx/',optimism:'https://optimistic.etherscan.io/tx/'};
+function gtRun(path,tries){
+ return sleep(Math.max(0,GAP-(Date.now()-lastCall))).then(function(){lastCall=Date.now();return fetch('https://api.geckoterminal.com/api/v2'+path,{headers:{Accept:'application/json;version=20230302'}})})
+ .then(function(r){if(r.status===429&&tries<2)return sleep(9000).then(function(){return gtRun(path,tries+1)});
+  if(r.status===429)throw new Error('GeckoTerminal is rate-limiting free users. It will retry on the next pass.');
+  if(r.status===404){var e=new Error('not on GeckoTerminal');e.nf=1;throw e}
+  if(!r.ok)throw new Error('GeckoTerminal answered '+r.status);return r.json()},function(){throw new Error('GeckoTerminal busy or blocked (offline, or an ad blocker is in the way)')})}
+function gt(path,ttl){var h=gcache[path];if(h&&Date.now()-h.t<(ttl||60000))return Promise.resolve(h.v);
+ var p=gq.then(function(){return gtRun(path,0)});gq=p.catch(function(){});return p.then(function(v){gcache[path]={t:Date.now(),v:v};return v})}
+async function gtId(ch){
+ if(GTMAP[ch])return GTMAP[ch];if(!/robinhood/i.test(ch))return null;if(rhId)return rhId;
+ var c=['robinhood-chain','robinhood','robinhood_chain'];
+ for(var i=0;i<c.length&&!rhId;i++){try{await gt('/networks/'+c[i]+'/trending_pools?page=1',300000);rhId=c[i]}catch(e){}}
+ for(var pg=1;pg<=12&&!rhId;pg++){var j=await gt('/networks?page='+pg,3600000),d=j.data||[];if(!d.length)break;d.forEach(function(n){if(!rhId&&/robinhood/i.test(n.id+' '+((n.attributes||{}).name||'')))rhId=n.id});if(d.length<20)break}
+ if(rhId)ss('coin_rhid',rhId);return rhId}
+var seen=ls('coin_bbseen',{}),bbBusy=false,bbInfo={t:0,n:0,bad:[],err:'',alerted:0};
+function bbKey(a){return String(a.tx_hash).slice(-12)+'|'+Math.round(+a.volume_in_usd)}
+async function bbOne(it){
+ var gid=await gtId(it.ch);if(!gid)return 'unsupported';
+ var j=await gt('/networks/'+gid+'/pools/'+it.pair+'/trades?trade_volume_in_usd_greater_than='+cfg.bbMin,5000);
+ var want=normA(it.addr),s=seen[it.id]||(seen[it.id]={i:false,h:[]}),have={};s.h.forEach(function(h){have[h]=1});
+ var buys=(j.data||[]).map(function(x){return x.attributes}).filter(function(a){return a&&normA(a.to_token_address||'')===want&&+a.volume_in_usd>=cfg.bbMin&&a.tx_hash});
+ buys.sort(function(a,b){return Date.parse(a.block_timestamp)-Date.parse(b.block_timestamp)});
+ var fresh=buys.filter(function(a){return !have[bbKey(a)]});
+ fresh.forEach(function(a){s.h.push(bbKey(a))});if(s.h.length>150)s.h=s.h.slice(-150);
+ if(!s.i){s.i=true;return []}
+ return fresh;
+}
+function bbText(it,a){
+ var l=it.last||{},mc=l.mc||l.fdv,w=a.tx_from_address||'unknown';
+ return 'BWS Coin Tracker BIG BUY: '+usd(+a.volume_in_usd)+' buy of '+it.sym+' ('+pretty(it.ch)+') by wallet '+w+(a.price_to_in_usd?' at '+px(+a.price_to_in_usd):'')+(mc?' · '+(l.mc?'market cap ':'FDV ')+usd(mc):'')+' · tx '+((TXU[it.ch]||'')+a.tx_hash)+' · chart '+(it.url||'https://dexscreener.com/'+it.ch+'/'+it.pair);
+}
+async function bbCycle(){
+ if(bbBusy||!cfg.bb||!list.length)return;bbBusy=true;$('bbNow').disabled=true;
+ var coins=list.filter(function(x){return !x.bbMute}).slice(0,40),bad=[],err='';
+ try{
+  for(var i=0;i<coins.length;i++){var it=coins[i];
+   status($('bbStat'),'Scanning for big buys: '+it.sym+' ('+(i+1)+' of '+coins.length+')…',false,true);
+   try{var r=await bbOne(it);
+    if(r==='unsupported'){bad.push(it.sym);continue}
+    if(r.length){
+     var show=r.slice(-4),skipped=r.length-show.length;
+     for(var k=0;k<show.length;k++){var text=bbText(it,show[k]),res=await sendAll(text);
+      hist.unshift({t:Date.now(),m:text,to:res.length?res.map(function(x){return x.name+(x.ok?'':' (failed)')}).join(', '):'this page only'});toast(text);bbInfo.alerted++}
+     if(skipped>0){var t2='BWS Coin Tracker BIG BUY: '+skipped+' more buys of '+usd(cfg.bbMin)+'+ on '+it.sym+' were found in the same pass. See the chart: '+(it.url||'');var r2=await sendAll(t2);hist.unshift({t:Date.now(),m:t2,to:r2.map(function(x){return x.name}).join(', ')||'this page only'})}
+     hist=hist.slice(0,60);ss(K.hist,hist);render()}
+   }catch(e){if(e.nf)bad.push(it.sym);else err=e.message}
+   ss('coin_bbseen',seen)}
+ }finally{bbBusy=false;$('bbNow').disabled=false;bbInfo.t=Date.now();bbInfo.bad=bad;bbInfo.err=err;ss('coin_bbseen',seen);renderBB()}
+}
+function renderBB(){
+ var el=$('bbStat');if(!cfg.bb){status(el,'Big-buy alerts are off.');return}
+ if(!list.length){status(el,'Add a coin to start watching for big buys.');return}
+ var n=list.filter(function(x){return !x.bbMute}).length;
+ status(el,(bbInfo.t?'Last pass '+new Date(bbInfo.t).toLocaleTimeString()+' · ':'Waiting for the first pass · ')+n+' coin'+(n===1?'':'s')+' watched for buys of '+usd(cfg.bbMin)+'+'+(bbInfo.alerted?' · '+bbInfo.alerted+' alert'+(bbInfo.alerted===1?'':'s')+' sent this session':'')
+  +(bbInfo.bad.length?' · No trade feed for: '+bbInfo.bad.join(', ')+' (small chain or pool GeckoTerminal does not cover). Price alerts still work.':'')+(bbInfo.err?' · '+bbInfo.err:''),!!bbInfo.err&&!bbInfo.t)}
+$('bbOn').checked=!!cfg.bb;$('bbMin').value=cfg.bbMin;
+$('bbOn').onchange=function(){cfg.bb=$('bbOn').checked;ss(K.cfg,cfg);render();renderBB();if(cfg.bb)bbCycle()};
+$('bbMin').onchange=function(){var v=parseFloat($('bbMin').value);cfg.bbMin=v>=100?v:500;$('bbMin').value=cfg.bbMin;ss(K.cfg,cfg);
+ Object.keys(seen).forEach(function(k){seen[k].i=false});ss('coin_bbseen',seen);render();renderBB();bbCycle()};
+$('bbNow').onclick=bbCycle;
+setInterval(function(){if(!bbBusy&&cfg.bb&&!document.hidden)bbCycle()},20000);
+setTimeout(function(){renderBB();bbCycle()},1500);
 $('chk').onclick=poll;
 $('iv').value=String(cfg.iv);
 var timer=null;
