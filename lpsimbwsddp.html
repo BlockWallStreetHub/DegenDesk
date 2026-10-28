@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LP Pool Simulator — Uniswap / PancakeSwap / Aerodrome</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg-deep:#070f1b;
+    --bg:#0c1a2c;
+    --bg-panel:#0f2038;
+    --bg-card:#122544;
+    --line: rgba(234,228,211,0.10);
+    --line-strong: rgba(234,228,211,0.22);
+    --gold:#c9a13b;
+    --gold-bright:#eec957;
+    --rust:#c06a4f;
+    --green:#4f9d6e;
+    --ink:#ece6d6;
+    --ink-dim:#8fa0b8;
+    --ink-faint:#5c6c84;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background: radial-gradient(1200px 600px at 15% -10%, rgba(201,161,59,0.08), transparent 60%), var(--bg-deep);
+    color:var(--ink);
+    font-family:'Barlow', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .eyebrow{ font-family:'DM Mono', monospace; font-size:0.68rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); }
+  h1,h2,h3{ font-family:'Bebas Neue', sans-serif; font-weight:400; letter-spacing:0.02em; margin:0; color:var(--ink); }
+  .page-head{ padding:36px 28px 20px; border-bottom:1px solid var(--line); }
+  .page-head h1{ font-size:clamp(1.9rem,4vw,2.6rem); margin-top:8px; }
+  .page-head p{ color:var(--ink-dim); max-width:700px; margin-top:10px; font-size:0.95rem; }
+
+  .layout{ display:grid; grid-template-columns: 340px 1fr; gap:0; align-items:start; }
+  @media (max-width: 900px){ .layout{ grid-template-columns:1fr; } }
+
+  .panel{ padding:24px 22px 60px; border-right:1px solid var(--line); position:sticky; top:0; max-height:100vh; overflow-y:auto; }
+  @media (max-width: 900px){ .panel{ position:static; max-height:none; border-right:none; border-bottom:1px solid var(--line); } }
+  .group{ margin-bottom:26px; }
+  .group-title{ font-family:'DM Mono', monospace; font-size:0.66rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:12px; display:block; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:flex; justify-content:space-between; font-size:0.82rem; color:var(--ink-dim); margin-bottom:6px; }
+  .field label b{ color:var(--gold-bright); font-weight:500; font-family:'DM Mono', monospace; font-size:0.78rem; }
+  input[type="number"]{ width:100%; background:var(--bg-panel); border:1px solid var(--line-strong); color:var(--ink); padding:8px 10px; border-radius:4px; font-family:'DM Mono', monospace; font-size:0.85rem; }
+  input[type="range"]{ width:100%; accent-color:var(--gold); height:4px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .radio-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  .radio-row label{ flex:1; text-align:center; padding:7px 6px; border:1px solid var(--line-strong); border-radius:4px; font-size:0.74rem; color:var(--ink-dim); cursor:pointer; font-family:'DM Mono', monospace; }
+  .radio-row input{ display:none; }
+  .radio-row label:has(input:checked){ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); font-weight:600; }
+  .toggle-row{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .toggle-row input{ width:16px; height:16px; accent-color:var(--gold); }
+  .toggle-row span{ font-size:0.85rem; color:var(--ink-dim); }
+  .hint{ font-size:0.72rem; color:var(--ink-faint); margin-top:4px; font-family:'DM Mono', monospace; line-height:1.5; }
+  .divider{ height:1px; background:var(--line); margin:22px 0; }
+  .reward-badge{ display:inline-block; margin-top:6px; padding:3px 8px; border-radius:4px; font-family:'DM Mono', monospace; font-size:0.68rem; background:var(--bg-card); color:var(--gold-bright); border:1px solid var(--line-strong); }
+
+  .results{ padding:28px 28px 60px; }
+  .day-bar{ background:var(--bg-panel); border:1px solid var(--line-strong); border-radius:8px; padding:16px 20px; margin-bottom:24px; }
+  .day-bar .top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .day-bar .top .val{ font-family:'Bebas Neue',sans-serif; font-size:1.6rem; color:var(--gold-bright); }
+
+  .compare-head{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:10px; }
+  @media (max-width: 640px){ .compare-head{ grid-template-columns:1fr; } }
+  .compare-head .col-lbl{ font-family:'DM Mono', monospace; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; padding:8px 4px; text-align:center; border-radius:6px 6px 0 0; }
+  .compare-head .col-lbl.claim{ background:rgba(192,106,79,0.15); color:var(--rust); }
+  .compare-head .col-lbl.compound{ background:rgba(79,157,110,0.15); color:var(--green); }
+
+  .cards{ display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:20px; }
+  @media (max-width: 640px){ .cards{ grid-template-columns:1fr; } }
+  .card-col{ display:grid; gap:12px; }
+  .card{ background:var(--bg-card); border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
+  .card .label{ font-family:'DM Mono', monospace; font-size:0.64rem; letter-spacing:0.07em; text-transform:uppercase; color:var(--ink-faint); }
+  .card .num{ font-family:'Bebas Neue', sans-serif; font-size:1.5rem; color:var(--ink); margin-top:4px; }
+  .card .sub{ font-family:'DM Mono', monospace; font-size:0.68rem; color:var(--ink-dim); margin-top:2px; }
+  .card.gold .num{ color:var(--gold-bright); }
+  .card.claim .num{ color:var(--rust); }
+  .card.compound .num{ color:var(--green); }
+
+  .shared-cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:12px; margin-bottom:28px; }
+  .shared-cards .card .num{ font-size:1.3rem; }
+
+  .chart-wrap{ background:var(--bg-panel); border:1px solid var(--line); border-radius:8px; padding:18px; margin-bottom:28px; }
+  .chart-wrap h3{ font-size:1.1rem; margin-bottom:4px; }
+  .chart-wrap .legend-note{ font-family:'DM Mono', monospace; font-size:0.68rem; color:var(--ink-faint); margin-bottom:10px; }
+  .legend-row{ display:flex; gap:18px; flex-wrap:wrap; margin-bottom:14px; }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-family:'DM Mono', monospace; font-size:0.7rem; color:var(--ink-dim); }
+  .legend-swatch{ width:14px; height:2px; display:inline-block; }
+  .chart-canvas-box{ height:340px; }
+  .chart-canvas-box svg{ width:100%; height:100%; display:block; }
+
+  .table-wrap h3{ font-size:1.1rem; margin-bottom:12px; }
+  .table-scroll{ max-height:380px; overflow-y:auto; border:1px solid var(--line); border-radius:8px; }
+  table{ width:100%; border-collapse:collapse; font-family:'DM Mono', monospace; font-size:0.74rem; }
+  thead th{ position:sticky; top:0; background:var(--bg-panel); text-align:right; padding:9px 10px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.05em; font-size:0.62rem; border-bottom:1px solid var(--line-strong); }
+  thead th:first-child, td:first-child{ text-align:left; }
+  tbody td{ text-align:right; padding:7px 10px; color:var(--ink-dim); border-bottom:1px solid var(--line); }
+  tbody tr.today{ background:rgba(201,161,59,0.09); }
+  tbody tr.today td{ color:var(--gold-bright); }
+  tbody td.oor{ color:var(--rust); }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <span class="eyebrow">Day 3 Companion — LP Pool Simulator</span>
+  <h1>Uniswap / PancakeSwap / Aerodrome — Claim vs. Compound</h1>
+  <p>Model a concentrated liquidity position across the three DEX types from the course, with your own range width, price path, and pool assumptions — then see exactly how much claiming your fees costs you against reinvesting them, day by day across a full year.</p>
+</div>
+
+<div class="layout">
+  <div class="panel">
+
+    <div class="group">
+      <span class="group-title">Platform</span>
+      <div class="radio-row" id="platformRow">
+        <label><input type="radio" name="platform" value="uniswap" checked><span>Uniswap V3</span></label>
+        <label><input type="radio" name="platform" value="pancake"><span>PancakeSwap V3</span></label>
+        <label><input type="radio" name="platform" value="aerodrome"><span>Aerodrome</span></label>
+      </div>
+      <div class="reward-badge" id="rewardBadge">Reward token: None — fees only</div>
+    </div>
+
+    <div class="group">
+      <span class="group-title">Pool Pair</span>
+      <div class="radio-row">
+        <label><input type="radio" name="pair" value="ethbtc" checked><span>ETH / BTC</span></label>
+        <label><input type="radio" name="pair" value="ethusdc"><span>ETH / USDC</span></label>
+        <label><input type="radio" name="pair" value="paxgbtc"><span>PAXG / BTC</span></label>
+        <label><input type="radio" name="pair" value="xautbtc"><span>XAUT / BTC</span></label>
+        <label><input type="radio" name="pair" value="btcusdc"><span>BTC / USDC</span></label>
+      </div>
+      <div class="hint">ETH/BTC and PAXG/XAUT-BTC: both legs can appreciate — though ETH/BTC are correlated blue-chips, while a gold token paired with BTC is two appreciating assets that don't move together, a different IL shape. ETH/USDC and BTC/USDC: the stablecoin leg never appreciates — a dead-weight leg included so you can see the difference for yourself.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="group">
+      <span class="group-title">Capital &amp; Pool Size</span>
+      <div class="field">
+        <label>Initial deposit <b id="lblDeposit">$3,000</b></label>
+        <input type="number" id="inpDeposit" value="3000" step="100">
+      </div>
+      <div class="field">
+        <label>Pool total liquidity (TVL) <b id="lblTvl">$10,000,000</b></label>
+        <input type="number" id="inpTvl" value="10000000" step="100000">
+      </div>
+      <div class="field">
+        <label>Daily pool volume <b id="lblVolume">$3,000,000</b></label>
+        <input type="number" id="inpVolume" value="3000000" step="100000">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="group">
+      <span class="group-title">Fee &amp; Reward Rates</span>
+      <div class="field">
+        <label>Fee tier <b id="lblFeeTier">0.30%</b></label>
+        <input type="range" id="rngFeeTier" min="0.01" max="1" step="0.01" value="0.30">
+      </div>
+      <div class="field">
+        <label>Reward token APY <b id="lblRewardApy">0.00%</b></label>
+        <input type="range" id="rngRewardApy" min="0" max="40" step="0.5" value="0">
+      </div>
+      <div class="hint">Reward APY defaults per platform (0% on Uniswap, since it's fees-only) — adjust freely, real emissions vary constantly.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="group">
+      <span class="group-title">Position Range</span>
+      <div class="radio-row">
+        <label><input type="radio" name="range" value="narrow"><span>Narrow</span></label>
+        <label><input type="radio" name="range" value="medium" checked><span>Medium</span></label>
+        <label><input type="radio" name="range" value="wide"><span>Wide</span></label>
+        <label><input type="radio" name="range" value="full"><span>Full Range</span></label>
+      </div>
+      <div class="hint" id="rangeHint"></div>
+      <div class="toggle-row" style="margin-top:14px;">
+        <input type="checkbox" id="chkRebalance" checked>
+        <span>Rebalance when out of range</span>
+      </div>
+      <div class="field">
+        <label>Rebalance delay (days) <b id="lblRebalDelay">1</b></label>
+        <input type="range" id="rngRebalDelay" min="0" max="10" step="1" value="1">
+        <div class="hint">The course teaches this in hours (short: 1–2 hrs, long: 4–12 hrs) — this simulator runs on daily steps, so delay is modeled in whole days instead.</div>
+      </div>
+      <div class="field">
+        <label>Rebalance cost <b id="lblRebalCost">0.10%</b></label>
+        <input type="range" id="rngRebalCost" min="0" max="1" step="0.05" value="0.1">
+        <div class="hint">Gas, slippage, and reset cost-basis IL — deducted from the position each time it actually rebalances.</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="group">
+      <span class="group-title">Price Path (Day 1 → Day 365)</span>
+      <div class="field" id="ethPriceField">
+        <label>ETH start / end</label>
+        <div class="row2">
+          <input type="number" id="inpEthStart" value="1900" step="50">
+          <input type="number" id="inpEthEnd" value="3200" step="50">
+        </div>
+      </div>
+      <div class="field" id="btcPriceField">
+        <label>BTC start / end</label>
+        <div class="row2">
+          <input type="number" id="inpBtcStart" value="64000" step="500">
+          <input type="number" id="inpBtcEnd" value="90000" step="500">
+        </div>
+      </div>
+      <div class="field" id="goldPriceField">
+        <label>Gold (PAXG/XAUT) start / end</label>
+        <div class="row2">
+          <input type="number" id="inpGoldStart" value="2650" step="25">
+          <input type="number" id="inpGoldEnd" value="2900" step="25">
+        </div>
+        <div class="hint">Per-ounce spot price — both PAXG and XAUT track gold 1:1, so they share this one price path.</div>
+      </div>
+      <div class="field">
+        <label>Price path shape</label>
+        <div class="radio-row">
+          <label><input type="radio" name="curve" value="linear" checked><span>Linear</span></label>
+          <label><input type="radio" name="curve" value="compound"><span>Compounding</span></label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="results">
+
+    <div class="day-bar">
+      <div class="top">
+        <span class="eyebrow">Viewing Day</span>
+        <span class="val" id="dayVal">Day 365</span>
+      </div>
+      <input type="range" id="rngDay" min="1" max="365" value="365">
+      <div class="radio-row" id="resRow" style="margin-top:12px;">
+        <label><input type="radio" name="res" value="daily"><span>Daily view</span></label>
+        <label><input type="radio" name="res" value="weekly"><span>Weekly view</span></label>
+        <label><input type="radio" name="res" value="monthly" checked><span>Monthly view</span></label>
+      </div>
+    </div>
+
+    <div class="compare-head">
+      <div class="col-lbl claim">If Claiming Fees &amp; Rewards</div>
+      <div class="col-lbl compound">If Compounding Fees &amp; Rewards</div>
+    </div>
+    <div class="cards">
+      <div class="card-col" id="claimCards"></div>
+      <div class="card-col" id="compoundCards"></div>
+    </div>
+
+    <div class="shared-cards" id="sharedCards"></div>
+
+    <div class="chart-wrap">
+      <h3>Net Value Over Time</h3>
+      <div class="legend-note">Solid = accumulated to date &nbsp;·&nbsp; Faded = projection beyond the viewing day</div>
+      <div class="legend-row">
+        <span class="legend-item"><span class="legend-swatch" style="background:#c06a4f;"></span>Claim (Net Value)</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:#4f9d6e;"></span>Compound (Net Value)</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:#8fa0b8;"></span>HODL Reference</span>
+      </div>
+      <div class="chart-canvas-box"><svg id="chartSvg" viewBox="0 0 900 320" preserveAspectRatio="none"></svg></div>
+    </div>
+
+    <div class="table-wrap">
+      <h3>Results Table</h3>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Day</th><th>Status</th><th>Fees Today</th><th>Rewards Today</th>
+              <th>Claim Net</th><th>Compound Net</th><th>HODL Value</th><th>IL %</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmtUSD = n => '$' + n.toLocaleString('en-US', {maximumFractionDigits:0});
+const fmtPct = n => (n*100).toFixed(2) + '%';
+
+// Each pair maps to two price "legs" — 'eth'/'btc'/'gold' track a price path, 'usdc' is fixed at $1
+const PAIR_CONFIG = {
+  ethbtc:  { legA:'ETH',  legB:'BTC',  priceA:'eth',  priceB:'btc'  },
+  ethusdc: { legA:'ETH',  legB:'USDC', priceA:'eth',  priceB:'usdc' },
+  paxgbtc: { legA:'PAXG', legB:'BTC',  priceA:'gold', priceB:'btc'  },
+  xautbtc: { legA:'XAUT', legB:'BTC',  priceA:'gold', priceB:'btc'  },
+  btcusdc: { legA:'BTC',  legB:'USDC', priceA:'btc',  priceB:'usdc' },
+};
+
+function getPrice(key, day, p){
+  if (key === 'usdc') return 1;
+  if (key === 'eth') return interpolate(p.ethStart, p.ethEnd, day, p.curve);
+  if (key === 'btc') return interpolate(p.btcStart, p.btcEnd, day, p.curve);
+  if (key === 'gold') return interpolate(p.goldStart, p.goldEnd, day, p.curve);
+  return 1;
+}
+
+const PLATFORM_DEFAULTS = {
+  uniswap:   { rewardApy: 0,  label: 'Reward token: None — fees only' },
+  pancake:   { rewardApy: 6,  label: 'Reward token: CAKE (staked LPs)' },
+  aerodrome: { rewardApy: 9,  label: 'Reward token: AERO (staked LPs)' },
+};
+
+// Range width % is the course's own convention: stated width, bound = ±half of it.
+const RANGE_CONFIG = {
+  narrow: { widthPct: 3,    boundPct: 1.5,      multiplier: 35 },
+  medium: { widthPct: 10,   boundPct: 5,        multiplier: 12 },
+  wide:   { widthPct: 20,   boundPct: 10,       multiplier: 6  },
+  full:   { widthPct: null, boundPct: Infinity, multiplier: 1  },
+};
+
+function interpolate(start, end, day, curve){
+  const t = (day - 1) / 364;
+  if (curve === 'compound'){
+    if (start <= 0) return start;
+    return start * Math.pow(end/start, t);
+  }
+  return start + (end - start) * t;
+}
+
+function readParams(){
+  const platform = document.querySelector('input[name="platform"]:checked').value;
+  const pair = document.querySelector('input[name="pair"]:checked').value;
+  const deposit = parseFloat($('inpDeposit').value) || 0;
+  const tvl = parseFloat($('inpTvl').value) || 1;
+  const volume = parseFloat($('inpVolume').value) || 0;
+  const feeTierPct = parseFloat($('rngFeeTier').value);
+  const rewardApyPct = parseFloat($('rngRewardApy').value);
+  const rangeKey = document.querySelector('input[name="range"]:checked').value;
+  const rebalanceEnabled = $('chkRebalance').checked;
+  const rebalDelay = parseInt($('rngRebalDelay').value);
+  const rebalCostPct = parseFloat($('rngRebalCost').value);
+  const ethStart = parseFloat($('inpEthStart').value) || 1;
+  const ethEnd = parseFloat($('inpEthEnd').value) || 1;
+  const btcStart = parseFloat($('inpBtcStart').value) || 1;
+  const btcEnd = parseFloat($('inpBtcEnd').value) || 1;
+  const goldStart = parseFloat($('inpGoldStart').value) || 1;
+  const goldEnd = parseFloat($('inpGoldEnd').value) || 1;
+  const curve = document.querySelector('input[name="curve"]:checked').value;
+
+  return { platform, pair, deposit, tvl, volume, feeTierPct, rewardApyPct, rangeKey,
+           rebalanceEnabled, rebalDelay, rebalCostPct, ethStart, ethEnd, btcStart, btcEnd, goldStart, goldEnd, curve };
+}
+
+function simulate(p){
+  const range = RANGE_CONFIG[p.rangeKey];
+  const pairCfg = PAIR_CONFIG[p.pair];
+  const baseFeeRateDaily = (p.volume * (p.feeTierPct/100)) / p.tvl;
+  const rewardRateDaily = (p.rewardApyPct/100) / 365;
+
+  const priceA1 = getPrice(pairCfg.priceA, 1, p);
+  const priceB1 = getPrice(pairCfg.priceB, 1, p);
+  const legAUnits0 = (0.5*p.deposit) / priceA1;
+  const legBUnits0 = (0.5*p.deposit) / priceB1;
+
+  const results = [];
+  let entryRatio = null, rangeCenter = null, daysOutOfRange = 0;
+  let claimPrincipal = p.deposit, claimedCash = 0, totalFeesClaim = 0, totalRewardsClaim = 0;
+  let compoundValue = p.deposit, totalFeesCompound = 0, totalRewardsCompound = 0;
+  let prevBase = null;
+
+  for (let day = 1; day <= 365; day++){
+    const priceA = getPrice(pairCfg.priceA, day, p);
+    const priceB = getPrice(pairCfg.priceB, day, p);
+    const ethPrice = getPrice('eth', day, p);
+    const btcPrice = getPrice('btc', day, p);
+
+    const ratio = priceA / priceB;
+    if (entryRatio === null){ entryRatio = ratio; rangeCenter = ratio; }
+
+    const r = ratio / entryRatio;
+    const rawIL = (2*Math.sqrt(r)/(1+r)) - 1;
+    const concIL = Math.max(rawIL * range.multiplier, -0.95);
+
+    const hodlValue = legAUnits0*priceA + legBUnits0*priceB;
+
+    const lpValueBase = hodlValue * (1 + concIL);
+    const growthFactor = (prevBase === null) ? 1 : (lpValueBase / prevBase);
+    prevBase = lpValueBase;
+
+    // in-range check against rangeCenter (resets on rebalance)
+    const deviation = Math.abs(ratio/rangeCenter - 1) * 100; // as percent
+    let inRange = deviation <= range.boundPct;
+    let rebalancedToday = false;
+
+    if (!inRange){
+      daysOutOfRange += 1;
+      if (p.rebalanceEnabled && daysOutOfRange > p.rebalDelay){
+        rebalancedToday = true;
+        rangeCenter = ratio;
+        daysOutOfRange = 0;
+      }
+    } else {
+      daysOutOfRange = 0;
+    }
+
+    const feeRateToday = inRange ? baseFeeRateDaily * range.multiplier : 0;
+    const rewardRateToday = inRange ? rewardRateDaily : 0;
+
+    // ---- Claim scenario ----
+    claimPrincipal *= growthFactor;
+    if (rebalancedToday) claimPrincipal *= (1 - p.rebalCostPct/100);
+    const feesToday_claim = feeRateToday * claimPrincipal;
+    const rewardsToday_claim = rewardRateToday * claimPrincipal;
+    totalFeesClaim += feesToday_claim;
+    totalRewardsClaim += rewardsToday_claim;
+    claimedCash += feesToday_claim + rewardsToday_claim;
+    const netClaim = claimPrincipal + claimedCash;
+
+    // ---- Compound scenario ----
+    let grown = compoundValue * growthFactor;
+    if (rebalancedToday) grown *= (1 - p.rebalCostPct/100);
+    const feesToday_compound = feeRateToday * grown;
+    const rewardsToday_compound = rewardRateToday * grown;
+    totalFeesCompound += feesToday_compound;
+    totalRewardsCompound += rewardsToday_compound;
+    compoundValue = grown + feesToday_compound + rewardsToday_compound;
+    const netCompound = compoundValue;
+
+    results.push({
+      day, ethPrice, btcPrice, hodlValue, concIL, inRange, rebalancedToday,
+      feesToday_claim, rewardsToday_claim, feesToday_compound, rewardsToday_compound,
+      claimPrincipal, claimedCash, netClaim,
+      compoundValue, netCompound,
+      totalFeesClaim, totalRewardsClaim, totalFeesCompound, totalRewardsCompound
+    });
+  }
+  return results;
+}
+
+function updateLiveLabels(p){
+  $('lblDeposit').textContent = fmtUSD(p.deposit);
+  $('lblTvl').textContent = fmtUSD(p.tvl);
+  $('lblVolume').textContent = fmtUSD(p.volume);
+  $('lblFeeTier').textContent = p.feeTierPct.toFixed(2) + '%';
+  $('lblRewardApy').textContent = p.rewardApyPct.toFixed(2) + '%';
+  $('lblRebalDelay').textContent = p.rebalDelay;
+  $('lblRebalCost').textContent = p.rebalCostPct.toFixed(2) + '%';
+  $('rewardBadge').textContent = PLATFORM_DEFAULTS[p.platform].label;
+
+  const range = RANGE_CONFIG[p.rangeKey];
+  $('rangeHint').textContent = range.widthPct
+    ? `${range.widthPct}% range width (±${range.boundPct}%) — roughly ${range.multiplier}x capital efficiency vs. full range.`
+    : `Always in range — 1x capital efficiency, the baseline every other tier is compared against.`;
+
+  const cfg = PAIR_CONFIG[p.pair];
+  const usesPrice = key => cfg.priceA === key || cfg.priceB === key;
+  $('ethPriceField').style.display = usesPrice('eth') ? 'block' : 'none';
+  $('btcPriceField').style.display = usesPrice('btc') ? 'block' : 'none';
+  $('goldPriceField').style.display = usesPrice('gold') ? 'block' : 'none';
+}
+
+function renderCards(row, p){
+  const claimHTML = `
+    <div class="card claim"><div class="label">Position Value</div><div class="num">${fmtUSD(row.claimPrincipal)}</div></div>
+    <div class="card"><div class="label">Fees Claimed (Total)</div><div class="num">${fmtUSD(row.totalFeesClaim)}</div></div>
+    <div class="card"><div class="label">Rewards Claimed (Total)</div><div class="num">${fmtUSD(row.totalRewardsClaim)}</div></div>
+    <div class="card claim"><div class="label">Net Value</div><div class="num">${fmtUSD(row.netClaim)}</div></div>
+  `;
+  const compoundHTML = `
+    <div class="card compound"><div class="label">Position Value</div><div class="num">${fmtUSD(row.compoundValue)}</div></div>
+    <div class="card"><div class="label">Fees Compounded (Total)</div><div class="num">${fmtUSD(row.totalFeesCompound)}</div></div>
+    <div class="card"><div class="label">Rewards Compounded (Total)</div><div class="num">${fmtUSD(row.totalRewardsCompound)}</div></div>
+    <div class="card compound"><div class="label">Net Value</div><div class="num">${fmtUSD(row.netCompound)}</div></div>
+  `;
+  $('claimCards').innerHTML = claimHTML;
+  $('compoundCards').innerHTML = compoundHTML;
+
+  const diff = row.netCompound - row.netClaim;
+  const shared = [
+    {label:'HODL Value (Reference)', val: fmtUSD(row.hodlValue)},
+    {label:'Impermanent Loss', val: fmtPct(row.concIL)},
+    {label:'Currently In Range', val: row.inRange ? 'Yes' : 'No'},
+    {label:'Compound − Claim', val: (diff>=0?'+':'') + fmtUSD(diff), cls:'gold'},
+  ];
+  $('sharedCards').innerHTML = shared.map(c => `
+    <div class="card ${c.cls||''}"><div class="label">${c.label}</div><div class="num">${c.val}</div></div>
+  `).join('');
+}
+
+function fmtAxisUSD(n){
+  const sign = n < 0 ? '-' : '';
+  n = Math.abs(n);
+  if (n >= 1000000) return sign + '$' + (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return sign + '$' + Math.round(n/1000) + 'k';
+  return sign + '$' + Math.round(n);
+}
+
+function renderChart(results, selectedDay){
+  const W = 900, H = 320;
+  const margin = {top:16, right:16, bottom:26, left:58};
+  const plotW = W - margin.left - margin.right;
+  const plotH = H - margin.top - margin.bottom;
+
+  const series = [
+    {key:'netClaim', color:'#c06a4f', width:2},
+    {key:'netCompound', color:'#4f9d6e', width:2},
+    {key:'hodlValue', color:'#8fa0b8', width:1, dash:'3,3'},
+  ];
+
+  let allVals = [0];
+  results.forEach(r => series.forEach(s => allVals.push(r[s.key])));
+  let yMin = Math.min(...allVals);
+  let yMax = Math.max(...allVals);
+  if (yMax === yMin) yMax = yMin + 1;
+  const pad = (yMax - yMin) * 0.08;
+  yMin -= pad; yMax += pad;
+
+  const xScale = day => margin.left + ((day-1)/364) * plotW;
+  const yScale = val => margin.top + plotH - ((val - yMin)/(yMax - yMin)) * plotH;
+
+  let gridSvg = '';
+  const gridCount = 4;
+  for (let i=0;i<=gridCount;i++){
+    const val = yMin + (yMax-yMin)*i/gridCount;
+    const y = yScale(val);
+    gridSvg += `<line x1="${margin.left}" y1="${y.toFixed(1)}" x2="${W-margin.right}" y2="${y.toFixed(1)}" stroke="rgba(234,228,211,0.06)" stroke-width="1"/>`;
+    gridSvg += `<text x="${margin.left-8}" y="${(y+3).toFixed(1)}" text-anchor="end" font-family="DM Mono, monospace" font-size="9" fill="#5c6c84">${fmtAxisUSD(val)}</text>`;
+  }
+
+  let xLabelSvg = '';
+  [1, 91, 182, 273, 365].forEach(d => {
+    const x = xScale(d);
+    xLabelSvg += `<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="middle" font-family="DM Mono, monospace" font-size="9" fill="#5c6c84">Day ${d}</text>`;
+  });
+
+  let seriesSvg = '';
+  series.forEach(s => {
+    const before = results.filter(r => r.day <= selectedDay).map(r => `${xScale(r.day).toFixed(1)},${yScale(r[s.key]).toFixed(1)}`).join(' ');
+    const after = results.filter(r => r.day >= selectedDay).map(r => `${xScale(r.day).toFixed(1)},${yScale(r[s.key]).toFixed(1)}`).join(' ');
+    const dashAttr = s.dash ? ` stroke-dasharray="${s.dash}"` : '';
+    if (before) seriesSvg += `<polyline points="${before}" fill="none" stroke="${s.color}" stroke-width="${s.width}"${dashAttr}/>`;
+    if (after) seriesSvg += `<polyline points="${after}" fill="none" stroke="${s.color}" stroke-width="${s.width}" stroke-dasharray="${s.dash ? s.dash : '4,4'}" opacity="0.35"/>`;
+  });
+
+  const selX = xScale(selectedDay).toFixed(1);
+  const marker = `<line x1="${selX}" y1="${margin.top}" x2="${selX}" y2="${H-margin.bottom}" stroke="#c9a13b" stroke-width="1" stroke-dasharray="2,3" opacity="0.6"/>`;
+
+  $('chartSvg').setAttribute('viewBox', `0 0 ${W} ${H}`);
+  $('chartSvg').innerHTML = gridSvg + marker + seriesSvg + xLabelSvg;
+}
+
+function getResolutionRows(results, resolution, upToDay){
+  let rows;
+  if (resolution === 'daily'){
+    rows = results.filter(r => r.day <= upToDay);
+  } else if (resolution === 'weekly'){
+    rows = results.filter(r => r.day <= upToDay && (r.day % 7 === 1 || r.day === upToDay));
+  } else {
+    rows = results.filter(r => r.day <= upToDay && ((r.day - 1) % 30 === 0 || r.day === upToDay));
+  }
+  const seen = new Set();
+  return rows.filter(r => (seen.has(r.day) ? false : (seen.add(r.day), true)));
+}
+
+function renderTable(results, resolution, selectedDay){
+  const rows = getResolutionRows(results, resolution, selectedDay);
+  $('tbody').innerHTML = rows.map(r => `
+    <tr class="${r.day === selectedDay ? 'today' : ''}">
+      <td>Day ${r.day}</td>
+      <td class="${r.inRange ? '' : 'oor'}">${r.inRange ? 'In range' : (r.rebalancedToday ? 'Rebalanced' : 'Out of range')}</td>
+      <td>${r.feesToday_claim > 0 ? fmtUSD(r.feesToday_claim) : '—'}</td>
+      <td>${r.rewardsToday_claim > 0 ? fmtUSD(r.rewardsToday_claim) : '—'}</td>
+      <td>${fmtUSD(r.netClaim)}</td>
+      <td>${fmtUSD(r.netCompound)}</td>
+      <td>${fmtUSD(r.hodlValue)}</td>
+      <td>${fmtPct(r.concIL)}</td>
+    </tr>
+  `).join('');
+}
+
+function recompute(){
+  const p = readParams();
+  const results = simulate(p);
+  const selectedDay = parseInt($('rngDay').value);
+  const resolution = document.querySelector('input[name="res"]:checked').value;
+
+  $('dayVal').textContent = 'Day ' + selectedDay;
+  updateLiveLabels(p);
+  renderCards(results[selectedDay - 1], p);
+  renderChart(results, selectedDay);
+  renderTable(results, resolution, selectedDay);
+}
+
+// Platform selection updates the reward APY default + badge
+document.querySelectorAll('input[name="platform"]').forEach(el => {
+  el.addEventListener('change', () => {
+    const platform = document.querySelector('input[name="platform"]:checked').value;
+    $('rngRewardApy').value = PLATFORM_DEFAULTS[platform].rewardApy;
+    recompute();
+  });
+});
+
+document.querySelectorAll('input').forEach(el => el.addEventListener('input', recompute));
+recompute();
+</script>
+<!-- BWS COMPASS (shared navigator) -->
+<style id="cmpCss">
+#cmpFab{position:fixed;left:14px;bottom:14px;z-index:9000;display:flex;align-items:center;gap:8px;border:1px solid #d9b650;background:#0d1426;color:#f1d98a;border-radius:999px;padding:0 16px 0 10px;height:46px;font:700 14px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.02em;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+#cmpFab svg{width:28px;height:28px}
+#cmpFab .nw{background:#d9b650;color:#1a1405;border-radius:999px;font-size:10px;padding:3px 7px;letter-spacing:.06em;text-transform:uppercase;animation:cmpP 1.8s infinite}
+@keyframes cmpP{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){#cmpFab .nw{animation:none}}
+#cmpOv{position:fixed;inset:0;z-index:9500;display:none;background:rgba(2,5,14,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#e8ecf7}
+#cmpOv.on{display:block}
+#cmpBox{position:absolute;top:4vh;left:50%;transform:translateX(-50%);width:min(940px,96vw);max-height:92vh;display:flex;flex-direction:column;background:#0b1224;border:1px solid #d9b650;border-radius:16px;box-shadow:0 20px 80px rgba(0,0,0,.7);overflow:hidden}
+#cmpHd{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #1f2a4a}
+#cmpHd svg{width:34px;height:34px;flex:none}
+#cmpHd h2{margin:0;font-size:19px;color:#f1d98a;letter-spacing:.04em}
+#cmpHd small{display:block;color:#93a0c4;font-size:12.5px;margin-top:2px}
+#cmpX{margin-left:auto;border:1px solid #2a3760;background:#111a33;color:#e8ecf7;border-radius:10px;width:42px;height:42px;font-size:20px;cursor:pointer;flex:none}
+#cmpSrch{padding:12px 18px 0}
+#cmpQ{width:100%;box-sizing:border-box;background:#101935;border:1px solid #2a3760;border-radius:12px;color:#e8ecf7;padding:13px 14px;font-size:16px}
+#cmpQ:focus{outline:2px solid #d9b650;outline-offset:1px}
+#cmpTabs{display:flex;gap:8px;padding:12px 18px 0;flex-wrap:wrap}
+#cmpTabs button{border:1px solid #2a3760;background:#101935;color:#c3cde8;border-radius:999px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;min-height:42px}
+#cmpTabs button.on{background:#d9b650;color:#1a1405;border-color:#d9b650}
+#cmpBd{overflow:auto;padding:14px 18px 22px;-webkit-overflow-scrolling:touch}
+.cmpHere{background:#122046;border:1px solid #2a3f7a;border-radius:10px;padding:9px 12px;font-size:13.5px;color:#b9c8ee;margin-bottom:12px}
+.cmpGoal{border:1px solid #1f2a4a;background:#0f1730;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.cmpGoal>button{width:100%;text-align:left;display:flex;align-items:center;gap:12px;background:none;border:0;color:#fff;padding:14px 14px;font:600 16px/1.3 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;cursor:pointer;min-height:56px}
+.cmpGoal .ic{flex:none;width:38px;height:38px;border-radius:50%;background:#1b2750;display:grid;place-items:center;font-size:19px}
+.cmpGoal .ar{margin-left:auto;color:#d9b650;transition:transform .2s;flex:none}
+.cmpGoal.open .ar{transform:rotate(90deg)}
+.cmpGoal .ops{display:none;padding:0 14px 14px}
+.cmpGoal.open .ops{display:block}
+.cmpGoal .why{color:#93a0c4;font-size:13.5px;margin:0 0 10px}
+.cmpLn{display:block;text-decoration:none;color:inherit;border:1px solid #2a3760;background:#111b38;border-radius:12px;padding:12px 14px;margin-bottom:8px;min-height:48px}
+.cmpLn:hover,.cmpLn:focus{border-color:#d9b650;outline:none}
+.cmpLn b{color:#f1d98a;font-size:15px}
+.cmpLn span{display:block;color:#a9b5d6;font-size:13.5px;margin-top:2px}
+.cmpLn em{font-style:normal;float:right;font-size:11px;border-radius:999px;padding:2px 8px;border:1px solid #3a4a80;color:#9fb0e0;margin-left:8px}
+.cmpLn em.b{color:#7fe3a4;border-color:#2d6e4c}.cmpLn em.m{color:#f1c765;border-color:#7a6320}.cmpLn em.a{color:#ff9d8f;border-color:#7a3a33}
+.cmpLn.here{border-color:#d9b650;background:#1a2244}
+.cmpLn.done b:after{content:" ✓";color:#7fe3a4}
+.cmpGrp{margin:18px 0 8px;color:#d9b650;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.cmpGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:8px}
+.cmpGrid .cmpLn{margin:0}
+.cmpPath{counter-reset:s}
+.cmpPath .cmpLn{padding-left:52px;position:relative}
+.cmpPath .cmpLn:before{counter-increment:s;content:counter(s);position:absolute;left:12px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:#1b2750;border:1px solid #d9b650;color:#f1d98a;display:grid;place-items:center;font-weight:700;font-size:14px}
+.cmpPath .cmpLn.done:before{content:"✓";background:#1d5a3a;border-color:#7fe3a4;color:#fff}
+.cmpBar{height:8px;border-radius:99px;background:#16224a;margin:6px 0 14px;overflow:hidden}.cmpBar i{display:block;height:100%;background:linear-gradient(90deg,#d9b650,#7fe3a4);width:0;transition:width .4s}
+.cmpEmpty{color:#93a0c4;padding:18px 4px}
+.cmpLeg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:#93a0c4;margin:0 0 6px}
+@media (max-width:700px){#cmpBox{top:0;left:0;transform:none;width:100vw;max-height:100vh;height:100vh;border-radius:0;border:0}#cmpFab{height:50px}#cmpFab .t{display:none}#cmpFab{padding:0 12px 0 10px}#cmpFab .nw{display:inline}}
+
+.bwsNav{display:inline-flex;align-items:center;gap:8px;font:600 14px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+.bwsNav a,.bwsNav button{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;text-decoration:none;cursor:pointer;white-space:nowrap;font:inherit;letter-spacing:.01em}
+.bwsNav .bwsHome{border:1px solid #d9b650;background:#0d1426;color:#f1d98a}
+.bwsNav .bwsMenu{border:1px solid #d9b650;background:#d9b650;color:#1a1405}
+.bwsNav .bwsMenu .cur{font-weight:500;opacity:.8;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.bwsNav svg{width:18px;height:18px;flex:none}
+.bwsNav a:focus-visible,.bwsNav button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+#bwsBar{position:sticky;top:0;z-index:8500;display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(7,11,22,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid #1f2a4a}
+#bwsBar .ttl{color:#93a0c4;font:13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#bwsDrop{position:fixed;z-index:9400;top:0;left:0;bottom:0;width:min(370px,88vw);overflow:auto;background:#0b1224;border-right:1px solid #d9b650;box-shadow:18px 0 60px rgba(0,0,0,.6);padding:0 8px 18px;font:15px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#e8ecf7;-webkit-overflow-scrolling:touch;transform:translateX(-102%);transition:transform .22s ease;visibility:hidden}
+#bwsDrop.on{transform:none;visibility:visible}
+@media (prefers-reduced-motion:reduce){#bwsDrop{transition:none}}
+#bwsBk{position:fixed;inset:0;z-index:9390;background:rgba(2,5,14,.6);display:none}
+#bwsBk.on{display:block}
+#bwsDrop .dh{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;background:#0b1224;padding:14px 8px 10px;margin:0 -8px;padding-left:16px;padding-right:12px;border-bottom:1px solid #1f2a4a}
+#bwsDrop .dh b{color:#f1d98a;letter-spacing:.1em;font-size:14px}
+#bwsDrop .dh button{width:44px;height:44px;border-radius:10px;border:1px solid #2a3760;background:#111a33;color:#e8ecf7;font-size:20px;cursor:pointer}
+#bwsDrop h6{margin:12px 10px 4px;color:#d9b650;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase}
+#bwsDrop h6:first-child{margin-top:6px}
+#bwsDrop a.it{display:block;text-decoration:none;color:inherit;border-radius:10px;padding:10px 12px;min-height:46px;position:relative}
+#bwsDrop a.it:hover,#bwsDrop a.it:focus{background:#16224a;outline:none}
+#bwsDrop a.it b{display:block;color:#fff;font-size:15px}
+#bwsDrop a.it span{display:block;color:#93a0c4;font-size:12.5px;margin-top:1px}
+#bwsDrop a.it.here{background:#1a2650;box-shadow:inset 3px 0 0 #d9b650}
+#bwsDrop a.it.here b:after{content:"  · you are here";color:#d9b650;font-weight:500;font-size:12px}
+#bwsDrop a.it i{position:absolute;right:12px;top:14px;width:10px;height:10px;border-radius:50%;background:#e5a93c}
+#bwsDrop a.it i.d{background:#e5584b}
+#bwsDrop .ft{border-top:1px solid #1f2a4a;margin:10px 4px 0;padding-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+#bwsDrop .ft button{flex:1;min-width:140px;height:44px;border-radius:10px;border:1px solid #2a3760;background:#111a33;color:#f1d98a;font:600 14px system-ui,Arial,sans-serif;cursor:pointer}
+#bwsDrop .hn{color:#6f7da6;font-size:12px;margin:8px 8px 0}
+@media (max-width:700px){.bwsNav .bwsMenu .cur{display:none}.bwsNav a,.bwsNav button{padding:0 14px}#bwsBar .ttl{display:none}}
+
+#bwsBar{overflow:visible}
+#bwsBar .bwsRow{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;overflow-x:auto;overflow-y:hidden;flex:1;min-width:0;scrollbar-width:none;padding:2px 2px}
+#bwsBar .bwsRow::-webkit-scrollbar{display:none}
+#bwsBar .bwsRow>*{flex:none}
+.bwsPill{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 18px;border-radius:12px;border:1px solid #3a4a80;background:#111a33;color:#e8ecf7;text-decoration:none;font:700 15px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;cursor:pointer}
+.bwsPill:hover{border-color:#d9b650;color:#fff}
+.bwsPill.here{background:#d9b650;border-color:#d9b650;color:#1a1405}
+.bwsPill:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.bwsSw{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:12px;border:1px dashed #6f7da6;background:transparent;color:#b9c8ee;font:600 13.5px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;cursor:pointer;white-space:nowrap;flex:none}
+.bwsSw:hover{border-color:#d9b650;color:#f1d98a}
+@media (max-width:700px){.bwsSw .t{display:none}.bwsPill{height:40px;padding:0 14px;font-size:14px}}
+</style>
+<script id="cmpJs">
+(function(){
+'use strict';
+var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',WH='whalebwsddp.html',CT='cointrackbwsddp.html',LS='lpsimbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
+var ITEMS=[
+ {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'22 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
+ {id:'desk',n:'Overview',h:D+'#desk',g:'Watch',lv:'b',d:'Prices, your alerts, positions, pegs and news on one screen.',kw:'home dashboard summary today prices market'},
+ {id:'cinema',n:'Degen Cinema',h:'cinemabwsddp.html',g:'Watch',lv:'b',d:'Movies, shows and podcasts to watch right inside the Desk, in a movie-theater setting.',kw:'cinema movies movie shows podcasts videos youtube watch theater film documentary'},
+ {id:'news',n:'News',h:D+'#news',g:'Watch',lv:'b',d:'Headlines that could move prices, scored by how big they might be.',kw:'headlines fed cpi hack listing sec'},
+ {id:'heat',n:'Heat Map',h:D+'#heat',g:'Find',lv:'b',d:'A colour map of which coins and sectors are up or down right now.',kw:'heatmap sectors green red gainers losers'},
+ {id:'trend',n:'Trending Coins',h:D+'#trend',g:'Find',lv:'b',d:'New and fast-moving coins people are looking at today.',kw:'trending new tokens dexscreener geckoterminal'},
+ {id:'pegs',n:'Stablecoin Pegs',h:D+'#pegs',g:'Protect',lv:'b',d:'Checks whether USDT, USDC, DAI and others still trade at $1.',kw:'depeg usdt usdc dai safe stable'},
+ {id:'whale',n:'Whale Scanner & Tracker',h:WH,g:'Track',lv:'m',d:'Spot single buys of $1,000 or more in alt coins, tap a wallet to follow it, see what it holds, and look up who made the biggest buys of any coin.',kw:'whale whales scanner tracker wallet big buys large orders smart money top buyers contract address ticker copy trade alt coins'},
+ {id:'coins',n:'Coin Tracker',h:CT,g:'Track',lv:'b',d:'Paste a contract address or ticker to watch a coin and get alerts at a price you choose, or on a 10% to 50%+ move.',kw:'coin tracker watchlist alert price target percent move 10 20 30 40 50 contract address ticker notify telegram'},
+ {id:'lpsim',n:'LP Pool Simulator',h:LS,g:'Test',lv:'m',d:'Model an LP position on Uniswap, PancakeSwap or Aerodrome for a year and compare claiming your fees with compounding them.',kw:'lp pool simulator claim compound fees uniswap pancakeswap aerodrome range rebalance impermanent loss'},
+ {id:'pf',n:'Portfolio',h:P,g:'Track',lv:'b',d:'Log what you bought and see your value, profit and loss. Set price alerts.',kw:'holdings profit loss track coingecko invest'},
+ {id:'acct',n:'Account',h:A,g:'Account',lv:'b',d:'Your sign-up info, access time, alert channels and renewal.',kw:'settings email subscription renew billing login'},
+ {id:'biz',n:'Business Bitcoin Time Machine',h:D+'#biz',g:'Business',lv:'b',d:'For merchants and business owners: what setting aside part of sales or profit into Bitcoin could have built.',kw:'business merchant owner shop store sales profit treasury small business bitcoin time machine'},
+ {id:'moon',n:'Moon Desk',h:M,g:'Test',lv:'b',d:'Moon phases, zodiac and eclipses laid behind real price charts, with a back-test.',kw:'astrology zodiac eclipse planetarium lunar full new mercury'},
+ {id:'wealth',n:'Accumulation Sim',h:D+'#wealth',g:'Test',lv:'b',d:'See how saving a little each week into BTC and ETH could grow over a year.',kw:'dca save stack feed the machine aave'},
+ {id:'risk',n:'Lending Account Manager',h:D+'#risk',g:'Protect',lv:'m',d:'Watches the health factor on your loans (Aave, Morpho, Kamino, Jupiter Lend) so you can act before you are liquidated.',kw:'aave morpho fluid kamino jupiter lend health factor liquidation instadapp loan borrow margin'},
+ {id:'ind',n:'Indicators & Alerts',h:D+'#ind',g:'Protect',lv:'m',d:'Alerts for health factor, EMA crosses, divergences and liquidations.',kw:'alerts ema rsi divergence telegram'},
+ {id:'lp',n:'LP Scout',h:L,g:'Find',lv:'m',d:'Search liquidity pools on every chain, filter by size and yield, and simulate outcomes.',kw:'liquidity pool yield apr tvl farm uniswap'},
+ {id:'lpm',n:'LP Manager',h:LM,g:'Protect',lv:'m',d:'Add your wallet to see every LP position, the prices where it leaves range, and a Hold / Rebalance / Close meter.',kw:'lp position manager range out of range rebalance impermanent loss uniswap aerodrome raydium orca meteora pancakeswap wallet hold close'},
+ {id:'rh',n:'Robinhood Chain stock LPs',h:L+'#rhstock',g:'Find',lv:'m',d:'Only the pools that hold stock tokens such as NVDA, AAPL and TSLA.',kw:'robinhood stock token tsla nvda aapl lp'},
+ {id:'sig',n:'Signal Scanner',h:D+'#sig',g:'Find',lv:'m',d:'Trade signals from moving averages and more, with a paper-trading log.',kw:'signals scanner paper trading fibonacci'},
+ {id:'bt',n:'EMA Backtester',h:D+'#bt',g:'Test',lv:'m',d:'Test buying and selling on the 20, 50, 100 or 200 EMA for any coin.',kw:'backtest ema strategy history'},
+ {id:'port',n:'Portfolio Simulator',h:D+'#port',g:'Test',lv:'m',d:'Project your holdings forward under price moves you choose.',kw:'what if scenario projection'},
+ {id:'hosted',n:'Savings Manager (full page)',h:D+'#hosted',g:'Protect',lv:'a',d:'The standalone Savings Liquidation Manager for advanced setups.',kw:'savings hosted standalone'}
+];
+var GOALS=[
+ {i:'🌱',q:'I am new. Where do I start?',w:'Take the course first. It is short and every lesson ends with something to try. Then look at the Overview.',to:['course','desk']},
+ {i:'🎬',q:'Watch a movie, show or podcast',w:'Degen Cinema is a movie theater inside the Desk. Pick a movie or a show episode and it plays on the big screen.',to:['cinema']},
+ {i:'📰',q:'What is happening in the market today?',w:'Start with the Overview for prices, then check the news and the heat map.',to:['desk','news','heat']},
+ {i:'🛡️',q:'I have a loan and do not want to be liquidated',w:'The Lending Account Manager watches your health factor. Add alerts so you hear about trouble early.',to:['risk','ind','pegs']},
+ {i:'💼',q:'Track what I own and my profit',w:'Log your buys in Portfolio. It works out your profit, loss and value over time.',to:['pf','port']},
+ {i:'🔔',q:'Get alerts on Telegram, email or my phone',w:'Set up your channels once in Account. Every alert on the desk and in Portfolio uses them.',to:['acct','pf','ind']},
+ {i:'🐋',q:'See what the whales are buying',w:'The Whale Scanner lists single buys of $1,000 or more in alt coins. Tap a wallet to follow it and see its holdings, or type in any coin to see who made the biggest buys in the last 5 minutes up to a month.',to:['whale','trend']},
+ {i:'🔔',q:'Alert me when a coin hits a price or moves 10% to 50%',w:'The Coin Tracker watches any coin you paste in and alerts you at a price you pick, or when it moves 10%, 20%, 30%, 40% or 50%+.',to:['coins','pf','ind']},
+ {i:'🧮',q:'Should I claim or compound my LP fees?',w:'The LP Pool Simulator runs a full year on Uniswap, PancakeSwap or Aerodrome and shows claiming against compounding, day by day.',to:['lpsim','lp','lpm']},
+ {i:'🔎',q:'Find coins that are moving',w:'Trending shows what is new and hot. The heat map shows the big picture. Signals add a technical view.',to:['trend','heat','sig']},
+ {i:'💧',q:'Find a pool to earn trading fees (LP)',w:'LP Scout lets you filter thousands of pools, then simulate what could happen to your money.',to:['lp','rh']},
+ {i:'🎯',q:'My LP went out of range. Hold, rebalance or close?',w:'The LP Manager reads your wallet, shows where each position leaves its range, and a meter reads the market to say hold, rebalance or close.',to:['lpm','lp']},
+ {i:'🏪',q:'I run a business. Should I hold some Bitcoin?',w:'The Business Bitcoin Time Machine shows what setting aside a share of sales or profit into Bitcoin each period would have built, next to plain savings. It is a look back, not a promise.',to:['biz','course']},
+ {i:'🧪',q:'Test an idea on past prices',w:'Back-tests show what a rule would have done before. They are lessons, not promises.',to:['bt','moon','sig']},
+ {i:'🌙',q:'See if the moon and zodiac line up with price',w:'Moon Desk draws the sky behind the chart, then checks whether any pattern beats luck.',to:['moon']},
+ {i:'📈',q:'Plan to build wealth slowly over time',w:'The accumulation sim shows weekly saving. The course explains the idea behind it.',to:['wealth','course']},
+ {i:'🪙',q:'Check if a stablecoin is safe',w:'The pegs page shows how far each stablecoin has slipped from $1.',to:['pegs']},
+ {i:'🔑',q:'Manage my access or renew',w:'Account shows your plan, time left and a renew button.',to:['acct']}
+];
+var PATH=['course','desk','pf','acct','heat','moon'];
+var LV={b:['Beginner','b'],m:['Next step','m'],a:['Advanced','a']};
+var byId={};ITEMS.forEach(function(t){byId[t.id]=t});
+var file=(location.pathname.split('/').pop()||'index.html').toLowerCase(),hash=location.hash.replace('#','');
+function here(t){var f=t.h.split('#')[0].toLowerCase(),hh=t.h.split('#')[1]||'';if(f!==file)return false;if(f===D.toLowerCase())return (hash||'desk')===hh;return !hh||hh===hash}
+var DONE={};try{DONE=JSON.parse(localStorage.getItem('dd_cmp')||'{}')}catch(e){}
+function save(){try{localStorage.setItem('dd_cmp',JSON.stringify(DONE))}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function ln(t,cls){var l=LV[t.lv];return '<a class="cmpLn '+(here(t)?'here ':'')+(DONE[t.id]?'done ':'')+(cls||'')+'" href="'+t.h+'" data-id="'+t.id+'"><em class="'+l[1]+'">'+l[0]+'</em><b>'+esc(t.n)+'</b><span>'+esc(t.d)+'</span></a>'}
+var rose='<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="#0d1426" stroke="#d9b650" stroke-width="2.5"/><circle cx="32" cy="32" r="22" fill="none" stroke="#d9b65066" stroke-width="1"/><path d="M32 6l6 20 20 6-20 6-6 20-6-20-20-6 20-6z" fill="#d9b650"/><path d="M32 6l6 20-6 6z" fill="#f6e3a0"/><circle cx="32" cy="32" r="4" fill="#0d1426" stroke="#0d1426"/><text x="32" y="5" text-anchor="middle" font-size="8" font-weight="700" fill="#f1d98a" font-family="Arial">N</text></svg>';
+var tab='goals',q='';
+function body(){
+  var h='';
+  var cur=null;for(var i=0;i<ITEMS.length;i++)if(here(ITEMS[i])){cur=ITEMS[i];break}
+  if(q){
+    var w=q.toLowerCase().split(/\s+/).filter(Boolean);
+    var hit=ITEMS.filter(function(t){var s=(t.n+' '+t.g+' '+t.d+' '+t.kw).toLowerCase();return w.every(function(x){return s.indexOf(x)>=0})});
+    var gh=GOALS.filter(function(g){var s=(g.q+' '+g.w).toLowerCase();return w.every(function(x){return s.indexOf(x)>=0})});
+    h=hit.length?'<div class="cmpGrid">'+hit.map(function(t){return ln(t)}).join('')+'</div>':'';
+    if(!hit.length&&gh.length){gh.forEach(function(g){g.to.forEach(function(id){h+=ln(byId[id])})})}
+    return h||'<div class="cmpEmpty">Nothing matches “'+esc(q)+'”. Try a simple word like <b>alerts</b>, <b>loan</b>, <b>profit</b>, <b>moon</b> or <b>pool</b>.</div>';
+  }
+  if(cur)h+='<div class="cmpHere">You are on <b>'+esc(cur.n)+'</b>. '+esc(cur.d)+'</div>';
+  if(tab==='goals'){
+    h+='<p style="margin:0 0 12px;color:#93a0c4">Pick what you want to do. We will point you to the right tool.</p>';
+    GOALS.forEach(function(g,i){h+='<div class="cmpGoal" data-g="'+i+'"><button type="button" aria-expanded="false"><span class="ic">'+g.i+'</span><span>'+esc(g.q)+'</span><span class="ar">▶</span></button><div class="ops"><p class="why">'+esc(g.w)+'</p>'+g.to.map(function(id){return ln(byId[id])}).join('')+'</div></div>'});
+  }else if(tab==='path'){
+    var n=PATH.filter(function(id){return DONE[id]}).length;
+    h+='<p style="margin:0 0 4px;color:#93a0c4">Six steps to get comfortable. Each one is ticked off when you open it.</p><div class="cmpBar"><i style="width:'+Math.round(n/PATH.length*100)+'%"></i></div><div style="margin:-6px 0 12px;font-size:13px;color:#93a0c4">'+n+' of '+PATH.length+' done</div><div class="cmpPath">'+PATH.map(function(id){return ln(byId[id])}).join('')+'</div>';
+  }else{
+    h+='<div class="cmpLeg"><span><em style="color:#7fe3a4">●</em> Beginner: safe to start here</span><span><em style="color:#f1c765">●</em> Next step: needs a little setup</span><span><em style="color:#ff9d8f">●</em> Advanced</span></div>';
+    ['Learn','Watch','Track','Find','Protect','Test','Business','Account'].forEach(function(g){var it=ITEMS.filter(function(t){return t.g===g});if(!it.length)return;
+      var sub={Learn:'Understand the tools',Watch:'See the market',Track:'Know what you own',Find:'Spot opportunities',Protect:'Avoid big losses',Test:'Try ideas safely',Business:'For merchants and owners',Account:'Your access'}[g];
+      h+='<div class="cmpGrp">'+g+' · '+sub+'</div><div class="cmpGrid">'+it.map(function(t){return ln(t)}).join('')+'</div>'});
+  }
+  return h;
+}
+var ov;
+function draw(){
+  document.getElementById('cmpTabs').innerHTML=[['goals','What do you want to do?'],['path','Your first week'],['map','All sections']].map(function(t){return '<button type="button" data-t="'+t[0]+'" class="'+(tab===t[0]&&!q?'on':'')+'">'+t[1]+'</button>'}).join('');
+  document.getElementById('cmpBd').innerHTML=body();
+}
+function build(){
+  var s=document.createElement('div');s.id='cmpOv';s.setAttribute('role','dialog');s.setAttribute('aria-modal','true');s.setAttribute('aria-label','Compass navigator');
+  s.innerHTML='<div id="cmpBox"><div id="cmpHd">'+rose+'<div><h2>COMPASS</h2><small>Not sure where to go? Start here.</small></div><button id="cmpX" type="button" aria-label="Close">✕</button></div><div id="cmpSrch"><input id="cmpQ" type="search" placeholder="Search: alerts, loan, profit, moon, pool…" autocomplete="off"></div><div id="cmpTabs"></div><div id="cmpBd"></div></div>';
+  document.body.appendChild(s);ov=s;
+  s.addEventListener('click',function(e){
+    if(e.target===s||e.target.id==='cmpX'){close();return}
+    var t=e.target.closest('#cmpTabs button');if(t){tab=t.getAttribute('data-t');q='';document.getElementById('cmpQ').value='';draw();return}
+    var g=e.target.closest('.cmpGoal>button');if(g){var p=g.parentNode,o=!p.classList.contains('open');p.classList.toggle('open',o);g.setAttribute('aria-expanded',o);return}
+    var a=e.target.closest('a.cmpLn');if(a){DONE[a.getAttribute('data-id')]=1;save();var hf=a.getAttribute('href');
+      if(hf.split('#')[0].toLowerCase()===file){close();setTimeout(function(){hash=location.hash.replace('#','')},50)}
+    }
+  });
+  document.getElementById('cmpQ').addEventListener('input',function(){q=this.value.trim();draw()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.classList.contains('on'))close()});
+}
+function open(){if(!ov)build();hash=location.hash.replace('#','');ov.classList.add('on');document.documentElement.style.overflow='hidden';
+  try{localStorage.setItem('dd_cmp_seen','1')}catch(e){}var nw=document.querySelector('#cmpFab .nw');if(nw)nw.remove();
+  tab='goals';q='';document.getElementById('cmpQ').value='';draw();var f=ov.querySelector('.cmpGoal>button');}
+function close(){ov.classList.remove('on');document.documentElement.style.overflow=''}
+
+/* ===== top navigator: Home button + drop-down menu ===== */
+var HOME={h:D+'#desk',n:'Home'};
+var ORDER=['Learn','Watch','Track','Find','Protect','Test','Business','Account'];
+var house='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>';
+var burger='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+var drop,menuBtn,bk;
+function curItem(){hash=location.hash.replace('#','');for(var i=0;i<ITEMS.length;i++)if(here(ITEMS[i]))return ITEMS[i];return null}
+function dropHtml(){
+  var h='<h6>Start</h6><a class="it'+((file===D.toLowerCase()&&(hash||'desk')==='desk')?' here':'')+'" href="'+HOME.h+'"><b>Home · Overview</b><span>Prices, alerts, positions and news on one screen.</span></a>';
+  ORDER.forEach(function(g){
+    var it=ITEMS.filter(function(t){return t.g===g&&t.id!=='desk'});if(!it.length)return;
+    h+='<h6>'+g+'</h6>';
+    it.forEach(function(t){
+      var dot='',b=document.getElementById('bd-'+t.id);if(b){if(b.classList.contains('danger'))dot='<i class="d" title="Needs attention"></i>';else if(b.classList.contains('warn'))dot='<i title="Heads up"></i>'}
+      h+='<a class="it'+(here(t)?' here':'')+'" href="'+t.h+'" data-id="'+t.id+'"><b>'+esc(t.n)+'</b><span>'+esc(t.d)+'</span>'+dot+'</a>'});
+  });
+  h+='<div class="ft"><button type="button" data-cmp="1">🧭 Not sure? Ask the Compass</button></div><div class="hn">Tip: press M to open this menu from the keyboard.</div>';
+  return h;
+}
+function placeDrop(){return;
+  var r=menuBtn.getBoundingClientRect(),w=Math.min(380,window.innerWidth*0.94);
+  drop.style.top=(r.bottom+8)+'px';drop.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';
+  drop.style.maxHeight=(window.innerHeight-r.bottom-20)+'px';
+}
+function openDrop(){drop.innerHTML='<div class="dh"><b>MENU</b><button type="button" data-x="1" aria-label="Close menu">✕</button></div>'+dropHtml();bk.classList.add('on');drop.classList.add('on');if(menuBtn)menuBtn.setAttribute('aria-expanded','true');var f=drop.querySelector('a.here');if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'center'})}catch(e){}}
+function closeDrop(){if(!drop)return;bk.classList.remove('on');drop.classList.remove('on');if(menuBtn)menuBtn.setAttribute('aria-expanded','false')}
+var MODE='links';try{MODE=localStorage.getItem('dd_navmode')||'links'}catch(e){}
+var PILLS=['course','pf','lp','lpm','moon','acct'];
+var onDesk=(file===D.toLowerCase());
+function swLabel(){return MODE==='menu'?'<span>⇄</span><span class="t">Switch to tabs &amp; sidebar</span>':'<span>⇄</span><span class="t">Switch to menu</span>'}
+function renderBar(){
+  var h='<a class="bwsHome" href="'+HOME.h+'" aria-label="Home" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;text-decoration:none;font:700 14px system-ui,Arial,sans-serif;border:1px solid #d9b650;background:#0d1426;color:#f1d98a;flex:none">'+house+'<span>Home</span></a>';
+  h+='<div class="bwsRow">';
+  if(MODE==='menu'){
+    h+='<button type="button" class="bwsMenuB" aria-haspopup="true" aria-expanded="false" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;border:1px solid #d9b650;background:#d9b650;color:#1a1405;font:700 14px system-ui,Arial,sans-serif;cursor:pointer">'+burger+'<span>Menu</span><span class="cur" style="font-weight:500;opacity:.8"></span></button>';
+  }else{
+    PILLS.forEach(function(id){var t=byId[id];h+='<a class="bwsPill'+(here(t)?' here':'')+'" href="'+t.h+'" data-id="'+id+'">'+esc(t.n)+'</a>'});
+    if(!onDesk)h+='<button type="button" class="bwsPill bwsMenuB" aria-haspopup="true" aria-expanded="false">Desk tools ▾</button>';
+  }
+  h+='</div><button type="button" class="bwsSw" title="Switch between tabs & sidebar and the drop-out menu">'+swLabel()+'</button><span class="ttl"></span>';
+  return h;
+}
+function applyMode(){
+  document.body.classList.toggle('nm-menu',MODE==='menu');
+  var bar=document.getElementById('bwsBar');bar.innerHTML=renderBar();
+  menuBtn=bar.querySelector('.bwsMenuB');
+  if(menuBtn)menuBtn.onclick=function(e){e.stopPropagation();drop.classList.contains('on')?closeDrop():openDrop()};
+  bar.querySelector('.bwsSw').onclick=function(){MODE=MODE==='menu'?'links':'menu';try{localStorage.setItem('dd_navmode',MODE)}catch(e){}closeDrop();applyMode()};
+  labelMenu();
+}
+function labelMenu(){var c=curItem();var cu=menuBtn&&menuBtn.querySelector('.cur');if(cu)cu.textContent=c?'· '+c.n:'';var tt=document.querySelector('#bwsBar .ttl');if(tt)tt.textContent=''}
+function initNav(){
+  var bar=document.createElement('div');bar.id='bwsBar';document.body.insertBefore(bar,document.body.firstChild);
+  bk=document.createElement('div');bk.id='bwsBk';document.body.appendChild(bk);bk.onclick=function(){closeDrop()};
+  drop=document.createElement('div');drop.id='bwsDrop';drop.setAttribute('role','navigation');drop.setAttribute('aria-label','Main menu');document.body.appendChild(drop);
+  drop.addEventListener('click',function(e){
+    if(e.target.closest('[data-x]')){closeDrop();return}
+    if(e.target.closest('[data-cmp]')){closeDrop();open();return}
+    var a=e.target.closest('a.it');if(a){var id=a.getAttribute('data-id');if(id){DONE[id]=1;save()}closeDrop();setTimeout(labelMenu,60)}
+  });
+  document.addEventListener('click',function(e){if(drop.classList.contains('on')&&!drop.contains(e.target))closeDrop()});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape')closeDrop();
+    var ty=/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||''))||e.target.isContentEditable;
+    if(!ty&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&(e.key==='m'||e.key==='M')){e.preventDefault();drop.classList.contains('on')?closeDrop():openDrop()}
+  });
+  window.addEventListener('hashchange',function(){labelMenu();closeDrop()});
+  applyMode();
+}
+function init(){
+  initNav();
+  var seen=false;try{seen=!!localStorage.getItem('dd_cmp_seen')}catch(e){}
+  var b=document.createElement('button');b.id='cmpFab';b.type='button';b.setAttribute('aria-label','Open the Compass navigator');
+  b.innerHTML=rose+'<span class="t">Compass</span>'+(seen?'':'<span class="nw">Start here</span>');
+  b.onclick=open;document.body.appendChild(b);
+  document.querySelectorAll('[data-compass]').forEach(function(x){x.addEventListener('click',function(e){e.preventDefault();open()})});
+  document.addEventListener('keydown',function(e){var ty=/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||''))||e.target.isContentEditable;
+    if(!ty&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&(e.key==='c'||e.key==='C')&&!(ov&&ov.classList.contains('on'))){e.preventDefault();open()}});
+  window.BWSCompass={open:open,close:close};
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+<!-- BWS RADIO (shared music player) -->
+<style id="rdCss">
+#rdBtn{position:fixed;right:14px;bottom:78px;z-index:8990;display:flex;align-items:stretch;border:1px solid #d9b650;background:#0d1426;color:#f1d98a;border-radius:999px;height:42px;font:700 14px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.5);touch-action:none;user-select:none;-webkit-user-select:none}
+#rdBtn.on{background:#d9b650;color:#1a1405}
+#rdBtn button{all:unset;display:flex;align-items:center;justify-content:center;cursor:pointer;color:inherit;font:inherit}
+#rdBtn .q{width:42px;border-radius:999px 0 0 999px}
+#rdBtn .m{padding:0 8px 0 4px}
+#rdBtn .x{width:30px;border-radius:0 999px 999px 0;font-size:16px;opacity:.8}
+#rdBtn .g{display:flex;align-items:center;padding:0 2px 0 8px;cursor:grab;opacity:.7;font-size:14px;letter-spacing:-2px}
+#rdBtn button:focus-visible{outline:2px solid #fff;outline-offset:-3px}
+#rdBtn .eq{display:inline-flex;gap:2px;align-items:flex-end;height:14px}
+#rdBtn .eq i{display:block;width:3px;background:currentColor;height:4px;border-radius:1px}
+#rdBtn.on .eq i{animation:rdE .9s infinite ease-in-out}
+#rdBtn.on .eq i:nth-child(2){animation-delay:.2s}#rdBtn.on .eq i:nth-child(3){animation-delay:.4s}
+@keyframes rdE{0%,100%{height:3px}50%{height:14px}}
+@media (prefers-reduced-motion:reduce){#rdBtn.on .eq i{animation:none;height:9px}}
+#rdTab{position:fixed;right:0;bottom:90px;z-index:8990;display:none;width:30px;height:44px;border:1px solid #d9b650;border-right:0;background:#0d1426;color:#f1d98a;border-radius:12px 0 0 12px;cursor:pointer;font-size:16px;box-shadow:0 6px 24px rgba(0,0,0,.5);padding:0}
+#rdTab.on{background:#d9b650;color:#1a1405}
+#rdPn{position:fixed;z-index:8991;width:min(300px,calc(100vw - 28px));background:#0d1426;border:1px solid #2a3556;border-radius:14px;padding:14px;color:#e8ecf7;font:14px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none}
+#rdPn.open{display:block}
+#rdPn h4{margin:0 0 4px;font-size:14px;color:#f1d98a}
+#rdPn .sub{font-size:12px;color:#8e99b8;margin-bottom:10px}
+#rdPn select,#rdPn input[type=range]{width:100%;margin:0 0 10px}
+#rdPn select{background:#131c33;color:#e8ecf7;border:1px solid #2a3556;border-radius:8px;padding:10px;font-size:16px}
+#rdPn .row2{display:flex;gap:8px}
+#rdPn .row2 button{flex:1;min-height:44px;border-radius:10px;border:1px solid #d9b650;background:#d9b650;color:#1a1405;font-weight:700;font-size:15px;cursor:pointer}
+#rdPn .row2 button.sec{background:transparent;color:#f1d98a}
+#rdPn .st{font-size:12px;color:#8e99b8;margin-top:8px;min-height:16px}
+#rdPn .st.err{color:#ff9b9b}
+@media (max-width:700px){#rdBtn .m .t{display:none}#rdBtn{bottom:84px}}
+</style>
+<div id="rdPn" role="dialog" aria-label="Music player"><h4>BWS Radio</h4><div class="sub">Free background music from SomaFM. Drag the button anywhere to move it.</div>
+<select id="rdSel" aria-label="Station"></select>
+<input type="range" id="rdVol" min="0" max="100" value="40" aria-label="Volume">
+<div class="row2"><button id="rdPlay" type="button">Play</button><button id="rdHide" type="button" class="sec">Hide button</button></div>
+<div class="st" id="rdSt"></div></div>
+<div id="rdBtn"><span class="g" id="rdGrip" title="Drag to move" aria-hidden="true">⋮⋮</span><button class="q" id="rdQ" type="button" aria-label="Music on or off" title="Music on / off"><span class="eq"><i></i><i></i><i></i></span></button><button class="m" id="rdM" type="button" aria-label="Open music settings"><span class="t">Music</span></button><button class="x" id="rdX" type="button" aria-label="Tuck the music button away" title="Tuck away">›</button></div>
+<button id="rdTab" type="button" aria-label="Bring back the music button" title="Show music">♪</button>
+<script id="rdJs">
+(function(){
+var ST=[['groovesalad','Groove Salad: chill beats'],['beatblender','Beat Blender: deep house, downtempo'],['lush','Lush: mellow vocals'],['deepspaceone','Deep Space One: ambient'],['dronezone','Drone Zone: calm focus'],['fluid','Fluid: instrumental hip-hop'],['defcon','DEF CON Radio: hacker beats'],['secretagent','Secret Agent: spy lounge']];
+var HOSTS=['ice1','ice2','ice4','ice6'];
+function g(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function s(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var $=function(i){return document.getElementById(i)};
+var sel=$('rdSel'),vol=$('rdVol'),pl=$('rdPlay'),box=$('rdBtn'),tab=$('rdTab'),pn=$('rdPn'),st=$('rdSt'),au=null,hi=0;
+ST.forEach(function(x){var o=document.createElement('option');o.value=x[0];o.textContent=x[1];sel.appendChild(o)});
+var cur=g('bws_radio_st');if(!cur||!ST.some(function(x){return x[0]===cur}))cur=ST[0][0];sel.value=cur;
+var v=parseInt(g('bws_radio_vol'),10);vol.value=isNaN(v)?40:v;
+function msg(t,e){st.textContent=t||'';st.className='st'+(e?' err':'')}
+function ui(on){box.classList.toggle('on',on);tab.classList.toggle('on',on);pl.textContent=on?'Pause':'Play'}
+function url(){return 'https://'+HOSTS[hi]+'.somafm.com/'+sel.value+'-128-mp3'}
+function stop(){if(au){au.pause();au.removeAttribute('src');au.load();au=null}ui(false)}
+function start(auto){
+  stop();au=new Audio();au.preload='none';au.volume=vol.value/100;au.src=url();msg('Connecting…');
+  au.addEventListener('playing',function(){ui(true);msg('Playing');s('bws_radio_on','1')});
+  au.addEventListener('waiting',function(){msg('Buffering…')});
+  au.addEventListener('error',function(){if(hi<HOSTS.length-1){hi++;start(auto)}else{hi=0;ui(false);msg('Could not reach the stream. Check your connection or ad-blocker, or try another station.',true)}});
+  var p=au.play();if(p&&p.catch)p.catch(function(e){ui(false);msg(auto?'Tap the music button to start.':'Could not start. Try again.',!auto&&e&&e.name!=='NotAllowedError')});
+}
+function toggle(){if(au&&!au.paused){stop();s('bws_radio_on','0');msg('Paused')}else{hi=0;start(false)}}
+/* position: remembered, draggable, clamped */
+function clamp(){var r=box.getBoundingClientRect(),W=innerWidth,H=innerHeight,l=Math.min(Math.max(4,r.left),W-r.width-4),t=Math.min(Math.max(4,r.top),H-r.height-4);box.style.left=l+'px';box.style.top=t+'px';box.style.right='auto';box.style.bottom='auto'}
+function place(){if(!pn.classList.contains('open'))return;var r=box.getBoundingClientRect(),w=pn.offsetWidth,h=pn.offsetHeight,l=Math.min(Math.max(8,r.right-w),innerWidth-w-8),t=r.top-h-8;if(t<8)t=Math.min(r.bottom+8,innerHeight-h-8);pn.style.left=l+'px';pn.style.top=Math.max(8,t)+'px'}
+try{var sp=JSON.parse(g('bws_radio_pos')||'null');if(sp&&typeof sp.l==='number'){box.style.left=sp.l+'px';box.style.top=sp.t+'px';box.style.right='auto';box.style.bottom='auto';clamp()}}catch(e){}
+var drag=null,moved=false;
+box.addEventListener('pointerdown',function(e){if(e.button&&e.button!==0)return;var r=box.getBoundingClientRect();drag={x:e.clientX,y:e.clientY,l:r.left,t:r.top};moved=false});
+addEventListener('pointermove',function(e){if(!drag)return;var dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!moved&&Math.abs(dx)+Math.abs(dy)<8)return;moved=true;box.style.left=(drag.l+dx)+'px';box.style.top=(drag.t+dy)+'px';box.style.right='auto';box.style.bottom='auto';clamp();place()});
+addEventListener('pointerup',function(){if(drag&&moved){var r=box.getBoundingClientRect();s('bws_radio_pos',JSON.stringify({l:r.left,t:r.top}));setTimeout(function(){moved=false},0)}drag=null});
+box.addEventListener('click',function(e){if(moved){e.stopPropagation();e.preventDefault()}},true);
+addEventListener('resize',function(){if(box.style.left){clamp()}place()});
+$('rdQ').addEventListener('click',toggle);
+$('rdM').addEventListener('click',function(){pn.classList.toggle('open');place()});
+function tuck(on){box.style.display=on?'none':'flex';tab.style.display=on?'block':'none';if(on)pn.classList.remove('open');s('bws_radio_tuck',on?'1':'0');if(!on)clamp()}
+$('rdX').addEventListener('click',function(){tuck(true)});
+$('rdHide').addEventListener('click',function(){tuck(true)});
+tab.addEventListener('click',function(){tuck(false)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')pn.classList.remove('open')});
+pl.addEventListener('click',toggle);
+sel.addEventListener('change',function(){s('bws_radio_st',sel.value);hi=0;if(au&&!au.paused)start(false)});
+vol.addEventListener('input',function(){s('bws_radio_vol',vol.value);if(au)au.volume=vol.value/100});
+if(g('bws_radio_tuck')==='1')tuck(true);
+if(g('bws_radio_on')==='1'){hi=0;start(true)}
+})();
+</script>
+<!-- /BWS RADIO -->
+</body>
+</html>

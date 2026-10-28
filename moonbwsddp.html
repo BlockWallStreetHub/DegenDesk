@@ -878,9 +878,9 @@ loadAsset();
 <script id="cmpJs">
 (function(){
 'use strict';
-var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',WH='whalebwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
+var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',WH='whalebwsddp.html',CT='cointrackbwsddp.html',LS='lpsimbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
 var ITEMS=[
- {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'20 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
+ {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'22 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
  {id:'desk',n:'Overview',h:D+'#desk',g:'Watch',lv:'b',d:'Prices, your alerts, positions, pegs and news on one screen.',kw:'home dashboard summary today prices market'},
  {id:'cinema',n:'Degen Cinema',h:'cinemabwsddp.html',g:'Watch',lv:'b',d:'Movies, shows and podcasts to watch right inside the Desk, in a movie-theater setting.',kw:'cinema movies movie shows podcasts videos youtube watch theater film documentary'},
  {id:'news',n:'News',h:D+'#news',g:'Watch',lv:'b',d:'Headlines that could move prices, scored by how big they might be.',kw:'headlines fed cpi hack listing sec'},
@@ -888,6 +888,8 @@ var ITEMS=[
  {id:'trend',n:'Trending Coins',h:D+'#trend',g:'Find',lv:'b',d:'New and fast-moving coins people are looking at today.',kw:'trending new tokens dexscreener geckoterminal'},
  {id:'pegs',n:'Stablecoin Pegs',h:D+'#pegs',g:'Protect',lv:'b',d:'Checks whether USDT, USDC, DAI and others still trade at $1.',kw:'depeg usdt usdc dai safe stable'},
  {id:'whale',n:'Whale Scanner & Tracker',h:WH,g:'Track',lv:'m',d:'Spot single buys of $1,000 or more in alt coins, tap a wallet to follow it, see what it holds, and look up who made the biggest buys of any coin.',kw:'whale whales scanner tracker wallet big buys large orders smart money top buyers contract address ticker copy trade alt coins'},
+ {id:'coins',n:'Coin Tracker',h:CT,g:'Track',lv:'b',d:'Paste a contract address or ticker to watch a coin and get alerts at a price you choose, or on a 10% to 50%+ move.',kw:'coin tracker watchlist alert price target percent move 10 20 30 40 50 contract address ticker notify telegram'},
+ {id:'lpsim',n:'LP Pool Simulator',h:LS,g:'Test',lv:'m',d:'Model an LP position on Uniswap, PancakeSwap or Aerodrome for a year and compare claiming your fees with compounding them.',kw:'lp pool simulator claim compound fees uniswap pancakeswap aerodrome range rebalance impermanent loss'},
  {id:'pf',n:'Portfolio',h:P,g:'Track',lv:'b',d:'Log what you bought and see your value, profit and loss. Set price alerts.',kw:'holdings profit loss track coingecko invest'},
  {id:'acct',n:'Account',h:A,g:'Account',lv:'b',d:'Your sign-up info, access time, alert channels and renewal.',kw:'settings email subscription renew billing login'},
  {id:'biz',n:'Business Bitcoin Time Machine',h:D+'#biz',g:'Business',lv:'b',d:'For merchants and business owners: what setting aside part of sales or profit into Bitcoin could have built.',kw:'business merchant owner shop store sales profit treasury small business bitcoin time machine'},
@@ -911,6 +913,8 @@ var GOALS=[
  {i:'💼',q:'Track what I own and my profit',w:'Log your buys in Portfolio. It works out your profit, loss and value over time.',to:['pf','port']},
  {i:'🔔',q:'Get alerts on Telegram, email or my phone',w:'Set up your channels once in Account. Every alert on the desk and in Portfolio uses them.',to:['acct','pf','ind']},
  {i:'🐋',q:'See what the whales are buying',w:'The Whale Scanner lists single buys of $1,000 or more in alt coins. Tap a wallet to follow it and see its holdings, or type in any coin to see who made the biggest buys in the last 5 minutes up to a month.',to:['whale','trend']},
+ {i:'🔔',q:'Alert me when a coin hits a price or moves 10% to 50%',w:'The Coin Tracker watches any coin you paste in and alerts you at a price you pick, or when it moves 10%, 20%, 30%, 40% or 50%+.',to:['coins','pf','ind']},
+ {i:'🧮',q:'Should I claim or compound my LP fees?',w:'The LP Pool Simulator runs a full year on Uniswap, PancakeSwap or Aerodrome and shows claiming against compounding, day by day.',to:['lpsim','lp','lpm']},
  {i:'🔎',q:'Find coins that are moving',w:'Trending shows what is new and hot. The heat map shows the big picture. Signals add a technical view.',to:['trend','heat','sig']},
  {i:'💧',q:'Find a pool to earn trading fees (LP)',w:'LP Scout lets you filter thousands of pools, then simulate what could happen to your money.',to:['lp','rh']},
  {i:'🎯',q:'My LP went out of range. Hold, rebalance or close?',w:'The LP Manager reads your wallet, shows where each position leaves its range, and a meter reads the market to say hold, rebalance or close.',to:['lpm','lp']},

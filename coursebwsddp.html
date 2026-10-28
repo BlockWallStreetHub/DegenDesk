@@ -141,7 +141,7 @@ footer{border-top:1px solid var(--line);padding:22px 5vw 40px;font-size:12.5px;c
     Degen Desk Course
   </a>
   <span class="sp"></span>
-  <div class="prog"><span id="progTxt">0 of 20</span><div class="bar"><i id="progBar"></i></div></div>
+  <div class="prog"><span id="progTxt">0 of 22</span><div class="bar"><i id="progBar"></i></div></div>
 </header>
 
 <div class="wrap">
@@ -456,6 +456,30 @@ var L=[
   $('whM').oninput=go;$('whA').oninput=go;go();
  },
  quiz:{q:'You see a $12,000 buy from a wallet in the scanner. What is the sensible next step?',o:['Copy it right away','Track the wallet and watch what it does over time','Ignore the scanner','Send it money'],a:1,why:'A single buy tells you very little. The wallet could be a bot or market maker, and whales sell too. Tracking it shows its holdings and how they change, which is far more useful than reacting to one trade.'}},
+{id:'lpsim',code:'LPSIM',title:'LP Pool Simulator: claim or compound?',tool:null,link:['lpsimbwsddp.html','Open the LP Pool Simulator'],
+ body:'<p>When you provide liquidity you earn trading fees, and sometimes reward tokens. You then have a choice: <b>claim</b> them and keep them aside, or <b>compound</b> them by adding them back into the position so they earn fees too. The <b>LP Pool Simulator</b> runs a full year of both choices side by side, day by day, so you can see the difference.</p><p>You pick the platform (Uniswap, PancakeSwap or Aerodrome), the pair, the size of the pool and its daily volume, the fee tier, and how wide your range is. A narrow range earns more fees while price stays inside it, but leaves the range sooner. Turn on <b>rebalance</b> and it re-centers the range after a delay and a cost. You also set a start and end price for each coin, so you can test a rising, flat or falling market.</p><p>The chart compares claiming, compounding and simply holding the two coins. That last line matters: <b>impermanent loss</b> can leave you with less than if you had just held. Everything is a model with made-up inputs, so it teaches how the pieces fit, not what will happen. This is education, not advice.</p>',
+ widget:function(el){
+  el.innerHTML='<div class="lab"><h4>Why compounding helps a little, not a lot</h4><p class="hint">Move the sliders. This simple model ignores impermanent loss and gas, so it shows only the compounding effect.</p><label>Yearly fee rate on your position: <b id="lsA"></b></label><input id="lsR" type="range" min="2" max="80" step="1" value="20" style="width:100%"><label>Compound how often: <b id="lsF"></b></label><input id="lsC" type="range" min="1" max="4" step="1" value="2" style="width:100%"><div class="stat" id="lsS"></div><div class="verdict" id="lsV"></div></div>';
+  var N=[['never (claim)',0],['monthly',12],['weekly',52],['daily',365]],dep=1000;
+  function go(){var r=+$('lsR').value/100,f=N[+$('lsC').value-1];$('lsA').textContent=Math.round(r*100)+'%';$('lsF').textContent=f[0];
+   var claim=dep*(1+r),comp=f[1]?dep*Math.pow(1+r/f[1],f[1]):claim,d=comp-claim;
+   $('lsS').innerHTML='<div><small>Claim, end of year</small><b>$'+Math.round(claim).toLocaleString()+'</b></div><div><small>Compound</small><b>$'+Math.round(comp).toLocaleString()+'</b></div><div><small>Extra from compounding</small><b>$'+Math.round(d).toLocaleString()+'</b></div>';
+   var v=$('lsV');v.className='verdict'+(d>0?' good':'');v.textContent=d>0?'On $1,000 that is about $'+Math.round(d)+' extra. Gas costs from each compounding can eat it on small positions.':'Claiming keeps the fees as cash, with no extra growth.'}
+  $('lsR').oninput=go;$('lsC').oninput=go;go();
+ },
+ quiz:{q:'What does compounding your LP fees mean?',o:['Taking the fees out as cash','Adding the fees back into the position so they earn fees too','Closing the position','Switching to a stablecoin'],a:1,why:'Compounding reinvests your earned fees. The simulator shows how much extra that adds compared with claiming them, and why gas cost and impermanent loss can shrink the gain.'}},
+{id:'coins',code:'COINS',title:'Coin Tracker: alerts on any coin',tool:null,link:['cointrackbwsddp.html','Open the Coin Tracker'],
+ body:'<p>The <b>Coin Tracker</b> is your watchlist. Paste a <b>contract address</b> or a <b>ticker</b> and it finds the coin and starts tracking its price, its 5 minute, 1 hour, 6 hour and 24 hour moves, and its liquidity. If a ticker matches several coins, it shows each with its chain and liquidity so you can pick the right one. Using the contract address is safest, since many scam coins copy a famous name.</p><p>Then set alerts. A <b>price alert</b> fires when the coin goes above or below a dollar price you choose. A <b>move alert</b> fires when the price has moved <b>10%, 20%, 30%, 40%, 50% or more</b> from where it was when you made the alert, up, down or either way. Turn on <b>keep alerting</b> and it resets at each new price, so a coin that keeps climbing keeps pinging you.</p><p>Alerts go to the channels you set up in Account: Telegram, Discord, email, phone push or WhatsApp. <b>Prices are only checked while the page is open in a browser tab.</b> Close it and nothing is checked. An alert is a prompt to look, not a reason to buy or sell.</p>',
+ widget:function(el){
+  el.innerHTML='<div class="lab"><h4>What does a move alert really mean?</h4><p class="hint">Pick a price and a percent. See the two prices that would set off the alert, and how big a bounce it takes to recover from a drop.</p><label>Price now ($)</label><input id="ctP" type="number" step="any" value="1" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:inherit"><label>Move alert size: <b id="ctA"></b></label><input id="ctM" type="range" min="1" max="5" step="1" value="2" style="width:100%"><div class="stat" id="ctS"></div><div class="verdict" id="ctV"></div></div>';
+  var P=[10,20,30,40,50];
+  function go(){var p=+$('ctP').value||0,m=P[+$('ctM').value-1];$('ctA').textContent=m+'%';
+   var up=p*(1+m/100),dn=p*(1-m/100),rec=m/(100-m)*100;
+   $('ctS').innerHTML='<div><small>Alert if it rises to</small><b>$'+(+up.toPrecision(4))+'</b></div><div><small>Alert if it falls to</small><b>$'+(+dn.toPrecision(4))+'</b></div><div><small>Gain needed to recover a '+m+'% drop</small><b>'+rec.toFixed(0)+'%</b></div>';
+   var v=$('ctV');v.className='verdict';v.textContent=m>=50?'A 50% drop needs a 100% gain just to get back to even. That is why big drops hurt so much.':'Small moves are noise on small coins. Bigger alert sizes mean fewer, more meaningful pings.'}
+  $('ctP').oninput=go;$('ctM').oninput=go;go();
+ },
+ quiz:{q:'When does the Coin Tracker check prices and send alerts?',o:['Always, even with the page closed','Only while the page is open in a browser tab','Only once a day','Only on weekends'],a:1,why:'The tracker runs in your browser. Keep the tab open for alerts to work. Close it and nothing is checked.'}},
 {id:'moon',code:'MOON',title:'Moon Desk: the sky behind the chart',tool:null,link:['moonbwsddp.html','Open Moon Desk'],
  body:'<p>Moon Desk lays astrology behind a price chart: the <b>moon phase</b>, the <b>zodiac sign</b> the moon and sun are in, <b>eclipses</b> and <b>Mercury retrograde</b>. You can view the chart as daily, weekly or monthly candles, zoom in and out, and hover any candle to see the sky on that day.</p><p>Below the chart, the tool measures what price actually did under each phase and each moon sign, and a back-test lets you try a rule such as &ldquo;only be invested while the moon is waxing.&rdquo; Many serious traders and funds watch cycles of all kinds. A saying often credited to J.P. Morgan claims that billionaires use astrologers, but nobody has confirmed he said it, so treat it as lore.</p><p>The honest part is the <b>random-calendar test</b>. The tool re-runs your idea on the same prices with a fake sky. If the real calendar does not clearly beat the fake ones, the pattern is probably luck. Test many ideas and a few will look good by chance alone, so confirm anything promising on a second coin and a different date range.</p>',
  widget:function(el){
@@ -649,9 +673,9 @@ show();
 <script id="cmpJs">
 (function(){
 'use strict';
-var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',WH='whalebwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
+var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',WH='whalebwsddp.html',CT='cointrackbwsddp.html',LS='lpsimbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
 var ITEMS=[
- {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'20 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
+ {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'22 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
  {id:'desk',n:'Overview',h:D+'#desk',g:'Watch',lv:'b',d:'Prices, your alerts, positions, pegs and news on one screen.',kw:'home dashboard summary today prices market'},
  {id:'cinema',n:'Degen Cinema',h:'cinemabwsddp.html',g:'Watch',lv:'b',d:'Movies, shows and podcasts to watch right inside the Desk, in a movie-theater setting.',kw:'cinema movies movie shows podcasts videos youtube watch theater film documentary'},
  {id:'news',n:'News',h:D+'#news',g:'Watch',lv:'b',d:'Headlines that could move prices, scored by how big they might be.',kw:'headlines fed cpi hack listing sec'},
@@ -659,6 +683,8 @@ var ITEMS=[
  {id:'trend',n:'Trending Coins',h:D+'#trend',g:'Find',lv:'b',d:'New and fast-moving coins people are looking at today.',kw:'trending new tokens dexscreener geckoterminal'},
  {id:'pegs',n:'Stablecoin Pegs',h:D+'#pegs',g:'Protect',lv:'b',d:'Checks whether USDT, USDC, DAI and others still trade at $1.',kw:'depeg usdt usdc dai safe stable'},
  {id:'whale',n:'Whale Scanner & Tracker',h:WH,g:'Track',lv:'m',d:'Spot single buys of $1,000 or more in alt coins, tap a wallet to follow it, see what it holds, and look up who made the biggest buys of any coin.',kw:'whale whales scanner tracker wallet big buys large orders smart money top buyers contract address ticker copy trade alt coins'},
+ {id:'coins',n:'Coin Tracker',h:CT,g:'Track',lv:'b',d:'Paste a contract address or ticker to watch a coin and get alerts at a price you choose, or on a 10% to 50%+ move.',kw:'coin tracker watchlist alert price target percent move 10 20 30 40 50 contract address ticker notify telegram'},
+ {id:'lpsim',n:'LP Pool Simulator',h:LS,g:'Test',lv:'m',d:'Model an LP position on Uniswap, PancakeSwap or Aerodrome for a year and compare claiming your fees with compounding them.',kw:'lp pool simulator claim compound fees uniswap pancakeswap aerodrome range rebalance impermanent loss'},
  {id:'pf',n:'Portfolio',h:P,g:'Track',lv:'b',d:'Log what you bought and see your value, profit and loss. Set price alerts.',kw:'holdings profit loss track coingecko invest'},
  {id:'acct',n:'Account',h:A,g:'Account',lv:'b',d:'Your sign-up info, access time, alert channels and renewal.',kw:'settings email subscription renew billing login'},
  {id:'biz',n:'Business Bitcoin Time Machine',h:D+'#biz',g:'Business',lv:'b',d:'For merchants and business owners: what setting aside part of sales or profit into Bitcoin could have built.',kw:'business merchant owner shop store sales profit treasury small business bitcoin time machine'},
@@ -682,6 +708,8 @@ var GOALS=[
  {i:'💼',q:'Track what I own and my profit',w:'Log your buys in Portfolio. It works out your profit, loss and value over time.',to:['pf','port']},
  {i:'🔔',q:'Get alerts on Telegram, email or my phone',w:'Set up your channels once in Account. Every alert on the desk and in Portfolio uses them.',to:['acct','pf','ind']},
  {i:'🐋',q:'See what the whales are buying',w:'The Whale Scanner lists single buys of $1,000 or more in alt coins. Tap a wallet to follow it and see its holdings, or type in any coin to see who made the biggest buys in the last 5 minutes up to a month.',to:['whale','trend']},
+ {i:'🔔',q:'Alert me when a coin hits a price or moves 10% to 50%',w:'The Coin Tracker watches any coin you paste in and alerts you at a price you pick, or when it moves 10%, 20%, 30%, 40% or 50%+.',to:['coins','pf','ind']},
+ {i:'🧮',q:'Should I claim or compound my LP fees?',w:'The LP Pool Simulator runs a full year on Uniswap, PancakeSwap or Aerodrome and shows claiming against compounding, day by day.',to:['lpsim','lp','lpm']},
  {i:'🔎',q:'Find coins that are moving',w:'Trending shows what is new and hot. The heat map shows the big picture. Signals add a technical view.',to:['trend','heat','sig']},
  {i:'💧',q:'Find a pool to earn trading fees (LP)',w:'LP Scout lets you filter thousands of pools, then simulate what could happen to your money.',to:['lp','rh']},
  {i:'🎯',q:'My LP went out of range. Hold, rebalance or close?',w:'The LP Manager reads your wallet, shows where each position leaves its range, and a meter reads the market to say hold, rebalance or close.',to:['lpm','lp']},
