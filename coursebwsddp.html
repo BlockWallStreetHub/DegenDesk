@@ -527,7 +527,7 @@ function show(){
   cur=idxFromHash();var l=L[cur];
   var m=$('main');
   m.innerHTML='<article class="lesson"><div class="code">'+l.code+' &middot; Lesson '+(cur+1)+' of '+L.length+'</div><h1>'+l.title+'</h1>'+l.body
-   +(l.tool?'<div class="openrow"><a class="btn" href="desk.html#'+l.tool+'" target="_blank" rel="noopener">Open this tool in the desk</a><span class="note">Opens in a new tab so you can follow along.</span></div>':'')
+   +(l.tool?'<div class="openrow"><a class="btn" href="deskbwsddp.html#'+l.tool+'" target="_blank" rel="noopener">Open this tool in the desk</a><span class="note">Opens in a new tab so you can follow along.</span></div>':'')
    +(l.link?'<div class="openrow"><a class="btn" href="'+l.link[0]+'" target="_blank" rel="noopener">'+l.link[1]+'</a><span class="note">Opens in a new tab so you can follow along.</span></div>':'')
    +'<div id="wg"></div>'
    +'<div class="quiz"><h3>Check yourself</h3><p><b>'+l.quiz.q+'</b></p><div class="opts" id="qo">'+l.quiz.o.map(function(o,i){return '<button data-a="'+i+'">'+o+'</button>'}).join('')+'</div><div class="why" id="qw"></div></div>'
