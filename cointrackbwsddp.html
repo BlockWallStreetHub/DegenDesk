@@ -56,6 +56,10 @@ td.r,th.r{text-align:right}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.tabs button{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;color:var(--mut);font-weight:600}
+.tabs button.on{background:var(--gold);color:#1a1405;border-color:var(--gold)}
+.tabs input{width:150px;padding:6px 10px}
 .ap{background:var(--panel2);border-radius:12px;padding:14px;margin:4px 0 8px}
 .ap h4{margin:0 0 8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold2)}
 .ap .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:16px}
@@ -84,12 +88,18 @@ td.r,th.r{text-align:right}
 </div>
 <div class="status" id="qStat" role="status" aria-live="polite"></div>
 <div id="cands"></div>
+<details class="how" style="margin-top:12px"><summary style="cursor:pointer;color:var(--gold2)">Paste a whole list at once</summary>
+<div style="margin-top:8px"><textarea id="bulk" rows="5" placeholder="One contract address or ticker per line (or separated by commas)" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--tx);font:inherit;font-size:14px"></textarea>
+<div class="acts"><button class="btn" id="bulkBtn" type="button">Add all</button><span class="mut" style="font-size:12px">Addresses are exact. A ticker adds the most liquid coin with that name, so check the chain afterward. Up to 30 at a time. They go into the list you have open.</span></div>
+<div class="status" id="bStat"></div></div></details>
 </div>
 
 <div class="sum" id="sum"></div>
 
 <div class="card">
 <h2>Your coins</h2>
+<div class="tabs" id="ltabs"></div>
+<div class="acts" id="lbar" style="margin:0 0 10px"></div>
 <div class="acts" style="margin-top:0;margin-bottom:8px">
 <button class="btn sec sm" id="chk" type="button">Check now</button>
 <label class="f" style="flex-direction:row;align-items:center;gap:8px">Check every
@@ -128,8 +138,9 @@ function ls(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catc
 function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
-var K={list:'dd_coin_list',hist:'dd_coin_hist',cfg:'dd_coin_cfg',chan:'avaxLiqWatch.v1'};
-var list=ls(K.list,[]),hist=ls(K.hist,[]),cfg=Object.assign({iv:60},ls(K.cfg,{}));
+var K={list:'dd_coin_list',lists:'dd_coin_lists',hist:'dd_coin_hist',cfg:'dd_coin_cfg',chan:'avaxLiqWatch.v1'};
+var list=ls(K.list,[]),lists=ls(K.lists,[]),hist=ls(K.hist,[]),cfg=Object.assign({iv:60,active:'all'},ls(K.cfg,{}));
+function saveL(){ss(K.lists,lists)}
 var open={};
 function save(){ss(K.list,list)}
 function isEvm(a){return /^0x[0-9a-fA-F]{40}$/.test(a)}
@@ -175,9 +186,10 @@ $('qBtn').onclick=find;
 $('qIn').addEventListener('keydown',function(e){if(e.key==='Enter')find()});
 $('cands').addEventListener('click',function(e){var b=e.target.closest('[data-add]');if(b)addCoin(cands[+b.getAttribute('data-add')])});
 function addCoin(c){
- var dup=list.some(function(x){return x.ch===c.ch&&normA(x.addr)===normA(c.addr)});
- if(dup){status($('qStat'),c.sym+' is already on your list.',true);$('cands').innerHTML='';return}
- list.unshift({id:uid(),ch:c.ch,addr:c.addr,pair:c.pair,sym:c.sym,name:c.name,url:c.url,added:Date.now(),last:{p:c.price,c24:c.c24,liq:c.liq,fdv:c.fdv,t:Date.now()},alerts:[]});
+ var ex=list.filter(function(x){return x.ch===c.ch&&normA(x.addr)===normA(c.addr)})[0];
+ if(ex){if(activeList()&&(ex.lists||[]).indexOf(cfg.active)<0){ex.lists=(ex.lists||[]).concat([cfg.active]);save();$('cands').innerHTML='';$('qIn').value='';status($('qStat'),c.sym+' was already tracked. Added it to "'+activeList().name+'".');render();return}
+  status($('qStat'),c.sym+' is already on your list.',true);$('cands').innerHTML='';return}
+ list.unshift({id:uid(),ch:c.ch,addr:c.addr,pair:c.pair,sym:c.sym,name:c.name,url:c.url,added:Date.now(),lists:activeList()?[cfg.active]:[],last:{p:c.price,c24:c.c24,liq:c.liq,fdv:c.fdv,t:Date.now()},alerts:[]});
  save();$('cands').innerHTML='';$('qIn').value='';open[list[0].id]=true;
  status($('qStat'),'Added '+c.sym+'. Set an alert below.');render();
 }
@@ -201,7 +213,7 @@ async function poll(){
   save();
   await evaluate();
   $('upd').textContent='Checked '+new Date().toLocaleTimeString();
- }finally{busy=false;$('chk').disabled=false;var ae=document.activeElement;if(!(ae&&ae.closest&&ae.closest('.ap')))render();else{$('upd').textContent=$('upd').textContent}}
+ }finally{busy=false;$('chk').disabled=false;var ae=document.activeElement;if(!(ae&&ae.closest&&ae.closest('.ap,#ltabs,#lbar,#bulk')))render();else{$('upd').textContent=$('upd').textContent}}
 }
 function describe(it,a,p){
  if(a.type==='above')return it.sym+' rose to '+px(p)+', at or above your '+px(a.val)+' target';
@@ -264,10 +276,11 @@ function render(){
  list.forEach(function(it){it.alerts.forEach(function(a){if(a.on)act++})});
  $('sum').innerHTML=[['Coins tracked',list.length],['Active alerts',act],['Alerts fired (24h)',firedToday],['Checking every',cfg.iv>=60?(cfg.iv/60)+' min':cfg.iv+' sec']].map(function(x){return '<div class="k"><b>'+x[1]+'</b><span>'+x[0]+'</span></div>'}).join('');
  renderChan();
- if(!list.length){$('tbl').innerHTML='<div class="empty">No coins yet. Add one above.</div>'}
+ var vis=visible();renderTabs();
+ if(!vis.length){$('tbl').innerHTML='<div class="empty">'+(list.length?'No coins in this list yet. Add a coin above, or open a coin in All and put it in this list.':'No coins yet. Add one above.')+'</div>'}
  else{
   var h='<table><thead><tr><th>Coin</th><th class="r">Price</th><th class="r">5m</th><th class="r">1h</th><th class="r">6h</th><th class="r">24h</th><th class="r">Liquidity</th><th>Alerts</th><th></th></tr></thead><tbody>';
-  list.forEach(function(it){var l=it.last||{},n=it.alerts.filter(function(a){return a.on}).length,gt=DS2GT[it.ch];
+  vis.forEach(function(it){var l=it.last||{},n=it.alerts.filter(function(a){return a.on}).length,gt=DS2GT[it.ch];
    h+='<tr><td><b>'+esc(it.sym)+'</b> <span class="badge">'+esc(pretty(it.ch))+'</span><br><span class="mut" style="font-size:12px">'+esc(it.name||'')+'</span></td>'
     +'<td class="r"><b>'+px(l.p)+'</b></td><td class="r">'+pc(l.c5)+'</td><td class="r">'+pc(l.c1)+'</td><td class="r">'+pc(l.c6)+'</td><td class="r">'+pc(l.c24)+'</td><td class="r mut">'+usd(l.liq)+'</td>'
     +'<td><button class="btn sec sm" type="button" data-tog="'+it.id+'">🔔 '+(n?n+' active':'Set alert')+'</button></td>'
@@ -284,6 +297,7 @@ function panel(it){
   +'<div><h4>Move of 10% to 50%+</h4><div class="chips" style="margin:0 0 6px" data-pcts="'+it.id+'">'+[10,20,30,40,50].map(function(n){return '<button class="chip'+(n===20?' on':'')+'" type="button" data-pct="'+n+'">'+n+'%</button>'}).join('')+'<input type="number" min="1" max="1000" step="1" data-f="pm-cust" placeholder="Other %" aria-label="Custom percent" style="width:100px;padding:5px 8px"></div>'
   +'<div class="ar"><select data-f="pm-dir"><option value="either">Up or down</option><option value="up">Up only</option><option value="down">Down only</option></select><label class="tg"><input type="checkbox" data-f="pm-rep"> Keep alerting (reset at each new price)</label></div>'
   +'<div class="ar"><button class="btn sm" type="button" data-addm="'+it.id+'">Add move alert</button><span class="mut" style="font-size:12px">Measured from the price right now: '+px(p)+'</span></div></div></div>';
+ h+='<h4 style="margin-top:12px">Lists</h4><div class="chips" style="margin:0">'+(lists.length?lists.map(function(l){return '<button class="chip'+((it.lists||[]).indexOf(l.id)>=0?' on':'')+'" type="button" data-lt="'+it.id+'|'+l.id+'">'+esc(l.name)+'</button>'}).join(''):'<span class="mut">No lists yet. Make one with the + New list button above the table.</span>')+'</div>';
  if(it.alerts.length)h+='<h4 style="margin-top:12px">Your alerts</h4>'+it.alerts.map(function(a){
   var d=a.type==='above'?'Price above '+px(a.val):a.type==='below'?'Price below '+px(a.val):(a.dir==='either'?'Moves ':a.dir==='up'?'Rises ':'Drops ')+a.val+'% from '+px(a.base)+(a.rep?' (keeps alerting)':'');
   return '<div class="al'+(a.on?'':' off')+'"><span>'+esc(d)+' <span class="badge '+(a.on?'g':'y')+'">'+(a.on?'Waiting':(a.last?'Triggered '+ago(a.last):'Off'))+'</span></span><span><button class="btn sec sm" type="button" data-aon="'+it.id+'|'+a.id+'">'+(a.on?'Pause':'Turn on')+'</button> <button class="btn dg sm" type="button" data-adel="'+it.id+'|'+a.id+'">Delete</button></span></div>'}).join('');
@@ -303,10 +317,70 @@ $('tbl').addEventListener('click',function(e){
  b=t.closest('[data-addm]');if(b){var it2=find1(b.getAttribute('data-addm')),ap2=b.closest('.ap'),cu2=parseFloat(ap2.querySelector('[data-f=pm-cust]').value),on=ap2.querySelector('[data-pct].on'),pct=cu2>0?cu2:(on?+on.getAttribute('data-pct'):20);
   if(!(it2.last&&it2.last.p)){toast('No price yet. Press Check now first.');return}
   it2.alerts.push({id:uid(),type:'move',val:pct,dir:ap2.querySelector('[data-f=pm-dir]').value,base:it2.last.p,rep:ap2.querySelector('[data-f=pm-rep]').checked,on:true,created:Date.now()});save();render();return}
+ b=t.closest('[data-lt]');if(b){var q0=b.getAttribute('data-lt').split('|'),it0=find1(q0[0]);if(it0){it0.lists=it0.lists||[];var ix=it0.lists.indexOf(q0[1]);if(ix>=0)it0.lists.splice(ix,1);else it0.lists.push(q0[1]);save();render()}return}
  b=t.closest('[data-aon]');if(b){var q=b.getAttribute('data-aon').split('|'),it3=find1(q[0]),a3=it3.alerts.filter(function(x){return x.id===q[1]})[0];
   if(a3){a3.on=!a3.on;if(a3.on&&a3.type==='move'&&it3.last)a3.base=it3.last.p;save();render()}return}
  b=t.closest('[data-adel]');if(b){var q2=b.getAttribute('data-adel').split('|'),it4=find1(q2[0]);it4.alerts=it4.alerts.filter(function(x){return x.id!==q2[1]});save();render()}
 });
+function activeList(){for(var i=0;i<lists.length;i++)if(lists[i].id===cfg.active)return lists[i];return null}
+function visible(){if(!activeList())return list;return list.filter(function(x){return (x.lists||[]).indexOf(cfg.active)>=0})}
+function renderTabs(){
+ if(cfg.active!=='all'&&!activeList())cfg.active='all';
+ var h='<button type="button" data-tab="all" class="'+(cfg.active==='all'?'on':'')+'">All ('+list.length+')</button>';
+ lists.forEach(function(l){var n=list.filter(function(x){return (x.lists||[]).indexOf(l.id)>=0}).length;h+='<button type="button" data-tab="'+l.id+'" class="'+(cfg.active===l.id?'on':'')+'">'+esc(l.name)+' ('+n+')</button>'});
+ h+='<input type="text" id="nl" maxlength="30" placeholder="New list name" aria-label="New list name"><button type="button" id="nlb" class="on" style="background:transparent;color:var(--gold2);border-color:var(--gold)">+ New list</button>';
+ var keep=$('nl')&&$('nl').value;$('ltabs').innerHTML=h;if(keep)$('nl').value=keep;
+ var a=activeList(),b='';
+ if(a)b='<input type="text" id="rn" value="'+esc(a.name)+'" maxlength="30" aria-label="List name" style="width:180px;padding:6px 10px"><button class="btn sec sm" type="button" id="rnb">Rename</button><button class="btn dg sm" type="button" id="dlb">Delete this list</button>';
+ if(list.length)b+='<button class="btn sec sm" type="button" id="cpb">Copy addresses</button><button class="btn sec sm" type="button" id="csv">Download CSV</button>';
+ $('lbar').innerHTML=b;
+}
+$('ltabs').addEventListener('click',function(e){
+ var t=e.target.closest('[data-tab]');if(t){cfg.active=t.getAttribute('data-tab');ss(K.cfg,cfg);render();return}
+ if(e.target.id==='nlb'){var n=$('nl').value.trim().slice(0,30);if(!n)return;
+  if(lists.some(function(l){return l.name.toLowerCase()===n.toLowerCase()})){toast('You already have a list called "'+n+'".');return}
+  var l={id:uid(),name:n};lists.push(l);saveL();cfg.active=l.id;ss(K.cfg,cfg);$('nl').value='';render()}
+});
+$('ltabs').addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id==='nl')$('nlb').click()});
+$('lbar').addEventListener('click',function(e){
+ var a=activeList(),id=e.target.id;
+ if(id==='rnb'&&a){var n=$('rn').value.trim().slice(0,30);if(n){a.name=n;saveL();render()}return}
+ if(id==='dlb'&&a){var b=e.target;if(b.getAttribute('data-sure')==='1'){list.forEach(function(x){x.lists=(x.lists||[]).filter(function(i){return i!==a.id})});lists=lists.filter(function(l){return l.id!==a.id});cfg.active='all';save();saveL();ss(K.cfg,cfg);render()}else{b.setAttribute('data-sure','1');b.textContent='Tap again. Coins stay in All';setTimeout(function(){if(b.isConnected){b.removeAttribute('data-sure');b.textContent='Delete this list'}},3500)}return}
+ if(id==='cpb'){var txt=visible().map(function(x){return x.addr}).join('\n');
+  try{navigator.clipboard.writeText(txt).then(function(){toast('Copied '+visible().length+' addresses. You can paste them into "Paste a whole list" anywhere.')},function(){toast('Could not copy. Use Download CSV instead.')})}catch(er){toast('Could not copy. Use Download CSV instead.')}return}
+ if(id==='csv'){var rows=[['List','Symbol','Name','Chain','Contract address','Pair','Price USD','24h %','Liquidity USD']];
+  visible().forEach(function(x){var l=x.last||{},nm=(x.lists||[]).map(function(i){var q=lists.filter(function(z){return z.id===i})[0];return q?q.name:''}).filter(Boolean).join(' | ');
+   rows.push([nm,x.sym,x.name||'',x.ch,x.addr,x.pair,l.p||'',l.c24==null?'':l.c24,l.liq||''])});
+  var csv='\ufeff'+rows.map(function(r){return r.map(function(c){c=String(c==null?'':c);if(/^[=+\-@]/.test(c))c="'"+c;return '"'+c.replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
+  var u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),a2=document.createElement('a');a2.href=u;a2.download='coin-tracker-'+(a?a.name.replace(/[^A-Za-z0-9_-]+/g,'-'):'all')+'.csv';document.body.appendChild(a2);a2.click();a2.remove();setTimeout(function(){URL.revokeObjectURL(u)},2000)}
+});
+/* bulk add */
+$('bulkBtn').onclick=async function(){
+ var st=$('bStat'),parts=$('bulk').value.split(/[\s,;]+/).map(function(x){return x.trim().replace(/^\$/,'')}).filter(Boolean),seen={},items=[];
+ parts.forEach(function(x){var k=x.toLowerCase();if(!seen[k]){seen[k]=1;items.push(x)}});
+ if(!items.length){status(st,'Paste at least one address or ticker first.',true);return}
+ if(items.length>30){status(st,'That is '+items.length+'. Please add up to 30 at a time.',true);return}
+ $('bulkBtn').disabled=true;status(st,'Looking up '+items.length+'…',false,true);
+ var added=0,already=0,miss=[],tick=[];
+ try{
+  var addrs=items.filter(function(x){return isEvm(x)||isSol(x)}),names=items.filter(function(x){return !(isEvm(x)||isSol(x))});
+  function consider(c){var ex=list.filter(function(x){return x.ch===c.ch&&normA(x.addr)===normA(c.addr)})[0];
+   if(ex){if(activeList()&&(ex.lists||[]).indexOf(cfg.active)<0)ex.lists=(ex.lists||[]).concat([cfg.active]);already++;return}
+   list.push({id:uid(),ch:c.ch,addr:c.addr,pair:c.pair,sym:c.sym,name:c.name,url:c.url,added:Date.now(),lists:activeList()?[cfg.active]:[],last:{p:c.price,c24:c.c24,liq:c.liq,fdv:c.fdv,t:Date.now()},alerts:[]});added++}
+  function best(pairs,match){var map={};(pairs||[]).forEach(function(p){var b=p.baseToken;if(!b||!p.priceUsd||!match(b))return;var liq=(p.liquidity&&+p.liquidity.usd)||0,key=p.chainId+':'+normA(b.address),c=map[key];
+    if(!c||liq>c.liq)map[key]={ch:p.chainId,addr:b.address,sym:b.symbol,name:b.name,pair:p.pairAddress,url:p.url,price:+p.priceUsd,liq:liq,fdv:p.fdv||p.marketCap||0,c24:p.priceChange&&p.priceChange.h24}});
+   return Object.keys(map).map(function(k){return map[k]}).sort(function(a,b){return b.liq-a.liq})}
+  for(var i=0;i<addrs.length;i+=30){var ch=addrs.slice(i,i+30),j=await jf('https://api.dexscreener.com/latest/dex/tokens/'+ch.map(encodeURIComponent).join(','));
+   ch.forEach(function(a){var r=best(j.pairs,function(b){return normA(b.address)===normA(a)});if(r.length)r.forEach(function(c,ix){if(ix===0||(r[0].liq>0&&c.liq>=r[0].liq*0.5))consider(c)});else miss.push(a)})}
+  for(var k=0;k<names.length;k++){var nm=names[k];status(st,'Looking up '+nm+'…',false,true);
+   var j2=await jf('https://api.dexscreener.com/latest/dex/search?q='+encodeURIComponent(nm)),r2=best(j2.pairs,function(b){return String(b.symbol||'').toUpperCase()===nm.toUpperCase()});
+   if(r2.length){consider(r2[0]);tick.push(r2[0].sym+' on '+pretty(r2[0].ch)+(r2.length>1?' (1 of '+r2.length+' coins with this name)':''))}else miss.push(nm)}
+  save();$('bulk').value='';
+  status(st,'Added '+added+(already?', '+already+' already tracked':'')+(miss.length?'. Not found: '+miss.join(', '):'')+(tick.length?'. By ticker: '+tick.join(', ')+'. Check the chain, or use the contract address.':'.'),miss.length>0&&!added);
+  render();poll();
+ }catch(e){status(st,e.message,true)}
+ finally{$('bulkBtn').disabled=false}
+};
 $('chk').onclick=poll;
 $('iv').value=String(cfg.iv);
 var timer=null;
