@@ -493,7 +493,7 @@ nav .hint{font-size:12.5px !important}
         <div class="frow"><label>Add a token by ticker or contract address<input id="iAdd" placeholder="LINK or 0x... or a Solana address" style="width:340px"></label><button class="btn gold" id="iAddBtn">Add</button><span class="note" id="iAddMsg"></span></div>
         <div class="chips" id="indChips"></div>
         <div class="frow"><label>Find<input id="iSearch" placeholder="ticker or name" style="width:160px"></label><label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" id="iOnly">Only coins with a signal in the last 2 days</label></div>
-        <div style="overflow:auto;max-height:520px"><table><thead><tr><th>#</th><th>Coin</th><th>Price</th><th>24h</th><th>20 EMA</th><th>50 EMA</th><th>100 EMA</th><th>200 EMA</th><th style="text-align:left">Divergence</th></tr></thead><tbody id="indBody"></tbody></table></div>
+        <div style="overflow:auto;max-height:520px"><table><thead id="indHead"><tr><th data-isort="rank">#</th><th data-isort="sym">Coin</th><th data-isort="price">Price</th><th data-isort="chg">24h</th><th data-isort="e20">20 EMA</th><th data-isort="e50">50 EMA</th><th data-isort="e100">100 EMA</th><th data-isort="e200">200 EMA</th><th style="text-align:left">Divergence</th></tr></thead><tbody id="indBody"></tbody></table></div>
       </div>
       <div class="cols" style="margin-top:14px">
         <div class="box"><h3>Perp liquidations</h3><div id="liqFeeds" class="chips"></div><table><thead><tr><th>Coin, last 15 min</th><th>Longs</th><th>Shorts</th><th>Total</th></tr></thead><tbody id="liqBody"></tbody></table><p class="note" id="liqTot"></p><h3 style="margin-top:12px">Biggest in the last hour</h3><div id="liqBig"></div></div>
@@ -1079,6 +1079,12 @@ function liqConnect(name){
 function liqStart(){ if(!S.ind.liqOn){ Object.values(LQ.feeds).forEach(f=>{ try{ f.ws&&f.ws.close(); }catch(e){} f.ws=null; f.st='off'; }); renderIndSoft(); return; } liqConnect('binance'); liqConnect('bybit'); }
 
 /* ----- Indicators view ----- */
+let INDSORT=(function(){try{return JSON.parse(localStorage.getItem('dd_ind_sort')||'null')}catch(e){return null}})();
+function indSortVal(c,k){ if(c.err||!c.bars) return null; let v; if(k==='sym') return String(c.sym||'').toLowerCase(); if(k==='rank') v=c.rank<999?c.rank:null; else if(k==='price') v=c.price; else if(k==='chg') v=c.chg; else if(k[0]==='e'){ const e=c.ema&&c.ema[+k.slice(1)]; v=e?e.dist:null; } return v==null||!isFinite(+v)?null:+v; }
+function indSortRows(rows){ if(!INDSORT||!INDSORT.k) return rows; const dir=INDSORT.d==='asc'?1:-1, k=INDSORT.k; return rows.slice().sort((a,b)=>{ const x=indSortVal(a,k), y=indSortVal(b,k); if(x===null&&y===null) return 0; if(x===null) return 1; if(y===null) return -1; return x<y?-dir:x>y?dir:0; }); }
+function indSortClick(k){ const c=INDSORT; if(!c||c.k!==k) INDSORT={k:k,d:(k==='sym'||k==='rank')?'asc':'desc'}; else if(c.d==='desc'&&k!=='sym'&&k!=='rank'||c.d==='asc'&&(k==='sym'||k==='rank')) INDSORT={k:k,d:(k==='sym'||k==='rank')?'desc':'asc'}; else INDSORT=null; try{ localStorage.setItem('dd_ind_sort',JSON.stringify(INDSORT)); }catch(e){} renderInd(); }
+document.addEventListener('click',e=>{ const t=e.target.closest&&e.target.closest('#indHead [data-isort]'); if(t) indSortClick(t.getAttribute('data-isort')); });
+document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('#indHead [data-isort]')){ e.preventDefault(); indSortClick(e.target.getAttribute('data-isort')); } });
 let indT=null; function renderIndSoft(){ if(cur!=='ind'||indT) return; indT=setTimeout(()=>{ indT=null; renderInd(); },250); }
 const dcell=e=>!e?'<td class="note">-</td>':'<td class="mono"><span class="'+(e.above?'up':'dn')+'">'+(e.above?'▲':'▼')+' '+(e.dist>=0?'+':'')+e.dist.toFixed(1)+'%</span>'+(e.ago===0?' <span class="tag '+(e.dir>0?'ok':'dn')+'">new</span>':e.ago!=null&&e.ago<=3?' <small class="note">'+e.ago+'d</small>':'')+'</td>';
 function renderInd(){
@@ -1095,7 +1101,8 @@ function renderInd(){
   // table
   const q=($('iSearch').value||'').trim().toLowerCase(), only=$('iOnly').checked;
   const hasSig=c=>c.ema&&(EMAS.some(N=>c.ema[N]&&c.ema[N].ago!=null&&c.ema[N].ago<=1)||(c.divs||[]).some(d=>d.ago<=1));
-  const rows=coins.filter(c=>(!q||(c.sym+' '+(c.name||'')).toLowerCase().includes(q))&&(!only||hasSig(c)));
+  const rows=indSortRows(coins.filter(c=>(!q||(c.sym+' '+(c.name||'')).toLowerCase().includes(q))&&(!only||hasSig(c))));
+  document.querySelectorAll('#indHead [data-isort]').forEach(th=>{ const k=th.getAttribute('data-isort'), on=INDSORT&&INDSORT.k===k; if(!th.__t){ th.__t=th.textContent; th.tabIndex=0; th.setAttribute('role','button'); th.style.cursor='pointer'; th.title='Click to sort high to low, again for low to high, a third time to clear'; } th.textContent=th.__t+(on?(INDSORT.d==='asc'?' ▲':' ▼'):''); th.style.color=on?'var(--gold)':''; });
   $('indBody').innerHTML=rows.map(c=>{ if(c.err) return '<tr><td>'+(c.rank<999?c.rank:'+')+'</td><td><b>'+esc(c.sym)+'</b></td><td colspan="7" class="note" style="text-align:left">'+esc(c.err)+'</td></tr>'; if(!c.bars) return '<tr><td>'+(c.rank<999?c.rank:'+')+'</td><td><b>'+esc(c.sym)+'</b></td><td class="mono">'+fmtP(c.price)+'</td><td colspan="6" class="note" style="text-align:left">Waiting to be read...</td></tr>';
     const dv=(c.divs||[]).filter(d=>d.ago<=CF[d.tf].recent).map(d=>'<span class="tag '+(d.type==='bear'?'dn':'ok')+'" title="'+CF[d.tf].name+' '+(d.type==='bear'?'bearish':'bullish')+' divergence, confirmed '+d.ago+' bar(s) ago">'+d.tf.toUpperCase()+' '+(d.type==='bear'?'▼':'▲')+'</span>').join(' ');
     return '<tr><td>'+(c.rank<999?c.rank:'+')+'</td><td><b>'+esc(c.sym)+'</b>'+(c.custom?' <small class="note">added</small>':'')+'</td><td class="mono">'+fmtP(c.price)+'</td><td class="mono '+((c.chg||0)>=0?'up':'dn')+'">'+(c.chg==null?'-':(c.chg>=0?'+':'')+c.chg.toFixed(1)+'%')+'</td>'+EMAS.map(N=>dcell(c.ema&&c.ema[N])).join('')+'<td style="text-align:left">'+(dv||'<span class="note">-</span>')+'</td></tr>'; }).join('')||'<tr><td colspan="9" class="note" style="text-align:left">'+(coins.length?'Nothing matches.':'Reading the top coins...')+'</td></tr>';
