@@ -51,6 +51,8 @@ section{min-width:0}
   background:rgba(212,168,67,.92);display:grid;place-items:center;opacity:0;transition:.25s}
 .play:after{content:"";border-left:18px solid var(--navy);border-top:11px solid transparent;border-bottom:11px solid transparent;margin-left:5px}
 .poster:hover .play,.ep:hover .play{opacity:1}
+.poster .gem{position:absolute;top:8px;right:9px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 13px/1 "DM Mono",monospace;color:#f7931a;opacity:.22;border:1px solid rgba(247,147,26,.35);transition:opacity .3s,box-shadow .3s;z-index:2}
+.poster:hover .gem{opacity:.95;box-shadow:0 0 12px rgba(247,147,26,.7)}
 .badge{position:absolute;top:8px;left:8px;font-family:'DM Mono';font-size:10px;letter-spacing:.15em;background:var(--gold);color:var(--navy);padding:3px 7px;border-radius:3px;text-transform:uppercase;font-weight:500}
 
 /* ===== Side shows ===== */
@@ -193,7 +195,8 @@ body:not(.owner) .manage-toggle,body:not(.owner) .panel{display:none!important}
    poster: optional image link (blank = YouTube thumbnail)
    ========================================================= */
 const LINEUP = [
-  { type:"movie", title:"Feature Presentation", url:"https://youtu.be/VtKQxev-k6A", poster:"" },
+  { type:"movie", title:"The Bank", url:"https://youtu.be/VtKQxev-k6A", poster:"" },
+  { type:"movie", title:"In Time", url:"https://youtu.be/RC7BGd_AFoo", poster:"", gem:"Time is money. Money is Bitcoin." },
   { type:"show", show:"Side Show", title:"Episode 1", url:"https://youtu.be/tcWkTctWhAo", poster:"" },
   { type:"show", show:"Side Show", title:"$5 Million Dollar Bitcoin", url:"https://youtu.be/-N3_xBjg5vs", poster:"" },
   { type:"show", show:"Side Show", title:"Bitcoin Vs Real Estate", url:"https://youtu.be/eq4F8utg7rs", poster:"" },
@@ -237,7 +240,7 @@ function render(){
   $("#posters").innerHTML = movies.length ? movies.map(v=>`
     <div class="poster" data-u="${esc(v.url)}" data-t="${esc(v.title)}" data-s="Movie">
       <img src="${esc(thumb(v))}" alt="${esc(v.title)} poster" loading="lazy">
-      <span class="badge">Movie</span>
+      <span class="badge">Movie</span>${v.gem?`<span class="gem" title="${esc(v.gem)}" aria-label="${esc(v.gem)}">₿</span>`:""}
       <div class="shade"></div><div class="play"></div>
       <div class="meta"><h3>${esc(v.title)}</h3><p>Now showing</p></div>
     </div>`).join("")
