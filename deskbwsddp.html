@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="degendesk-favicon.png">
 <script>/* members only: the front page (index.html) sets this when a valid code is entered */
 (function(){try{var a=JSON.parse(localStorage.getItem('dd_access')||'null');if(a&&a.exp&&Date.now()<((a.exp.length>10&&a.exp.indexOf('T')>-1)?Date.parse(a.exp):Date.parse(a.exp+'T23:59:59-06:00')))return}catch(e){}document.documentElement.style.display='none';location.replace('index.html')})();</script>
 <meta charset="utf-8">
@@ -623,7 +624,7 @@ const TOOLS=[
  {id:'lpsim',n:'LP Pool Simulator',g:'Markets',d:'A year-long LP model for Uniswap, PancakeSwap and Aerodrome: claim fees vs compound them.',page:'lpsimbwsddp.html',nokey:1,kw:'lp pool simulator claim compound fees uniswap pancakeswap aerodrome range rebalance'},
  {id:'news',n:'News',g:'Intel',d:'Stories that may swing price, scored by impact.',kw:'news headlines sec fed cpi hack listing'},
  {id:'wealth',n:'Accumulation Sim',g:'Build',d:'Feed the Machine: Aave accumulation simulator.',url:'srcdoc',doc:'sim',kw:'simulator dca accumulate wealth feed the machine'},
- {id:'biz',n:'Business Bitcoin Time Machine',g:'Business',d:'For merchants and business owners: see what setting aside a share of sales or profit into Bitcoin could have built, versus plain savings.',url:'ext',ext:H+'BusinessInBitcoin/',nokey:1,kw:'business merchant owner shop store sales profit treasury set aside bitcoin time machine small business calculator savings'},
+ {id:'biz',n:'Business Bitcoin Time Machine',g:'Business',d:'For merchants and business owners: see what setting aside a share of sales or profit into Bitcoin could have built, versus plain savings.',url:'ext',ext:'businessbwsddp.html',nokey:1,kw:'business merchant owner shop store sales profit treasury set aside bitcoin time machine small business calculator savings'},
  {id:'hosted',n:'Manager (hosted copy)',g:'Build',d:'The standalone Savings Liquidation Manager page.',url:'srcdoc',doc:'savings',kw:'savings manager hosted standalone'}
 ];
 const byId={}; let kc=0; TOOLS.forEach(t=>{byId[t.id]=t; if(!t.nokey&&kc<10){ t.k=String((kc+1)%10); kc++; }});
