@@ -1159,12 +1159,13 @@ var STX=null,ST_LAST=[];
 function stGate(rowId,msgFn){
   var c='';try{c=localStorage.getItem('moonAskCode')||''}catch(e){}
   if(c)return true;$(rowId).style.display='block';msgFn('This tool is for members. Enter your access code below and press Unlock.');return false}
+function h53(str,seed){seed=seed||0;var h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(var i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
 function askVerify(code,done){
-  if(!/^https:\/\//.test(askUrl())){$('askSetup').style.display='block';done('Connect the AI helper first (paste its address in the box, press Save helper address), then press Unlock again.');return}
-  askPost({mode:'check',code:code}).then(function(j){
-    if(j&&j.ok){try{localStorage.setItem('moonAskCode',code)}catch(e){}done(null)}
-    else done((j&&j.error)||'That access code is not right.')
-  },function(){done('Could not reach the helper. Check its address and try again.')})
+  /* the page checks the code itself, so saving and the schedule work without the AI helper; the helper re-checks it for the AI parts */
+  if(h53(String(code).trim().toUpperCase())!==3310500657816984){done('That access code is not right.');return}
+  function keep(){try{localStorage.setItem('moonAskCode',code)}catch(e){}done(null)}
+  if(!/^https:\/\//.test(askUrl())){keep();return}
+  askPost({mode:'check',code:code}).then(function(j){if(j&&j.ok)keep();else done((j&&j.error)||'That access code is not right.')},function(){keep()})
 }
 function stFlags(ms){
   var mid=ms+DAY/2,mp=A.moonPos(mid),sl=A.sunLon(mid),age=w360(mp[0]-sl)/360*SYN,e=0;
@@ -1269,7 +1270,8 @@ function stChart(){
   x.fillStyle='#fff';x.textAlign='left';var ti=fl.findIndex(function(f){return f.t===X.today});if(ti>=0)x.fillText('today',L+ti*bw+5,11)
 }
 function stWriteAI(){
-  var X=STX,btn=$('stWrite');btn.disabled=true;btn.textContent='Writing…';
+  var X=STX,btn=$('stWrite');
+  if(!/^https:\/\//.test(askUrl())){$('stAI').insertAdjacentHTML('beforeend','<div class="verdict y">The AI writer needs the helper from the setup page. Your schedule and numbers above work without it.</div>');return}btn.disabled=true;btn.textContent='Writing…';
   var ups=X.ups.map(function(q,k){return{n:k+1,buyChicago:(q.a<=X.today&&X.nowOpen&&k===0)?'already open since '+utcd(q.a):chi(q.a),buyWhy:stWhyBuy(X.s,q.fa),sellChicago:q.b===null?'after the window':chi(q.b),sellWhy:q.b===null?'':stWhy(X.s,q.fb),days:q.b===null?null:Math.round((q.b-q.a)/DAY)}});
   var pay={asset:X.asset,today:new Date(X.today).toISOString().slice(0,10),horizonDays:X.days,rules:askDescribe(X.s).map(plain),from:X.s.from,to:X.s.to,
     history:{endsWith:Math.round(X.R.eq),returnPct:+(X.R.ret*100).toFixed(1),buyHoldReturnPct:+(X.bh.ret*100).toFixed(1),trades:X.H.trades,winRatePct:+(X.H.win*100).toFixed(0),avgTradePct:+(X.H.avg*100).toFixed(2),bestTradePct:+(X.H.best*100).toFixed(1),worstTradePct:+(X.H.worst*100).toFixed(1),avgHoldDays:+X.H.hold.toFixed(1),timeInvestedPct:+(X.H.inM*100).toFixed(0),worstDropPct:+(X.R.mdd*100).toFixed(1),beatFakeCalendarsPct:+X.pB.toFixed(0),last12MonthsReturnPct:+(X.Ry.ret*100).toFixed(1),last12MonthsBuyHoldPct:+(X.By.ret*100).toFixed(1)},
