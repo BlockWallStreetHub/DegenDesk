@@ -429,6 +429,31 @@ nav .hint{font-size:12.5px !important}
     <div class="status" id="status">Not started.</div>
   </section>
 
+  <section class="panel" id="lqPanel">
+    <h2>Ask the Lending Manager <span class="tag" style="font-size:11px">members</span></h2>
+    <p class="note">Ask in plain words, for example: <i>Is it time for a debt swap?</i> <i>Should I add collateral?</i> <i>Should I swap collateral into stablecoins?</i> It reads your live positions below and answers using your real numbers. Education only, not financial advice.</p>
+    <div class="row">
+      <label style="flex:1;min-width:260px">Your question<input id="lqQ" type="text" maxlength="500" placeholder="Is it time for me to do a debt swap or a collateral swap?" style="width:100%"></label>
+      <button class="gold" id="lqGo">Ask</button>
+    </div>
+    <div class="row" id="lqChips" style="gap:6px;margin-top:6px">
+      <button type="button" data-q="Is it time for a debt swap?">Debt swap now?</button>
+      <button type="button" data-q="Is it time for a collateral swap? Which way?">Collateral swap now?</button>
+      <button type="button" data-q="Should I add collateral or repay some debt? How much?">Add collateral?</button>
+      <button type="button" data-q="Give me a full check-up of all my positions: what is the biggest risk and what should I do first?">Full check-up</button>
+    </div>
+    <div class="row" id="lqCodeRow" style="display:none;margin-top:8px">
+      <label>Access code<input id="lqCode" type="password" autocomplete="off" style="width:170px"></label>
+      <button id="lqUnlock">Unlock</button>
+    </div>
+    <div class="row" id="lqSetup" style="display:none;margin-top:8px">
+      <label style="flex:1;min-width:260px">AI helper address (from the setup guide)<input id="lqUrl" type="text" placeholder="https://moon-ask....workers.dev" style="width:100%"></label>
+      <button id="lqSave">Save</button>
+    </div>
+    <div class="note" id="lqStatus" style="margin-top:8px"></div>
+    <div id="lqOut" style="margin-top:8px;white-space:pre-wrap;line-height:1.55"></div>
+  </section>
+
   <section class="panel">
     <h2>AI Manager settings</h2>
     <div class="row">
@@ -1991,6 +2016,7 @@ async function refresh(){
     raw.assets.forEach(x=>{ const k=KEYOF(x.sym); if(k&&!isStable(x.sym)) keys.add(k); });
   });
   let mk={}; try{ mk=await loadMarket([...keys]); }catch(e){}
+  window.__ddMk=mk;
   let needList=false;
   state.accounts.forEach(acc=>{
     const id=accId(acc), raw=raws[id]; if(!raw) return;
@@ -2150,6 +2176,74 @@ $('refreshBtn').onclick=refresh;
 
 ['mFloor','mStep','mStress'].forEach(id=>{ $(id).onchange=()=>{ readFields(); persist(); refresh(); }; });
 window.DD=window.DD||{};DD.pushAlert=pushAlert;DD.liqLog=()=>state.liqLog;DD.state=()=>state;DD.accounts=()=>state.accounts.map(acc=>({acc,res:results[accId(acc)]}));
+/* ---------- Ask the Lending Manager (AI chat; members only) ---------- */
+(function(){
+  const ASK_URL='PASTE_YOUR_WORKER_URL_HERE';
+  const lsGet=k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}};
+  const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+  const askUrl=()=>lsGet('moonAskUrl')||ASK_URL;
+  function h53(str,seed){seed=seed||0;var h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(var i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
+  const hist=[];
+  const st=(m,bad)=>{const e=$('lqStatus');e.innerHTML=m||'';e.style.color=bad?'var(--warn,#ffb020)':''};
+  const r0=(n,d)=>n==null||!isFinite(n)?null:+Number(n).toFixed(d==null?2:d);
+  const plain=h=>String(h||'').replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/\s+/g,' ').trim().slice(0,380);
+
+  function buildData(){
+    const out={today:new Date().toISOString().slice(0,10),
+      settings:{floorHealthFactor:state.floor,addEthWhenHealthFactorRisesPct:state.step,stressTestMarketDropPct:state.stress,cautionHealthFactor:state.warn,dangerHealthFactor:state.danger},
+      accounts:[],otherLendingAccounts:[]};
+    state.accounts.forEach(acc=>{
+      const id=accId(acc), r=results[id];
+      if(!r||r.error||!r.a){out.accounts.push({label:acc.label||acc.addr,network:netName(acc),error:r&&r.error?String(r.error).slice(0,120):'not loaded yet'});return}
+      const a=r.a, m=r.m||{};
+      const o={label:acc.label||String(acc.addr).slice(0,10),network:netName(acc),
+        healthFactor:isFinite(a.hf)?r0(a.hf,3):'no debt',referenceHealthFactor:state.refs[id]||null,
+        totalCollateralUsd:r0(a.totalColl,0),totalDebtUsd:r0(a.totalDebt,0),
+        collateral:a.colls.map(c=>({asset:c.sym,usd:r0(c.val,0),stablecoin:isStable(c.sym),liquidationThreshold:r0(c.ltEff,3),liquidationPriceIfAloneDrops:c.liq!=null?r0(c.liq,c.liq<10?4:2):null,dropToLiquidationPct:c.drop!=null?r0(c.drop*100,1):null})),
+        debts:a.debts.map(d=>({asset:d.sym,usd:r0(d.val,0),stablecoin:isStable(d.sym),risePctThatLiquidates:d.rise!=null?r0(d.rise*100,1):null}))};
+      if(isFinite(a.hf)&&a.D>0){o.healthFactorAfterMarketDrop={};[10,20,30,50].forEach(p=>{o.healthFactorAfterMarketDrop[p+'%']=r0(hfAt(a,p/100),3)})}
+      const keys=[...new Set(a.colls.concat(a.debts).filter(x=>!isStable(x.sym)).map(x=>KEYOF(x.sym)).filter(Boolean))];
+      o.trend=keys.map(k=>{const t=trendOf(window.__ddMk,k);return t.ok?{coin:k,price:r0(t.price,t.price<10?4:2),vsWeekly20EMA:(t.wBelow?'below by ':'above by ')+Math.abs(t.wPct*100).toFixed(1)+'%',vsMonthly20EMA:t.mEma==null?'n/a':(t.mBelow?'below by ':'above by ')+Math.abs(t.mPct*100).toFixed(1)+'%',lostBothEMAs:!!t.both}:{coin:k,note:'no trend data'}});
+      if(m&&!m.error){o.managerHeadline=m.headline;o.managerNotes=(m.notes||[]).map(n=>({tone:n.tone,title:n.title,summary:plain(n.body)}));o.managerSignals=(m.signals||[]).map(s=>s.text)}
+      out.accounts.push(o);
+    });
+    try{(window.DD&&DD.lend?DD.lend():[]).forEach(x=>{const rs=x.res;if(!rs||!rs.pos)return;rs.pos.forEach(p=>out.otherLendingAccounts.push({protocol:x.acct.p,label:x.acct.label||'',market:p.market,suppliedUsd:r0(p.sup,0),borrowedUsd:r0(p.bor,0),healthFactor:p.hf==null?'no debt':r0(p.hf,3)}))})}catch(e){}
+    return out;
+  }
+  function post(body){
+    body.code=lsGet('moonAskCode');
+    return fetch(askUrl(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json().catch(()=>({error:'The helper sent back something unreadable.'})).then(j=>{if(!r.ok&&!j.error)j.error='The helper said no (code '+r.status+').';return j}))
+  }
+  function go(){
+    const q=($('lqQ').value||'').trim();
+    if(q.length<5){st('Type a question first, for example: <i>Should I add collateral?</i>',1);return}
+    if(!lsGet('moonAskCode')){$('lqCodeRow').style.display='flex';st('This box is for members. Enter your access code and press Unlock.',1);return}
+    if(!/^https:\/\//.test(askUrl())){$('lqSetup').style.display='flex';st('The AI helper is not connected yet. Follow the steps in <b>ask-helper-setup.html</b>, then paste the helper address here and press Save.',1);return}
+    const data=buildData();
+    data.accounts=data.accounts.filter(x=>!x.error);
+    if(!data.accounts.length&&!data.otherLendingAccounts.length){st('No positions are loaded yet. Add an account to watch (list above), press Refresh, wait for the numbers to appear, then ask again.',1);return}
+    const b=$('lqGo');b.disabled=true;b.textContent='Thinking…';st('Reading your positions…');
+    post({mode:'lending',question:q,history:hist.slice(-3),data}).then(j=>{
+      b.disabled=false;b.textContent='Ask';
+      if(j.badCode){try{localStorage.removeItem('moonAskCode')}catch(e){}$('lqCodeRow').style.display='flex';st('That access code is not right. Enter it again.',1);return}
+      if(j.error){st(esc(j.error),1);return}
+      hist.push({q:q,a:j.text});st('');
+      const e=document.createElement('div');e.style.cssText='border-top:1px solid var(--line);padding-top:8px;margin-top:8px';
+      e.innerHTML='<div class="note"><b>You:</b> '+esc(q)+'</div><div style="margin-top:4px">'+esc(j.text)+'</div>';
+      $('lqOut').insertBefore(e,$('lqOut').firstChild);$('lqQ').value='';
+    },()=>{b.disabled=false;b.textContent='Ask';st('Could not reach the AI helper. Check the address and your connection.',1)});
+  }
+  $('lqGo').onclick=go;
+  $('lqQ').onkeydown=e=>{if(e.key==='Enter')go()};
+  $('lqChips').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;$('lqQ').value=b.getAttribute('data-q');go()};
+  $('lqSave').onclick=()=>{const v=($('lqUrl').value||'').trim();if(!/^https:\/\/[^ ]+$/.test(v)){st('That does not look like a web address. It should start with https://',1);return}lsSet('moonAskUrl',v);$('lqSetup').style.display='none';st('Saved. Now press <b>Ask</b>.')};
+  $('lqUnlock').onclick=()=>{
+    const code=($('lqCode').value||'').trim();
+    if(h53(code.toUpperCase())!==3310500657816984){st('That access code is not right.',1);return}
+    lsSet('moonAskCode',code);$('lqCode').value='';$('lqCodeRow').style.display='none';st('Unlocked. Ask your question.');
+  };
+})();
+
 loadFields();renderList();wireLiq();
 if(state.accounts.length){startTimer();refresh();}
 }

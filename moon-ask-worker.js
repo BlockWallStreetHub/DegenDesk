@@ -92,6 +92,17 @@ function pickJson(text) {
   if (a < 0 || b <= a) throw new Error("no json");
   return JSON.parse(text.slice(a, b + 1));
 }
+const LENDING_PROMPT = `You are the Lending Manager helper inside a crypto-education tool called Degen Desk. A student asks a question about their own DeFi lending positions (Aave, Morpho, Kamino, Jupiter Lend and similar). You get JSON: their question, optional earlier questions, and "data" with their live positions: settings (floor health factor, the market drop they stress-test, caution and danger lines), accounts (health factor, collateral and debt per asset in USD, liquidation prices, health factor after assumed drops, trend versus weekly and monthly 20 EMA, and what the rule-based manager already said), and other lending accounts.
+Rules:
+- Use ONLY the numbers in the JSON. Never invent prices, rates, balances or health factors. If something needed is missing, say so.
+- Answer the question directly first (for example "Not yet", "Yes, add collateral", "Repay first"), then give the 2 to 5 reasons using their actual numbers.
+- Know the tools: ADD COLLATERAL or REPAY DEBT are the only moves that reliably raise health factor today. A COLLATERAL SWAP (volatile to stablecoin) lowers price sensitivity but barely changes health factor when it is already near 1. A swap INTO a volatile coin adds risk. A DEBT SWAP from stablecoin debt into a volatile coin is a leveraged short on that coin: it only makes sense with a healthy health factor and room to carry a rise. A debt swap from volatile debt back to stablecoin ends the short.
+- Their playbook: keep health factor above the floor; secure the floor by moving volatile collateral to stablecoin if the stress drop would break it; consider a debt-swap short only when the coin has lost BOTH the weekly and monthly 20 EMA; swap stablecoin collateral into ETH only after health factor has risen the set percent above the reference. Respect these unless asked otherwise.
+- Give rough sizes when you can, from their numbers, and say they are estimates. Mention swap fees and slippage once if you suggest a swap.
+- Do not promise outcomes, do not predict prices, never tell them to borrow more or use more leverage to chase gains. If health factor is under 1.1 or inside their danger line, lead with the urgency.
+- This is education, not financial advice; say that in one short closing sentence, not more.
+- Plain English, friendly, under 220 words, short paragraphs, no markdown headings. Bold is not available; use plain text only.`;
+
 async function claude(env, system, user, maxTokens) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -129,7 +140,7 @@ export default {
       if (!(await bump(env, "all", total))) return json({ error: "The Moon Desk AI is resting for today. Try again tomorrow." }, 429, h);
     }
     if (body.mode === "check") return json({ ok: true }, 200, h);
-    if (body.mode === "strategy") {
+    if (body.mode === "strategy" || body.mode === "lending") {
       if (!(await bump(env, "ip:" + ip, perIp))) return json({ error: "You have used today's questions. Come back tomorrow." }, 429, h);
       if (!(await bump(env, "all", total))) return json({ error: "The Moon Desk AI is resting for today. Try again tomorrow." }, 429, h);
     }
@@ -138,6 +149,15 @@ export default {
         const user = JSON.stringify(body.data || {});
         if (user.length > 12000 || user.length < 20) return json({ error: "Request too large." }, 400, h);
         const out = await claude(env, STRATEGY_PROMPT, user, 1200);
+        return json({ text: out.trim() }, 200, h);
+      }
+      if (body.mode === "lending") {
+        const q = String(body.question || "").slice(0, 600);
+        if (q.length < 5) return json({ error: "Ask a longer question." }, 400, h);
+        const hist = (Array.isArray(body.history) ? body.history : []).slice(-3).map((x) => ({ q: String(x.q || "").slice(0, 300), a: String(x.a || "").slice(0, 700) }));
+        const user = JSON.stringify({ question: q, earlier: hist, data: body.data || {} });
+        if (user.length > 24000) return json({ error: "Request too large." }, 400, h);
+        const out = await claude(env, LENDING_PROMPT, user, 900);
         return json({ text: out.trim() }, 200, h);
       }
       if (body.mode === "plan") {
