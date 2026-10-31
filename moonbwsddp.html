@@ -227,6 +227,43 @@ table.log th{position:sticky;top:0;z-index:1}
   <div class="note" id="c5n"></div>
   <div id="btRep"></div>
 </section>
+
+<section class="card" id="askCard">
+  <style>
+  #askQ{width:100%;min-height:70px;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;color:var(--tx);font:inherit;font-size:14px;resize:vertical;outline:none;box-sizing:border-box}
+  #askQ:focus{border-color:var(--gold)}
+  .askEx{background:var(--panel2);border:1px solid var(--line2);border-radius:999px;padding:5px 11px;font-size:12px;color:var(--mut);cursor:pointer;margin:0 6px 6px 0}
+  .askEx:hover{color:var(--gold2);border-color:var(--gold)}
+  #askGo:disabled{opacity:.6;cursor:wait}
+  #askOut ul{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
+  </style>
+  <h2>Ask the Moon Desk — what-if questions</h2>
+  <p class="note" style="margin-top:-4px">Ask in your own words. The AI sets up the test, the Moon Desk runs it on the real prices you loaded, and you get the numbers, a chart and a plain explanation. Anything you did not mention uses the settings in the back-test above.</p>
+  <textarea id="askQ" maxlength="500" placeholder="Example: What if I compound my profits only during Mercury retrograde, and take them out the rest of the time?"></textarea>
+  <div style="margin:8px 0 4px">
+    <button class="askEx">What if I compound my profits only during Mercury retrograde?</button>
+    <button class="askEx">Compare trading only on full moons vs only on new moons</button>
+    <button class="askEx">What if I skip Scorpio and stay in cash during eclipses?</button>
+    <button class="askEx">What if I add a 10% stop-loss to my strategy?</button>
+    <button class="askEx">Does trading only on weekdays change anything?</button>
+  </div>
+  <div class="row"><button class="btn gold" id="askGo">Ask</button><span class="mut" style="font-size:12px">Ctrl+Enter also works</span></div>
+  <div id="askCodeRow" style="display:none;margin-top:10px"><div class="row"><input type="text" id="askCodeIn" placeholder="Access code" autocomplete="off" style="max-width:220px"><button class="btn gold" id="askUnlock">Unlock</button></div></div>
+  <div id="askSetup" style="display:none;margin-top:10px"><div class="row"><input type="text" id="askUrlIn" placeholder="https://moon-ask.your-name.workers.dev" style="flex:1;min-width:240px"><button class="btn" id="askSave">Save helper address</button></div></div>
+  <div id="askOut" style="margin-top:12px"></div>
+</section>
+
+<section class="card" id="stCard">
+  <h2>Strategist — your next buys and sells</h2>
+  <p class="note" style="margin-top:-4px">Pick the settings you want to follow. The Strategist looks at how those exact rules did in your back-test, then lines them up against the coming moon cycles to show <b>when they would say buy and when they would say sell</b>.</p>
+  <div class="controls">
+    <label class="f">Settings to use<select id="stSrc"><option value="panel">The back-test settings above</option></select></label>
+    <label class="f">Look ahead<select id="stHor"><option value="30">1 moon cycle (30 days)</option><option value="60" selected>2 moon cycles (60 days)</option><option value="90">3 moon cycles (90 days)</option></select></label>
+  </div>
+  <div class="row" style="margin:10px 0"><button class="btn gold" id="stGo">Build my strategy</button></div>
+  <div id="stCodeRow" style="display:none;margin:8px 0"><div class="row"><input type="text" id="stCodeIn" placeholder="Access code" autocomplete="off" style="max-width:220px"><button class="btn gold" id="stUnlock">Unlock</button></div></div>
+  <div id="stOut"></div>
+</section>
 </main>
 <footer>Entertainment and research tool from Block Wall Street. Not financial advice. Moon, sun and Mercury positions come from simplified orbit formulas (moon phase and sign accurate to well under a day; Mercury stations within about a day). Eclipse dates match published ones for 2024–2026 in testing, but the eclipse kind is approximate. Past results never guarantee future results. The line "millionaires don't use astrologers, billionaires do" is widely attributed to J.P. Morgan but I can't confirm he said it. Treat it as lore, not evidence.</footer>
 </div>
@@ -974,6 +1011,273 @@ function histo(id,vals,mine){
   x.fillStyle='#9aa0b8';x.font='11px system-ui';x.textAlign='center';for(var k=0;k<=4;k++){var v=lo+(hi-lo)*k/4;x.fillText(Math.round(v)+'%',L+(W-L-R)*k/4,H-10)}
 }
 var rzT;window.addEventListener('resize',function(){clearTimeout(rzT);rzT=setTimeout(function(){showSky(Date.now());if(D.t.length){drawMain();analyze();runBT()}},200)});
+/* ---------- Ask the Moon Desk (AI what-if box) ---------- */
+var ASK_URL='PASTE_YOUR_WORKER_URL_HERE';
+function askUrl(){var u='';try{u=localStorage.getItem('moonAskUrl')||''}catch(e){}return u||ASK_URL}
+var ASK_COLS=['#d9b44a','#26a69a','#b58cff','#ff9f43','#5aa9ff'];
+var ASK_BH='#9aa0b8';
+function asBool(a,n){var r=[];for(var i=0;i<n;i++)r.push(a.indexOf(i)>=0);return r}
+function idxList(arr){var r=[];arr.forEach(function(v,k){if(v)r.push(k)});return r}
+function askBase(){
+  var o=btOpts(),i0=idxOf($('dFrom').value,0),i1=idxOf($('dTo').value,D.t.length-1);
+  return{phases:idxList(o.al),signs:idxList(o.sg),retro:o.ro?'cash':'ignore',eclipse:o.eo?'cash':'ignore',weekdays:null,
+    fee:o.fee*100,capital:o.cap,leverage:1,stopLoss:null,takeProfit:null,compound:{mode:'always'},from:fd(D.t[i0]),to:fd(D.t[i1])}
+}
+function ints(a,max){if(!Array.isArray(a))return null;var r=[];a.forEach(function(v){v=Math.round(+v);if(v>=0&&v<=max&&r.indexOf(v)<0)r.push(v)});return r.length?r:null}
+function num(v,lo,hi){v=parseFloat(v);return isNaN(v)?null:Math.min(hi,Math.max(lo,v))}
+function normSpec(sp,b){
+  sp=sp||{};var s=JSON.parse(JSON.stringify(b));
+  var p=ints(sp.phases,7);if(p)s.phases=p;var g=ints(sp.signs,11);if(g)s.signs=g;
+  if(sp.weekdays===null||sp.weekdays==='all')s.weekdays=null;else{var w=ints(sp.weekdays,6);if(w&&w.length<7)s.weekdays=w}
+  if(['ignore','cash','only'].indexOf(sp.retro)>=0)s.retro=sp.retro;
+  if(['ignore','cash','only'].indexOf(sp.eclipse)>=0)s.eclipse=sp.eclipse;
+  var f=num(sp.fee,0,5);if(f!==null)s.fee=f;var c=num(sp.capital,1,1e9);if(c!==null)s.capital=c;
+  var lv=num(sp.leverage,1,5);if(lv!==null)s.leverage=lv;
+  if('stopLoss' in sp)s.stopLoss=sp.stopLoss===null?null:num(sp.stopLoss,1,99);
+  if('takeProfit' in sp)s.takeProfit=sp.takeProfit===null?null:num(sp.takeProfit,1,1000);
+  if(sp.compound&&['always','never','when'].indexOf(sp.compound.mode)>=0){
+    s.compound={mode:sp.compound.mode};
+    if(sp.compound.mode==='when'){var wh=sp.compound.when||{},W={};
+      if(wh.retro===true||wh.retro===false)W.retro=wh.retro;if(wh.eclipse===true||wh.eclipse===false)W.eclipse=wh.eclipse;
+      var wp=ints(wh.phases,7),wg=ints(wh.signs,11);if(wp)W.phases=wp;if(wg)W.signs=wg;s.compound.when=W}
+  }
+  if(typeof sp.from==='string'&&!isNaN(Date.parse(sp.from)))s.from=sp.from;if(typeof sp.to==='string'&&!isNaN(Date.parse(sp.to)))s.to=sp.to;
+  return s
+}
+function stratX(s,i0,i1,shift){
+  var al=asBool(s.phases,8),sg=asBool(s.signs,12),wd=s.weekdays?asBool(s.weekdays,7):null,cap=s.capital,fee=s.fee/100,lev=s.leverage||1,
+      eq=cap,bank=0,prev=0,entry=0,entryI=i0,TR=[],nT=0,wins=0,fees=0,inM=0,locked=false,peak=cap,mdd=0,E=new Float64Array(i1-i0+1),cm=s.compound||{mode:'always'},cw=cm.when||{};
+  E[0]=cap;
+  function want(i){
+    var ph=shift?phaseIdx((D.age[i]+shift)%SYN):D.ph[i],sgi=shift?Math.floor(w360(D.mlon[i]+13.1764*shift)/30):D.ms[i];
+    if(!al[ph]||!sg[sgi])return 0;
+    if(s.retro==='cash'&&D.retro[i])return 0;if(s.retro==='only'&&!D.retro[i])return 0;
+    if(s.eclipse==='cash'&&D.ecl[i])return 0;if(s.eclipse==='only'&&!D.ecl[i])return 0;
+    if(wd&&!wd[new Date(D.t[i]).getUTCDay()])return 0;return 1}
+  function canC(i){
+    if(cm.mode==='always')return true;if(cm.mode==='never')return false;
+    if('retro' in cw&&!!D.retro[i]!==cw.retro)return false;if('eclipse' in cw&&!!D.ecl[i]!==cw.eclipse)return false;
+    if(cw.phases&&cw.phases.indexOf(D.ph[i])<0)return false;if(cw.signs&&cw.signs.indexOf(D.ms[i])<0)return false;return true}
+  for(var i=i0+1;i<=i1;i++){
+    var w=eq>0?want(i):0;if(locked){if(!w)locked=false;w=0}
+    if(w!==prev){
+      if(w){if(bank>0&&canC(i)){eq+=bank;bank=0}fees+=eq*fee;eq*=1-fee;entry=eq;entryI=i}
+      else{fees+=eq*fee;eq*=1-fee;nT++;TR.push({a:entryI,b:i,r:eq/entry-1});if(eq>entry)wins++;if(eq>entry&&!canC(i)){bank+=eq-entry;eq=entry}}
+    }
+    if(w){var r=D.r[i]*lev;eq=r<=-1?0:eq*(1+r);inM++;var pl=entry>0?eq/entry-1:-1;
+      if((s.stopLoss&&pl<=-s.stopLoss/100)||(s.takeProfit&&pl>=s.takeProfit/100))locked=true}
+    prev=w;var tot=eq+bank;E[i-i0]=tot;if(tot>peak)peak=tot;var dd=tot/peak-1;if(dd<mdd)mdd=dd}
+  if(prev){nT++;TR.push({a:entryI,b:i1+1,r:eq/entry-1,open:true});if(eq>entry)wins++}
+  var tot2=eq+bank,days=Math.max(1,(D.t[i1]-D.t[i0])/DAY);
+  return{eq:tot2,bank:bank,ret:tot2/cap-1,cagr:Math.pow(Math.max(tot2/cap,1e-9),365/days)-1,mdd:mdd,inM:inM/Math.max(1,i1-i0),trades:nT,win:nT?wins/nT:0,fees:fees,E:E,tr:TR,liq:eq<=0}
+}
+function askDescribe(s){
+  var L=[],ph=s.phases.length===8?'every moon phase':s.phases.map(function(k){return PH[k].n}).join(', '),sgn=s.signs.length===12?'every moon sign':s.signs.map(function(k){return SIGNS[k][0]}).join(', ');
+  L.push('Invested during: <b>'+esc(ph)+'</b>, with the Moon in <b>'+esc(sgn)+'</b>');
+  if(s.retro==='cash')L.push('In cash during Mercury retrograde');if(s.retro==='only')L.push('Invested <b>only</b> during Mercury retrograde');
+  if(s.eclipse==='cash')L.push('In cash near eclipses');if(s.eclipse==='only')L.push('Invested <b>only</b> near eclipses');
+  if(s.weekdays){var dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];L.push('Only on '+s.weekdays.map(function(k){return dn[k]}).join(', '))}
+  if(s.leverage>1)L.push(s.leverage+'x leverage (borrowing costs not included)');
+  if(s.stopLoss)L.push('Stop-loss: sell after a '+s.stopLoss+'% loss on a trade');if(s.takeProfit)L.push('Take-profit: sell after a '+s.takeProfit+'% gain on a trade');
+  var cm=s.compound||{mode:'always'};
+  if(cm.mode==='always')L.push('Profits are reinvested every time (compounding)');
+  else if(cm.mode==='never')L.push('Profits are <b>taken out</b> and kept as cash, only the starting stake is traded');
+  else{var cw=cm.when||{},t=[];if('retro' in cw)t.push(cw.retro?'Mercury is retrograde':'Mercury is not retrograde');if('eclipse' in cw)t.push(cw.eclipse?'near an eclipse':'not near an eclipse');
+    if(cw.phases)t.push('the moon is '+cw.phases.map(function(k){return PH[k].n}).join(' / '));if(cw.signs)t.push('the Moon is in '+cw.signs.map(function(k){return SIGNS[k][0]}).join(' / '));
+    L.push('Profits are reinvested <b>only when</b> '+esc(t.join(' and ')||'always')+'; otherwise they are taken out as cash')}
+  L.push(usd(s.capital)+' to start, '+s.fee+'% fee per buy or sell, '+esc(s.from)+' to '+esc(s.to));return L
+}
+function askStatus(h,cls2){$('askOut').innerHTML='<div class="verdict '+(cls2||'')+'">'+h+'</div>'}
+function askPost(body){
+  var cd='';try{cd=localStorage.getItem('moonAskCode')||''}catch(e){}if(!body.code)body.code=cd;
+  return fetch(askUrl(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){
+    return r.json().catch(function(){return{error:'The helper sent back something unreadable.'}}).then(function(j){if(!r.ok&&!j.error)j.error='The helper said no (code '+r.status+').';return j})})
+}
+function askRun(){
+  var q=($('askQ').value||'').trim();
+  if(q.length<5){askStatus('Type a question first, for example: <i>what if I only trade on full moons and compound the profits?</i>','y');return}
+  if(D.t.length<120){askStatus('Load an asset first.','y');return}
+  var hasCode='';try{hasCode=localStorage.getItem('moonAskCode')||''}catch(e){}
+  if(!hasCode){$('askCodeRow').style.display='block';askStatus('This box is for members. Enter your access code below and press Unlock.','y');return}
+  if(!/^https:\/\//.test(askUrl())){$('askSetup').style.display='block';askStatus('The AI helper is not connected yet. Follow the steps in <b>ask-helper-setup.html</b>, then paste the helper address in the box below and press Save.','y');return}
+  var btn=$('askGo');btn.disabled=true;btn.textContent='Thinking…';askStatus('Reading your question…');
+  var base=askBase();
+  askPost({mode:'plan',question:q,asset:D.name||'',dataFrom:fd(D.t[0]),dataTo:fd(D.t[D.t.length-1]),panel:base}).then(function(j){
+    if(j.badCode){try{localStorage.removeItem('moonAskCode')}catch(e){}$('askCodeRow').style.display='block'}
+    if(j.error)throw new Error(j.error);var p=j.plan||{};
+    if(p.unsupported||!p.runs||!p.runs.length){askStatus('<b>I can\'t test that one yet.</b> '+esc(p.unsupported||'I could not turn that into a test.')+'<br><span class="mut">I can test: moon phases, moon signs, Mercury retrograde, eclipses, days of the week, compounding vs taking profits, leverage, stop-loss, take-profit, fees, starting money and date ranges.</span>','y');return}
+    var runs=p.runs.slice(0,4).map(function(r,k){var s=normSpec(r.spec,base);return{label:String(r.label||'Test '+(k+1)).slice(0,80),s:s}});
+    var allIdx=runs.map(function(r){return[Math.max(0,idxOf(r.s.from,0)),Math.min(D.t.length-1,idxOf(r.s.to,D.t.length-1))]});
+    var i0=allIdx[0][0],i1=allIdx[0][1];
+    runs.forEach(function(r,k){r.i0=allIdx[k][0];r.i1=allIdx[k][1]});
+    var bad=runs.filter(function(r){return r.i1-r.i0<30});if(bad.length){askStatus('That date range is too short to test (need at least 30 days of prices).','y');return}
+    runs.forEach(function(r){r.R=stratX(r.s,r.i0,r.i1)});
+    var bh=stratX(normSpec({phases:[0,1,2,3,4,5,6,7],signs:[0,1,2,3,4,5,6,7,8,9,10,11],retro:'ignore',eclipse:'ignore',weekdays:'all',leverage:1,stopLoss:null,takeProfit:null,compound:{mode:'always'}},runs[0].s),runs[0].i0,runs[0].i1);
+    ST_LAST=runs.map(function(r){return{label:r.label,s:r.s}});stFillSources();askShow(q,runs,bh,p.note);
+    var pay=runs.map(function(r){return{label:r.label,rules:r.s,from:r.s.from,to:r.s.to,endsWith:Math.round(r.R.eq),returnPct:+(r.R.ret*100).toFixed(2),perYearPct:+(r.R.cagr*100).toFixed(2),worstDropPct:+(r.R.mdd*100).toFixed(2),trades:r.R.trades,winRatePct:+(r.R.win*100).toFixed(0),timeInvestedPct:+(r.R.inM*100).toFixed(0),takenOutCash:Math.round(r.R.bank),fees:Math.round(r.R.fees)}});
+    pay.push({label:'Buy and hold',endsWith:Math.round(bh.eq),returnPct:+(bh.ret*100).toFixed(2),perYearPct:+(bh.cagr*100).toFixed(2),worstDropPct:+(bh.mdd*100).toFixed(2)});
+    return askPost({mode:'explain',question:q,asset:D.name||'',results:pay}).then(function(e){$('askTxt').innerHTML=e&&e.text?askFmt(e.text):askLocal(runs,bh)},function(){$('askTxt').innerHTML=askLocal(runs,bh)});
+  }).catch(function(e){askStatus('Something went wrong: '+esc(e.message||e)+'<br><span class="mut">Try again in a moment.</span>','y')}).then(function(){btn.disabled=false;btn.textContent='Ask'});
+}
+function askFmt(t){return String(t).split(/\n{2,}/).map(function(p){return '<p>'+esc(p).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')+'</p>'}).join('')}
+function askLocal(runs,bh){
+  var out='';runs.forEach(function(r){var d=r.R.eq-bh.eq;out+='<p><b>'+esc(r.label)+'</b> ended with '+usd(r.R.eq)+' ('+pc(r.R.ret*100,1)+'), which is '+usd(Math.abs(d))+(d>=0?' more':' less')+' than buy &amp; hold ('+usd(bh.eq)+').</p>'});
+  if(runs.length>1){var a=runs[0].R,b=runs[1].R;out+='<p>Gap between the first two tests: '+usd(Math.abs(b.eq-a.eq))+' ('+(b.eq>=a.eq?'second is higher':'first is higher')+').</p>'}return out}
+function askShow(q,runs,bh,note){
+  var cols=function(k){return ASK_COLS[k%ASK_COLS.length]},h='<div class="rsec"><h4>You asked</h4><p>“'+esc(q)+'”</p></div>';
+  h+='<div class="rsec"><h4>What I tested</h4><div class="grid2">'+runs.map(function(r,k){return '<div><h5 style="color:'+cols(k)+'">'+esc(r.label)+'</h5><ul>'+askDescribe(r.s).map(function(l){return '<li>'+l+'</li>'}).join('')+'</ul></div>'}).join('')+'</div>'+
+   (note?'<p class="mut">'+esc(note)+'</p>':'')+'</div>';
+  var rows=[['Ends with',function(R){return usd(R.eq)}],['Total return',function(R){return '<span class="'+cls(R.ret)+'">'+pc(R.ret*100,1)+'</span>'}],['Yearly pace',function(R){return pc(R.cagr*100,1)+' / yr'}],
+    ['Worst drop',function(R){return '<span class="dn">'+pc(R.mdd*100,1)+'</span>'}],['Trades (win rate)',function(R){return R.trades?R.trades+' ('+(R.win*100).toFixed(0)+'%)':'0'}],['Days invested',function(R){return (R.inM*100).toFixed(0)+'%'}],
+    ['Profit taken out as cash',function(R){return R.bank>0?usd(R.bank):'—'}],['Fees paid',function(R){return usd(R.fees)}]];
+  var t='<tr><th class="l">Measure</th>'+runs.map(function(r,k){return '<th style="color:'+cols(k)+'">'+esc(r.label)+'</th>'}).join('')+'<th>Buy &amp; hold</th></tr>';
+  rows.forEach(function(rw){t+='<tr><td class="l">'+rw[0]+'</td>'+runs.map(function(r){return '<td>'+rw[1](r.R)+(r.R.liq?' <span class="dn">(wiped out)</span>':'')+'</td>'}).join('')+'<td>'+(rw[0]==='Profit taken out as cash'?'—':rw[1](bh))+'</td></tr>'});
+  h+='<div class="rsec"><h4>The numbers</h4><div class="tw"><table class="log">'+t+'</table></div></div>';
+  h+='<div class="rsec"><h4>How the money grew</h4><canvas id="askC" class="plot" style="height:300px"></canvas><div class="legend">'+runs.map(function(r,k){return '<span><i style="background:'+cols(k)+'"></i>'+esc(r.label)+'</span>'}).join('')+'<span><i style="background:'+ASK_BH+'"></i>Buy &amp; hold</span></div></div>';
+  h+='<div class="rsec"><h4>In plain words</h4><div id="askTxt"><p class="mut">Writing the explanation…</p></div></div>';
+  h+='<div class="note">A back-test shows what the rules would have done on past prices. It does not predict the future and it is not financial advice.</div>';
+  $('askOut').innerHTML=h;
+  var i0=runs[0].i0,i1=runs[0].i1;
+  lineChartLog('askC',runs.map(function(r,k){return{c:cols(k),y:Array.from(r.R.E).slice(0,i1-i0+1),w:2.2}}).concat([{c:ASK_BH,y:Array.from(bh.E)}]),i0,i1)
+}
+function btOpts(){return{cap:Math.max(1,parseFloat($('cap').value)||10000),fee:Math.max(0,parseFloat($('fee').value)||0)/100,al:checked('phSel'),sg:checked('sgSel'),ro:$('rOff').checked,eo:$('eOff').checked}}
+$('askGo').onclick=askRun;
+$('askUnlock').onclick=function(){var v=($('askCodeIn').value||'').trim();if(v.length<3){askStatus('Type your access code first.','y');return}askVerify(v,function(er){if(er)askStatus(esc(er),'y');else{$('askCodeRow').style.display='none';askStatus('Code accepted. Now type your question and press <b>Ask</b>.')}})};
+$('askSave').onclick=function(){var v=($('askUrlIn').value||'').trim();if(!/^https:\/\/[^ ]+$/.test(v)){askStatus('That does not look like a web address. It should start with https://','y');return}try{localStorage.setItem('moonAskUrl',v)}catch(e){}$('askSetup').style.display='none';askStatus('Saved. Now press <b>Ask</b>.')};
+$('askQ').addEventListener('keydown',function(e){if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();askRun()}});
+document.querySelectorAll('.askEx').forEach(function(b){b.onclick=function(){$('askQ').value=b.textContent;$('askQ').focus()}});
+
+/* ---------- Strategist: upcoming buy and sell schedule from the exact back-test rules ---------- */
+var STX=null,ST_LAST=[];
+function stGate(rowId,msgFn){
+  var c='';try{c=localStorage.getItem('moonAskCode')||''}catch(e){}
+  if(c)return true;$(rowId).style.display='block';msgFn('This tool is for members. Enter your access code below and press Unlock.');return false}
+function askVerify(code,done){
+  if(!/^https:\/\//.test(askUrl())){$('askSetup').style.display='block';done('Connect the AI helper first (paste its address in the box, press Save helper address), then press Unlock again.');return}
+  askPost({mode:'check',code:code}).then(function(j){
+    if(j&&j.ok){try{localStorage.setItem('moonAskCode',code)}catch(e){}done(null)}
+    else done((j&&j.error)||'That access code is not right.')
+  },function(){done('Could not reach the helper. Check its address and try again.')})
+}
+function stFlags(ms){
+  var mid=ms+DAY/2,mp=A.moonPos(mid),sl=A.sunLon(mid),age=w360(mp[0]-sl)/360*SYN,e=0;
+  for(var k=0;k<ECL.length;k++){if(Math.abs(ECL[k].t-mid)<=2.5*DAY){e=1;break}}
+  return{ph:phaseIdx(age),sg:signOf(mp[0]),retro:A.isRetro(mid)?1:0,ecl:e,wd:new Date(ms).getUTCDay()}
+}
+function stWant(s,f){
+  if(s.phases.indexOf(f.ph)<0||s.signs.indexOf(f.sg)<0)return 0;
+  if(s.retro==='cash'&&f.retro)return 0;if(s.retro==='only'&&!f.retro)return 0;
+  if(s.eclipse==='cash'&&f.ecl)return 0;if(s.eclipse==='only'&&!f.ecl)return 0;
+  if(s.weekdays&&s.weekdays.indexOf(f.wd)<0)return 0;return 1}
+function stWhy(s,f){
+  if(s.phases.indexOf(f.ph)<0)return'the Moon moves into '+PH[f.ph].n;
+  if(s.signs.indexOf(f.sg)<0)return'the Moon enters '+SIGNS[f.sg][0];
+  if(s.retro==='cash'&&f.retro)return'Mercury goes retrograde';if(s.retro==='only'&&!f.retro)return'Mercury goes direct';
+  if(s.eclipse==='cash'&&f.ecl)return'an eclipse window begins';if(s.eclipse==='only'&&!f.ecl)return'the eclipse window ends';
+  if(s.weekdays&&s.weekdays.indexOf(f.wd)<0)return'the day of the week is not one you picked';return'the rules turn off'}
+function stWhyBuy(s,f){return'the Moon is '+PH[f.ph].e+' '+PH[f.ph].n+' in '+SIGNS[f.sg][1]+' '+SIGNS[f.sg][0]+(f.retro?', Mercury retrograde':'')}
+function chi(ms){return new Date(ms).toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
+function utcd(ms){return new Date(ms).toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric',year:'numeric'})}
+function plain(h){return String(h).replace(/<[^>]+>/g,'').replace(/&amp;/g,'&')}
+function stSources(){
+  var o=[{k:'panel',label:'The back-test settings above',s:askBase()}];
+  ST_LAST.forEach(function(r,k){o.push({k:'ask'+k,label:'AI question: '+r.label,s:r.s})});return o}
+function stFillSources(){var sel=$('stSrc'),keep=sel.value,h='<option value="panel">The back-test settings above</option>';ST_LAST.forEach(function(r,k){h+='<option value="ask'+k+'">AI question: '+esc(r.label)+'</option>'});sel.innerHTML=h;if(keep&&sel.querySelector('option[value="'+keep+'"]'))sel.value=keep}
+function stBuild(){
+  var out=$('stOut');function msg(h,c){out.innerHTML='<div class="verdict '+(c||'')+'">'+h+'</div>'}
+  if(!stGate('stCodeRow',function(m){msg(m,'y')}))return;
+  if(D.t.length<120){msg('Load an asset first.','y');return}
+  var src=stSources().filter(function(o){return o.k===$('stSrc').value})[0]||stSources()[0],s=src.s,days=+$('stHor').value;
+  var i0=Math.max(0,idxOf(s.from,0)),i1=Math.min(D.t.length-1,idxOf(s.to,D.t.length-1));
+  if(i1-i0<60){msg('The date range of the back-test is too short to learn from (need at least 60 days).','y');return}
+  var R=stratX(s,i0,i1),bh=stratX(normSpec({phases:[0,1,2,3,4,5,6,7],signs:[0,1,2,3,4,5,6,7,8,9,10,11],retro:'ignore',eclipse:'ignore',weekdays:'all',leverage:1,stopLoss:null,takeProfit:null,compound:{mode:'always'}},s),i0,i1);
+  var tr=(R.tr||[]).filter(function(t){return !t.open}),rs=tr.map(function(t){return t.r}),hold=tr.map(function(t){return t.b-t.a});
+  function avg(a){return a.length?a.reduce(function(p,q){return p+q},0)/a.length:0}
+  var H={trades:tr.length,win:tr.length?rs.filter(function(v){return v>0}).length/tr.length:0,avg:avg(rs),best:rs.length?Math.max.apply(null,rs):0,worst:rs.length?Math.min.apply(null,rs):0,hold:avg(hold),inM:R.inM};
+  var beat=0;SHIFTS.forEach(function(sh){if(stratX(s,i0,i1,sh).ret<R.ret)beat++});var pB=beat/SHIFTS.length*100;
+  var j0=Math.max(i0,i1-365),Ry=stratX(s,j0,i1),By=stratX(normSpec({phases:[0,1,2,3,4,5,6,7],signs:[0,1,2,3,4,5,6,7,8,9,10,11],retro:'ignore',eclipse:'ignore',weekdays:'all',leverage:1,stopLoss:null,takeProfit:null,compound:{mode:'always'}},s),j0,i1);
+  /* forward calendar */
+  var today=Math.floor(Date.now()/DAY)*DAY,start=today-45*DAY,end=today+days*DAY,fl=[],t;
+  for(t=start;t<=end+DAY;t+=DAY){var f=stFlags(t);f.t=t;f.w=stWant(s,f);fl.push(f)}
+  var ups=[],cur=null,nowOpen=false;
+  fl.forEach(function(f,k){
+    if(f.w&&!cur)cur={a:f.t,fa:f};
+    if(!f.w&&cur){cur.b=f.t;cur.fb=f;ups.push(cur);cur=null}
+  });
+  if(cur){cur.b=null;ups.push(cur)}
+  var todayF=fl.filter(function(f){return f.t===today})[0];nowOpen=!!(todayF&&todayF.w);
+  ups=ups.filter(function(u){return u.b===null||u.b>today});
+  ups=ups.filter(function(u){return u.a<=end});
+  STX={asset:D.name,s:s,H:H,R:R,bh:bh,Ry:Ry,By:By,pB:pB,i0:i0,i1:i1,days:days,ups:ups,fl:fl,today:today,nowOpen:nowOpen,label:src.label};
+  stRender()
+}
+function stRender(){
+  var X=STX,s=X.s,H=X.H,h='';
+  function sec(t,b){return '<div class="rsec"><h4>'+t+'</h4>'+b+'</div>'}
+  function bd(c,t){return '<b class="'+c+'">'+t+'</b>'}
+  h+=sec('1 · The rules being used','<p class="mut">'+esc(X.label)+'. These are the exact settings from your back-test, from '+esc(s.from)+' to '+esc(s.to)+' on '+esc(X.asset)+'.</p><ul>'+askDescribe(s).map(function(l){return '<li>'+l+'</li>'}).join('')+'</ul>');
+  var luck=X.pB>=95?'It beat '+X.pB.toFixed(0)+'% of fake moon calendars, which is unusual, but still not proof.':X.pB>=75?'It beat '+X.pB.toFixed(0)+'% of fake moon calendars: better than average, not strong evidence.':'It beat only '+X.pB.toFixed(0)+'% of fake moon calendars, so the timing added no clear edge over luck.';
+  var p='<div class="kpis">'+
+   '<div class="kpi"><div class="t">These rules ended with</div><div class="v '+cls(X.R.ret)+'">'+usd(X.R.eq)+'</div><div class="s">'+pc(X.R.ret*100,1)+' · buy &amp; hold '+pc(X.bh.ret*100,1)+'</div></div>'+
+   '<div class="kpi"><div class="t">Trades · winners</div><div class="v">'+H.trades+' · '+(H.win*100).toFixed(0)+'%</div><div class="s">average hold '+H.hold.toFixed(1)+' days</div></div>'+
+   '<div class="kpi"><div class="t">Average trade</div><div class="v '+cls(H.avg)+'">'+pc(H.avg*100,2)+'</div><div class="s">best '+pc(H.best*100,1)+' · worst '+pc(H.worst*100,1)+'</div></div>'+
+   '<div class="kpi"><div class="t">Last 12 months</div><div class="v '+cls(X.Ry.ret)+'">'+pc(X.Ry.ret*100,1)+'</div><div class="s">buy &amp; hold '+pc(X.By.ret*100,1)+'</div></div></div>';
+  p+='<p>Over the full test the rules were invested about '+(H.inM*100).toFixed(0)+'% of days and made '+bd(cls(X.R.ret),pc(X.R.ret*100,1))+' against '+bd(cls(X.bh.ret),pc(X.bh.ret*100,1))+' for buy &amp; hold. In the most recent year they made '+bd(cls(X.Ry.ret),pc(X.Ry.ret*100,1))+' while holding made '+bd(cls(X.By.ret),pc(X.By.ret*100,1))+'. '+luck+'</p>';
+  h+=sec('2 · What history says about these exact rules',p);
+  var u='';
+  if(!X.ups.length)u='<p>With these rules there is <b>no buy window</b> in the next '+X.days+' days. The rules never switch on in that stretch.</p>';
+  else{
+    u+='<p>'+(X.nowOpen?'<b class="up">Right now the rules are IN.</b> ':'<b>Right now the rules are in cash.</b> ')+'Each switch happens when the daily candle changes (midnight UTC), which in Chicago is the evening before. Times below are Chicago time.</p>';
+    u+='<div class="tw"><table class="log"><tr><th class="l">#</th><th class="l">Buy</th><th class="l">Why it turns on</th><th class="l">Sell</th><th class="l">Why it turns off</th><th>Days held</th></tr>';
+    X.ups.forEach(function(q,k){
+      var bnote=q.a<=X.today&&X.nowOpen&&k===0?'Already open (started '+utcd(q.a)+')':chi(q.a);
+      u+='<tr><td class="l">'+(k+1)+'</td><td class="l">'+bd('up',esc(bnote))+'</td><td class="l">'+esc(stWhyBuy(s,q.fa))+'</td><td class="l">'+(q.b===null?'<span class="mut">after this window</span>':bd('dn',esc(chi(q.b))))+'</td><td class="l">'+(q.b===null?'—':esc(stWhy(s,q.fb)))+'</td><td>'+(q.b===null?'—':Math.round((q.b-q.a)/DAY))+'</td></tr>'});
+    u+='</table></div>'}
+  u+='<canvas id="stC" class="plot" style="height:150px;margin-top:10px"></canvas><div class="legend"><span><i style="background:rgba(217,180,74,.55)"></i>Invested</span><span><i style="background:#26a69a"></i>▲ Buy</span><span><i style="background:#ef5350"></i>▼ Sell</span><span><i style="background:#b58cff"></i>Mercury retrograde</span><span><i style="background:#ff9f43"></i>Eclipse window</span></div>';
+  u+='<div class="note">Dates come from the same moon, sign, Mercury and eclipse formulas the back-test used, so they match how your history was tested. Moon phases and signs switch at specific hours inside a day, but the test only works in whole daily candles, so a switch can be off by up to a day.'+((s.stopLoss||s.takeProfit)?' Stop-loss and take-profit depend on price and cannot be put on a calendar.':'')+'</div>';
+  h+=sec('3 · Your next buys and sells',u);
+  h+=sec('4 · Written strategy','<div id="stAI"><button class="btn gold" id="stWrite">Write my strategy (AI)</button> <span class="mut" style="font-size:12px">Uses one AI question. Turns the schedule and the history into a plain-English plan.</span></div>'+
+    '<div id="stLocal">'+stLocalText()+'</div>');
+  h+='<div class="note">This is a back-test and a calendar built from past results. It does not predict price and it is not financial advice. Only risk money you can afford to lose.</div>';
+  $('stOut').innerHTML=h;stChart();$('stWrite').onclick=stWriteAI
+}
+function stLocalText(){
+  var X=STX,s=X.s,out='';
+  if(!X.ups.length)return '<p>No buy window falls in the next '+X.days+' days under these rules.</p>';
+  var q=X.ups[0];
+  out+='<p>'+(X.nowOpen&&q.a<=X.today?'The rules are <b>already in</b> (since '+esc(utcd(q.a))+')'+(q.b?' and call for selling on <b>'+esc(chi(q.b))+'</b> ('+esc(stWhy(s,q.fb))+').':'.'):'The next buy is <b>'+esc(chi(q.a))+'</b> ('+esc(stWhyBuy(s,q.fa))+')'+(q.b?', and the sell is <b>'+esc(chi(q.b))+'</b>, about '+Math.round((q.b-q.a)/DAY)+' days later.':'.'))+'</p>';
+  if(X.ups.length>1)out+='<p>After that the rules call for '+(X.ups.length-1)+' more buy window'+(X.ups.length>2?'s':'')+' in the next '+X.days+' days; they are listed in the table.</p>';
+  return out
+}
+function stChart(){
+  var X=STX,o=setup('stC'),x=o.x,W=o.w,H=o.h,fl=X.fl.filter(function(f){return f.t>=X.today-5*DAY&&f.t<=X.today+X.days*DAY}),n=fl.length,L=10,R=10,bw=(W-L-R)/n,i;
+  x.font='11px system-ui';
+  fl.forEach(function(f,k){var xx=L+k*bw;if(f.w){x.fillStyle='rgba(217,180,74,.35)';x.fillRect(xx,22,bw+.5,H-60)}
+    if(f.retro){x.fillStyle='#b58cff';x.fillRect(xx,H-34,bw+.5,5)}if(f.ecl){x.fillStyle='#ff9f43';x.fillRect(xx,H-27,bw+.5,5)}
+    if(f.t===X.today){x.fillStyle='#fff';x.fillRect(xx,14,2,H-44)}
+    var pv=k?fl[k-1]:null;if(pv&&pv.w!==f.w){var buy=f.w;x.fillStyle=buy?'#26a69a':'#ef5350';x.beginPath();if(buy){x.moveTo(xx,H-36);x.lineTo(xx-6,H-48);x.lineTo(xx+6,H-48)}else{x.moveTo(xx,26);x.lineTo(xx-6,14);x.lineTo(xx+6,14)}x.closePath();x.fill()}
+  });
+  x.fillStyle='#9aa0b8';x.textAlign='center';
+  for(i=0;i<n;i+=7){x.fillText(new Date(fl[i].t).toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric'}),L+i*bw+bw/2,H-6)}
+  x.fillStyle='#fff';x.textAlign='left';var ti=fl.findIndex(function(f){return f.t===X.today});if(ti>=0)x.fillText('today',L+ti*bw+5,11)
+}
+function stWriteAI(){
+  var X=STX,btn=$('stWrite');btn.disabled=true;btn.textContent='Writing…';
+  var ups=X.ups.map(function(q,k){return{n:k+1,buyChicago:(q.a<=X.today&&X.nowOpen&&k===0)?'already open since '+utcd(q.a):chi(q.a),buyWhy:stWhyBuy(X.s,q.fa),sellChicago:q.b===null?'after the window':chi(q.b),sellWhy:q.b===null?'':stWhy(X.s,q.fb),days:q.b===null?null:Math.round((q.b-q.a)/DAY)}});
+  var pay={asset:X.asset,today:new Date(X.today).toISOString().slice(0,10),horizonDays:X.days,rules:askDescribe(X.s).map(plain),from:X.s.from,to:X.s.to,
+    history:{endsWith:Math.round(X.R.eq),returnPct:+(X.R.ret*100).toFixed(1),buyHoldReturnPct:+(X.bh.ret*100).toFixed(1),trades:X.H.trades,winRatePct:+(X.H.win*100).toFixed(0),avgTradePct:+(X.H.avg*100).toFixed(2),bestTradePct:+(X.H.best*100).toFixed(1),worstTradePct:+(X.H.worst*100).toFixed(1),avgHoldDays:+X.H.hold.toFixed(1),timeInvestedPct:+(X.H.inM*100).toFixed(0),worstDropPct:+(X.R.mdd*100).toFixed(1),beatFakeCalendarsPct:+X.pB.toFixed(0),last12MonthsReturnPct:+(X.Ry.ret*100).toFixed(1),last12MonthsBuyHoldPct:+(X.By.ret*100).toFixed(1)},
+    nowInvested:X.nowOpen,upcoming:ups};
+  askPost({mode:'strategy',data:pay}).then(function(j){
+    if(j.badCode){try{localStorage.removeItem('moonAskCode')}catch(e){}$('stCodeRow').style.display='block'}
+    if(j.error)throw new Error(j.error);
+    $('stAI').innerHTML='<div class="verdict" style="border-color:var(--gold)">'+askFmt(j.text)+'</div>'
+  }).catch(function(e){btn.disabled=false;btn.textContent='Write my strategy (AI)';$('stAI').insertAdjacentHTML('beforeend','<div class="verdict y">'+esc(e.message||e)+'</div>')})
+}
+$('stGo').onclick=stBuild;
+$('stUnlock').onclick=function(){var v=($('stCodeIn').value||'').trim();if(v.length<3)return;askVerify(v,function(er){if(er){$('stOut').innerHTML='<div class="verdict y">'+esc(er)+'</div>'}else{$('stCodeRow').style.display='none';$('stOut').innerHTML='<div class="verdict">Unlocked. Press <b>Build my strategy</b>.</div>'}})};
+$('stSrc').addEventListener('focus',stFillSources);
+stFillSources();
+
 window.__moon={D:function(){return D},ECL:ECL,NF:NF};
 loadAsset();
 })();

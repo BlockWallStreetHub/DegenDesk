@@ -1,0 +1,54 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Moon Desk AI helper setup</title>
+<link rel="icon" type="image/png" href="degendesk-favicon.png">
+<style>
+body{margin:0;background:#070b18;color:#e8ebf5;font:16px/1.6 system-ui,Segoe UI,sans-serif}
+main{max-width:760px;margin:0 auto;padding:28px 18px 60px}
+h1{font:700 26px Georgia,serif;color:#f1d27a;margin:0 0 6px}
+h2{font:700 15px Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#f1d27a;margin:0 0 8px}
+.card{background:#0e1428;border:1px solid #28315a;border-radius:14px;padding:18px;margin:16px 0}
+.n{display:inline-block;background:#d9b44a;color:#111;border-radius:50%;width:26px;height:26px;text-align:center;font-weight:700;margin-right:8px;line-height:26px}
+code{background:#1a2142;padding:2px 6px;border-radius:5px;color:#f1d27a}
+.mut{color:#9aa0b8;font-size:14px}
+.warn{border-color:#6d5a1c}
+a{color:#7ab8ff}
+</style></head><body><main>
+<h1>Turn on the AI box in the Moon Desk</h1>
+<p class="mut">About 15 minutes, one time. You will make two free accounts, copy and paste once, and you are done. Nothing here needs a zip file or any coding.</p>
+
+<div class="card"><h2><span class="n">1</span>Get your AI key</h2>
+<p>Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and sign in.</p>
+<ol><li>Open <b>Billing</b> (or Plans &amp; Billing) and add <b>$10</b> of credit. Each question costs only a few cents, so this lasts a long time.</li>
+<li>Open <b>Limits</b> and set a <b>monthly spend limit</b> (for example $20) so the bill can never run away.</li>
+<li>Open <b>API Keys</b>, press <b>Create Key</b>, name it <code>moon-desk</code>, and copy the key. It starts with <code>sk-ant-</code>. Keep that window open until step 3 is done.</li></ol>
+<p class="mut">Never paste this key in the website file or send it to anyone. It goes only in step 3.</p></div>
+
+<div class="card"><h2><span class="n">2</span>Make the free helper</h2>
+<p>Go to <a href="https://dash.cloudflare.com/sign-up" target="_blank">cloudflare.com</a> and make a free account (or sign in).</p>
+<ol><li>On the left choose <b>Workers &amp; Pages</b>, then <b>Create</b>, then <b>Create Worker</b>.</li>
+<li>Name it <code>moon-ask</code> and press <b>Deploy</b>.</li>
+<li>Press <b>Edit code</b>. Select everything in the editor (Ctrl+A) and delete it.</li>
+<li>Open the file <b>moon-ask-worker.js</b> I sent you (right-click it, Open with Notepad). Select all (Ctrl+A), copy (Ctrl+C), and paste it into the Cloudflare editor (Ctrl+V).</li>
+<li>Press <b>Deploy</b> at the top right.</li></ol></div>
+
+<div class="card"><h2><span class="n">3</span>Give the helper your key (privately)</h2>
+<ol><li>In your <code>moon-ask</code> worker open <b>Settings</b>, then <b>Variables and Secrets</b>, then <b>Add</b>.</li>
+<li>Type: choose <b>Secret</b>. Name: <code>ANTHROPIC_API_KEY</code>. Value: paste your key from step 1. Press <b>Deploy</b>.</li>
+<li>Your access code is <code>BBBDD</code> by default. To change it, add a Text variable <code>ACCESS_CODE</code> with the new code. People enter the code once in the Moon Desk box and their browser remembers it.</li>
+<li>Optional safety limits (type <b>Text</b>): <code>PER_IP_LIMIT</code> = <code>20</code> questions per person per day, and <code>DAILY_LIMIT</code> = <code>300</code> questions per day in total. Those are already the defaults if you skip this.</li></ol>
+<p class="mut">The helper only answers requests that come from <code>degendesk.blockwallstreet.biz</code>. If your Degen Desk lives at another address, add a Text variable <code>ALLOWED_ORIGIN</code> with that exact address (for example <code>https://degendesk.blockwallstreet.biz</code>, no slash at the end).</p></div>
+
+<div class="card"><h2><span class="n">4</span>Copy the helper's address</h2>
+<p>On the worker's main page you will see a web address ending in <code>.workers.dev</code>, like <code>https://moon-ask.something.workers.dev</code>. Copy it.</p></div>
+
+<div class="card"><h2><span class="n">5</span>Connect the Moon Desk</h2>
+<ol><li>Upload the new <b>moonbwsddp.html</b> to your DegenDesk repo (Add file, Upload files, Commit changes). Wait a minute or two and press Ctrl+Shift+R on the Moon Desk page.</li>
+<li>Load an asset, scroll to <b>Ask the Moon Desk</b>, type a question, and press <b>Ask</b>. A box appears asking for the helper address. Paste it, press <b>Save helper address</b>, then press <b>Ask</b> again.</li></ol>
+<p>That saves it for your own browser. <b>To make it work for everyone who visits</b>, send me the address and I will build it into the page.</p></div>
+
+<div class="card warn"><h2>Good to know</h2>
+<ul><li>Your key stays hidden inside Cloudflare. It is never in the web page.</li>
+<li>If you see "AI is resting for today", the daily question limit was reached. It resets by itself the next day.</li>
+<li>Free Cloudflare accounts keep question counts only until the helper restarts. For exact daily counts, add a free <b>KV</b> storage named <code>LIMITS</code> to the worker (Settings, Bindings, Add, KV namespace). This is optional.</li>
+<li>The AI only sets up the test. The Moon Desk does all the math on your real prices.</li></ul></div>
+</main></body></html>
