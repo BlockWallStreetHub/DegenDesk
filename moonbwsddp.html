@@ -220,6 +220,12 @@ table.log th{position:sticky;top:0;z-index:1}
     <label class="chk"><input type="checkbox" id="eOff"> Go to cash within 2 days of an eclipse</label>
     <button class="btn gold" id="bt">Run back-test</button>
   </div>
+  <style>.svItem{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--panel2)}.svTop{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:14px}.svRes{font-size:13px;margin:3px 0}.svItem .btn{font-size:12px;padding:5px 10px}</style>
+  <h3 style="margin-top:6px">★ Saved settings</h3>
+  <div class="row" id="svBar"><input type="text" id="svName" maxlength="50" placeholder="Name this setup, e.g. Waxing moon, skip retrograde" style="flex:1;min-width:220px"><button class="btn" id="svSave">★ Save these settings</button><label class="chk" style="font-size:12px"><input type="checkbox" id="svDates" checked> Load dates too</label></div>
+  <div id="svCodeRow" style="display:none;margin:8px 0"><div class="row"><input type="text" id="svCodeIn" placeholder="Access code" autocomplete="off" style="max-width:220px"><button class="btn gold" id="svUnlock">Unlock</button></div></div>
+  <div id="svMsg" class="note"></div>
+  <div id="svList"></div>
   <div id="btOut"></div>
   <canvas id="c4" class="plot" style="height:320px;margin-top:10px"></canvas>
   <div class="legend"><span><i style="background:#d9b44a"></i>Your moon strategy</span><span><i style="background:#9aa0b8"></i>Buy &amp; hold</span></div>
@@ -1125,7 +1131,7 @@ function askLocal(runs,bh){
   if(runs.length>1){var a=runs[0].R,b=runs[1].R;out+='<p>Gap between the first two tests: '+usd(Math.abs(b.eq-a.eq))+' ('+(b.eq>=a.eq?'second is higher':'first is higher')+').</p>'}return out}
 function askShow(q,runs,bh,note){
   var cols=function(k){return ASK_COLS[k%ASK_COLS.length]},h='<div class="rsec"><h4>You asked</h4><p>“'+esc(q)+'”</p></div>';
-  h+='<div class="rsec"><h4>What I tested</h4><div class="grid2">'+runs.map(function(r,k){return '<div><h5 style="color:'+cols(k)+'">'+esc(r.label)+'</h5><ul>'+askDescribe(r.s).map(function(l){return '<li>'+l+'</li>'}).join('')+'</ul></div>'}).join('')+'</div>'+
+  h+='<div class="rsec"><h4>What I tested</h4><div class="grid2">'+runs.map(function(r,k){return '<div><h5 style="color:'+cols(k)+'">'+esc(r.label)+' <button class="btn svAsk" data-k="'+k+'" style="font-size:11px;padding:3px 8px;margin-left:6px">★ Save this setup</button></h5><ul>'+askDescribe(r.s).map(function(l){return '<li>'+l+'</li>'}).join('')+'</ul></div>'}).join('')+'</div>'+
    (note?'<p class="mut">'+esc(note)+'</p>':'')+'</div>';
   var rows=[['Ends with',function(R){return usd(R.eq)}],['Total return',function(R){return '<span class="'+cls(R.ret)+'">'+pc(R.ret*100,1)+'</span>'}],['Yearly pace',function(R){return pc(R.cagr*100,1)+' / yr'}],
     ['Worst drop',function(R){return '<span class="dn">'+pc(R.mdd*100,1)+'</span>'}],['Trades (win rate)',function(R){return R.trades?R.trades+' ('+(R.win*100).toFixed(0)+'%)':'0'}],['Days invested',function(R){return (R.inM*100).toFixed(0)+'%'}],
@@ -1137,6 +1143,7 @@ function askShow(q,runs,bh,note){
   h+='<div class="rsec"><h4>In plain words</h4><div id="askTxt"><p class="mut">Writing the explanation…</p></div></div>';
   h+='<div class="note">A back-test shows what the rules would have done on past prices. It does not predict the future and it is not financial advice.</div>';
   $('askOut').innerHTML=h;
+  document.querySelectorAll('.svAsk').forEach(function(b){b.onclick=function(){var r=runs[+b.getAttribute('data-k')];if(svAdd(r.label,r.s)){b.textContent='Saved ✓';b.disabled=true}}});
   var i0=runs[0].i0,i1=runs[0].i1;
   lineChartLog('askC',runs.map(function(r,k){return{c:cols(k),y:Array.from(r.R.E).slice(0,i1-i0+1),w:2.2}}).concat([{c:ASK_BH,y:Array.from(bh.E)}]),i0,i1)
 }
@@ -1181,8 +1188,8 @@ function utcd(ms){return new Date(ms).toLocaleDateString('en-US',{timeZone:'UTC'
 function plain(h){return String(h).replace(/<[^>]+>/g,'').replace(/&amp;/g,'&')}
 function stSources(){
   var o=[{k:'panel',label:'The back-test settings above',s:askBase()}];
-  ST_LAST.forEach(function(r,k){o.push({k:'ask'+k,label:'AI question: '+r.label,s:r.s})});return o}
-function stFillSources(){var sel=$('stSrc'),keep=sel.value,h='<option value="panel">The back-test settings above</option>';ST_LAST.forEach(function(r,k){h+='<option value="ask'+k+'">AI question: '+esc(r.label)+'</option>'});sel.innerHTML=h;if(keep&&sel.querySelector('option[value="'+keep+'"]'))sel.value=keep}
+  ST_LAST.forEach(function(r,k){o.push({k:'ask'+k,label:'AI question: '+r.label,s:r.s})});if(localStorage.getItem('moonAskCode'))svGet().forEach(function(q){o.push({k:'sv'+q.id,label:'Saved: '+q.name,s:q.s})});return o}
+function stFillSources(){var sel=$('stSrc'),keep=sel.value,h='<option value="panel">The back-test settings above</option>';ST_LAST.forEach(function(r,k){h+='<option value="ask'+k+'">AI question: '+esc(r.label)+'</option>'});if(localStorage.getItem('moonAskCode'))svGet().forEach(function(q){h+='<option value="sv'+q.id+'">Saved: '+esc(q.name)+'</option>'});sel.innerHTML=h;if(keep&&sel.querySelector('option[value="'+keep+'"]'))sel.value=keep}
 function stBuild(){
   var out=$('stOut');function msg(h,c){out.innerHTML='<div class="verdict '+(c||'')+'">'+h+'</div>'}
   if(!stGate('stCodeRow',function(m){msg(m,'y')}))return;
@@ -1278,6 +1285,63 @@ $('stUnlock').onclick=function(){var v=($('stCodeIn').value||'').trim();if(v.len
 $('stSrc').addEventListener('focus',stFillSources);
 stFillSources();
 
+/* ---------- Saved settings (syncs with the Degen Desk account because the key starts with dd_) ---------- */
+var SV_KEY='dd_moon_saved_v1';
+function svGet(){try{var a=JSON.parse(localStorage.getItem(SV_KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function svPut(a){var ok=true;try{localStorage.setItem(SV_KEY,JSON.stringify(a))}catch(e){ok=false}try{if(window.BWSSync&&window.BWSSync.now)window.BWSSync.now()}catch(e){}return ok}
+function svMsg(h,c){$('svMsg').innerHTML=h?'<span class="'+(c||'')+'">'+h+'</span>':''}
+function svAdd(name,spec){
+  var cc='';try{cc=localStorage.getItem('moonAskCode')||''}catch(e){}if(!cc){svMsg('Saving is for members. Unlock with your access code first.','dn');return false}
+  if(D.t.length<120){svMsg('Load an asset first.','dn');return false}
+  var s=JSON.parse(JSON.stringify(spec)),i0=Math.max(0,idxOf(s.from,0)),i1=Math.min(D.t.length-1,idxOf(s.to,D.t.length-1));
+  if(i1-i0<30){svMsg('Pick a longer date range before saving.','dn');return false}
+  var R=stratX(s,i0,i1),bh=stratX(normSpec({phases:[0,1,2,3,4,5,6,7],signs:[0,1,2,3,4,5,6,7,8,9,10,11],retro:'ignore',eclipse:'ignore',weekdays:'all',leverage:1,stopLoss:null,takeProfit:null,compound:{mode:'always'}},s),i0,i1),beat=0;
+  SHIFTS.forEach(function(sh){if(stratX(s,i0,i1,sh).ret<R.ret)beat++});
+  var a=svGet();if(a.length>=40){svMsg('You have 40 saved setups. Delete one first.','dn');return false}
+  name=(name||'').trim().slice(0,50)||'Setup '+(a.length+1);
+  a.unshift({id:Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36),name:name,at:Date.now(),asset:D.name||'',s:s,res:{ret:R.ret,bh:bh.ret,trades:R.trades,win:R.win,mdd:R.mdd,luck:beat/SHIFTS.length*100}});
+  if(!svPut(a)){svMsg('Your browser would not let me save. Check that private browsing is off.','dn');return false}
+  svRender();stFillSources();return true
+}
+function svExtras(s){return !!(s.weekdays||s.leverage>1||s.stopLoss||s.takeProfit||(s.compound&&s.compound.mode!=='always')||s.retro==='only'||s.eclipse==='only')}
+function svRender(){
+  var cc='';try{cc=localStorage.getItem('moonAskCode')||''}catch(e){}
+  if(!cc){$('svList').innerHTML='<div class="note">Saved settings are for members. Press <b>Save these settings</b> and enter your access code to unlock.</div>';return}
+  var a=svGet(),h='';
+  if(!a.length){$('svList').innerHTML='<div class="note">Nothing saved yet. Run a back-test you like, give it a name and press <b>Save these settings</b>.</div>';return}
+  a.forEach(function(q){
+    var r=q.res||{},d=new Date(q.at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),ph=q.s.phases.length===8?'all phases':q.s.phases.map(function(k){return PH[k].s}).join(' · '),sg=q.s.signs.length===12?'all signs':q.s.signs.length+' of 12 signs';
+    var ex=svExtras(q.s);
+    h+='<div class="svItem"><div class="svTop"><b class="gold">'+esc(q.name)+'</b><span class="mut">'+esc(d)+(q.asset?' · '+esc(q.asset):'')+'</span></div>'+
+      '<div class="svRes"><span class="'+cls(r.ret)+'">'+pc(r.ret*100,1)+'</span> <span class="mut">vs buy &amp; hold '+pc(r.bh*100,1)+' · '+r.trades+' trades · '+(r.win*100).toFixed(0)+'% winners · worst drop '+pc(r.mdd*100,0)+' · beat '+Math.round(r.luck)+'% of fake calendars</span></div>'+
+      '<div class="mut" style="font-size:12px">'+esc(ph)+' · '+esc(sg)+(q.s.retro==='cash'?' · cash in retrograde':'')+(q.s.eclipse==='cash'?' · cash near eclipses':'')+(ex?' · extra rules (AI setup)':'')+' · '+esc(q.s.from)+' to '+esc(q.s.to)+'</div>'+
+      '<div class="row" style="margin-top:8px;gap:6px">'+(ex?'':'<button class="btn svLoad" data-id="'+q.id+'">Load into back-test</button>')+'<button class="btn svUse" data-id="'+q.id+'">Use in Strategist</button><button class="btn svDel" data-id="'+q.id+'">Delete</button></div></div>'});
+  $('svList').innerHTML=h
+}
+function svLoad(id){
+  var q=svGet().filter(function(z){return z.id===id})[0];if(!q)return;var s=q.s;
+  document.querySelectorAll('#phSel input').forEach(function(c){c.checked=s.phases.indexOf(+c.getAttribute('data-k'))>=0});
+  document.querySelectorAll('#sgSel input').forEach(function(c){c.checked=s.signs.indexOf(+c.getAttribute('data-k'))>=0});
+  $('rOff').checked=s.retro==='cash';$('eOff').checked=s.eclipse==='cash';$('cap').value=s.capital;$('fee').value=s.fee;
+  if($('svDates').checked){$('dFrom').value=s.from;$('dTo').value=s.to}
+  svMsg('Loaded “'+esc(q.name)+'”. Results are below.','up');runBT();$('btOut').scrollIntoView({behavior:'smooth',block:'center'})
+}
+$('svSave').onclick=function(){
+  if(!stGate('svCodeRow',function(m){svMsg(m,'dn')}))return;
+  var s=askBase();if(!s.phases.length||!s.signs.length){svMsg('Tick at least one phase and one sign first.','dn');return}
+  if(svAdd($('svName').value,s)){$('svName').value='';svMsg('Saved. It is kept in this browser and, if you are signed in to Degen Desk, on your account too.','up')}
+};
+$('svList').addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;var id=b.getAttribute('data-id');
+  if(b.classList.contains('svLoad'))svLoad(id);
+  else if(b.classList.contains('svUse')){stFillSources();$('stSrc').value='sv'+id;$('stCard').scrollIntoView({behavior:'smooth',block:'start'});$('stOut').innerHTML='<div class="verdict">Setup selected. Press <b>Build my strategy</b>.</div>'}
+  else if(b.classList.contains('svDel')){if(b.getAttribute('data-sure')!=='1'){b.setAttribute('data-sure','1');b.textContent='Tap again to delete';setTimeout(function(){b.setAttribute('data-sure','');b.textContent='Delete'},3000);return}
+    svPut(svGet().filter(function(z){return z.id!==id}));svRender();stFillSources();svMsg('Deleted.')}
+});
+window.addEventListener('bwssync',function(){svRender();stFillSources()});
+$('svUnlock').onclick=function(){var v=($('svCodeIn').value||'').trim();if(v.length<3)return;askVerify(v,function(er){if(er)svMsg(esc(er),'dn');else{$('svCodeRow').style.display='none';svMsg('Unlocked. Press <b>Save these settings</b> again.','up');svRender();stFillSources()}})};
+
+svRender();
 window.__moon={D:function(){return D},ECL:ECL,NF:NF};
 loadAsset();
 })();
