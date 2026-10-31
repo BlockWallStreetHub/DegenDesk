@@ -82,6 +82,14 @@ th.l,td.l{text-align:left}
 footer{max-width:1400px;margin:auto;padding:0 20px 40px;color:var(--mut);font-size:12px}
 @media(max-width:700px){input,select,textarea{font-size:16px !important}button,.btn,a.btn{min-height:40px}}
 @media(max-width:700px){.chk{min-height:38px;font-size:13.5px}.row{gap:8px}.signs,.phases{grid-template-columns:repeat(2,minmax(0,1fr)) !important}.signs label,.phases label{min-height:38px}}
+.rsec{background:var(--panel2);border:1px solid var(--line2);border-radius:12px;padding:14px 16px;margin:12px 0}
+.rsec h4{margin:0 0 8px;font:700 13px var(--serif);letter-spacing:.14em;text-transform:uppercase;color:var(--gold2)}
+.rsec h5{margin:16px 0 6px;font:500 13px var(--serif);letter-spacing:.06em;color:var(--tx)}
+.rsec p{margin:8px 0;font-size:13.5px;line-height:1.65}
+.rsec .kpis{margin:12px 0}
+.rsec .grid2{margin:10px 0}
+.rl{margin:8px 0 8px 18px;padding:0;font-size:13.5px;line-height:1.65}.rl li{margin:4px 0}
+table.log th{position:sticky;top:0;z-index:1}
 </style>
 </head>
 <body>
@@ -217,6 +225,7 @@ footer{max-width:1400px;margin:auto;padding:0 20px 40px;color:var(--mut);font-si
   <div class="legend"><span><i style="background:#d9b44a"></i>Your moon strategy</span><span><i style="background:#9aa0b8"></i>Buy &amp; hold</span></div>
   <canvas id="c5" class="plot" style="height:200px"></canvas>
   <div class="note" id="c5n"></div>
+  <div id="btRep"></div>
 </section>
 </main>
 <footer>Entertainment and research tool from Block Wall Street. Not financial advice. Moon, sun and Mercury positions come from simplified orbit formulas (moon phase and sign accurate to well under a day; Mercury stations within about a day). Eclipse dates match published ones for 2024–2026 in testing, but the eclipse kind is approximate. Past results never guarantee future results. The line "millionaires don't use astrologers, billionaires do" is widely attributed to J.P. Morgan but I can't confirm he said it. Treat it as lore, not evidence.</footer>
@@ -730,19 +739,22 @@ document.querySelectorAll('.sp').forEach(function(b){b.onclick=function(){preset
 $('phSel').onchange=runBT;$('sgSel').onchange=runBT;['cap','dFrom','dTo','fee','rOff','eOff'].forEach(function(id){$(id).addEventListener('change',runBT)});$('bt').onclick=runBT;
 function strat(o,i0,i1,shift,keep){
   var eq=o.cap,prev=0,peak=o.cap,mdd=0,trades=[],entry=0,inM=0,nTr=0,rets=[],E=keep?new Float64Array(i1-i0+1):null;if(keep)E[0]=o.cap;
+  var fees=0,entryI=i0,peakI=i0,mddI=i0,ddPkI=i0,tl=[],runIn=0,runOut=0,longIn=0,longOut=0;
   for(var i=i0+1;i<=i1;i++){
     var ph=shift?phaseIdx((D.age[i]+shift)%SYN):D.ph[i],sg=shift?Math.floor(w360(D.mlon[i]+13.1764*shift)/30):D.ms[i];
     var pos=(o.al[ph]&&o.sg[sg]&&!(o.ro&&D.retro[i])&&!(o.eo&&D.ecl[i]))?1:0,e0=eq;
-    if(pos!==prev){eq*=1-o.fee;if(pos)entry=eq;else trades.push(eq/entry-1);nTr++}
-    if(pos){eq*=1+D.r[i];inM++}
-    rets.push(eq/e0-1);prev=pos;if(eq>peak)peak=eq;var dd=eq/peak-1;if(dd<mdd)mdd=dd;if(keep)E[i-i0]=eq}
-  if(prev)trades.push(eq/entry-1);
+    if(pos!==prev){fees+=eq*o.fee;eq*=1-o.fee;if(pos){entry=eq;entryI=i}else{trades.push(eq/entry-1);tl.push({a:entryI,b:i,r:eq/entry-1,inn:entry,out:eq})}nTr++}
+    if(pos){eq*=1+D.r[i];inM++;runIn++;if(runIn>longIn)longIn=runIn;runOut=0}else{runOut++;if(runOut>longOut)longOut=runOut;runIn=0}
+    rets.push(eq/e0-1);prev=pos;if(eq>peak){peak=eq;peakI=i}var dd=eq/peak-1;if(dd<mdd){mdd=dd;mddI=i;ddPkI=peakI}if(keep)E[i-i0]=eq}
+  if(prev){trades.push(eq/entry-1);tl.push({a:entryI,b:i1+1,r:eq/entry-1,inn:entry,out:eq,open:true})}
   var days=Math.max(1,(D.t[i1]-D.t[i0])/DAY),ms=mstat(rets),w=trades.filter(function(v){return v>0}).length;
   return{eq:eq,ret:eq/o.cap-1,cagr:Math.pow(Math.max(eq/o.cap,1e-9),365/days)-1,mdd:mdd,inM:inM/Math.max(1,i1-i0),trades:trades.length,win:trades.length?w/trades.length:0,
-    avgTr:trades.length?trades.reduce(function(a,b){return a+b},0)/trades.length:0,sharpe:ms.sd>0?ms.m/ms.sd*Math.sqrt(365):0,E:E}
+    avgTr:trades.length?trades.reduce(function(a,b){return a+b},0)/trades.length:0,sharpe:ms.sd>0?ms.m/ms.sd*Math.sqrt(365):0,E:E,
+    fees:fees,tl:tl,mddI:mddI,ddPkI:ddPkI,longIn:longIn,longOut:longOut}
 }
 function idxOf(s,d){var ms=Date.parse(s);if(isNaN(ms))return d;return Math.min(D.t.length-1,lb(D.t,ms))}
 function runBT(){
+  var rp0=$('btRep');if(rp0)rp0.innerHTML='';
   if(D.t.length<120){$('btOut').innerHTML='<div class="note">Load an asset first.</div>';return}
   var i0=idxOf($('dFrom').value,0),i1=idxOf($('dTo').value,D.t.length-1);
   if(i1-i0<30){$('btOut').innerHTML='<div class="verdict y">Pick a longer date range (at least 30 days).</div>';return}
@@ -758,6 +770,191 @@ function runBT(){
   var pB=beat/SHIFTS.length*100;histo('c5',res,S.ret*100);
   $('c5n').innerHTML='<b>Real or luck?</b> The same strategy was re-run '+SHIFTS.length+' times on the same prices with the moon and sign calendar slid forward (a fake sky each time). Bars = how the fake-sky versions ended. The gold line is your real-sky result, which beat <b class="'+(pB>=95?'gold':'')+'">'+pB.toFixed(0)+'%</b> of them. '+
    (pB>=95?'That is interesting, but neighbouring fake calendars overlap a lot (they are only a few days apart), so it is weaker evidence than it looks. Re-test on another asset and date range before trusting it.':pB>=75?'Better than average, but not strong enough to rule out luck.':'That is within what random calendars produce, so the timing added no clear edge.');
+  reportBT(o,i0,i1,S,BH,pB,res);
+}
+/* ---------- written back-test report (sections under the charts) ---------- */
+function reportBT(o,i0,i1,S,BH,pB,res){
+  var box=$('btRep');if(!box)return;
+  var nm=esc(D.name||'this asset'),span=Math.max(1,i1-i0),days=Math.max(1,Math.round((D.t[i1]-D.t[i0])/DAY)),tl=S.tl||[],closed=tl.filter(function(t){return !t.open});
+  function dt(ms){return new Date(ms).toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric',year:'numeric'})}
+  function dn(n){n=Math.round(n);return n+' day'+(n===1?'':'s')}
+  function sec(t,body){return '<div class="rsec"><h4>'+t+'</h4>'+body+'</div>'}
+  function bd(c,t){return '<b class="'+c+'">'+t+'</b>'}
+  function sg(n){return (n>=0?'+':'-')+usd(Math.abs(n))}
+  function $$(v){return '$'+px(v)}
+  function moonS(i){return PH[D.ph[i]].e+' '+PH[D.ph[i]].s+' · '+SIGNS[D.ms[i]][1]+' '+SIGNS[D.ms[i]][0]}
+  function why(i){
+    if(!o.al[D.ph[i]])return{k:'phase',t:'Moon moved into '+PH[D.ph[i]].n+' (not selected)'};
+    if(!o.sg[D.ms[i]])return{k:'sign',t:'Moon entered '+SIGNS[D.ms[i]][0]+' (not selected)'};
+    if(o.ro&&D.retro[i])return{k:'retro',t:'Mercury went retrograde'};
+    if(o.eo&&D.ecl[i])return{k:'eclipse',t:'Eclipse window began'};
+    return{k:'other',t:'Rules turned off'}
+  }
+  function med(a){if(!a.length)return 0;var s=a.slice().sort(function(p,q){return p-q}),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2}
+  function mode(a){var c={},best=null;a.forEach(function(v){c[v]=(c[v]||0)+1});Object.keys(c).forEach(function(k){if(best===null||c[k]>c[best])best=k});return best===null?null:{k:+best,n:c[best],tot:a.length}}
+  var edge=(S.ret-BH.ret)*100,diff=S.eq-BH.eq,beat=diff>=0,inPct=S.inM*100,h='';
+
+  /* 1. big picture */
+  var p='<p>You started with '+usd(o.cap)+' on '+dt(D.t[i0])+', and the test ran to '+dt(D.t[i1])+' ('+dn(days)+' of '+nm+' prices). Following your moon rules, that money would have ended at '+bd(cls(S.ret),usd(S.eq))+' ('+pc(S.ret*100,1)+'). Simply buying on the first day and holding would have ended at '+bd(cls(BH.ret),usd(BH.eq))+' ('+pc(BH.ret*100,1)+').</p>';
+  if(beat)p+='<p>The moon strategy finished '+bd('up',usd(Math.abs(diff))+' ahead')+' of buy &amp; hold, a gap of '+Math.abs(edge).toFixed(1)+' percentage points. '+(BH.ret<0&&S.ret>=0?'Holding lost money over this window while your rules made money.':BH.ret<0?'Both lost money, but the rules lost less.':'Both made money, and the rules made more.')+'</p>';
+  else p+='<p>Buy &amp; hold finished '+bd('dn',usd(Math.abs(diff))+' ahead')+' of the moon strategy, a gap of '+Math.abs(edge).toFixed(1)+' percentage points. '+(S.ret<0&&BH.ret>=0?'The rules lost money while holding made money.':S.ret<0?'Both lost money, but holding lost less.':'Both made money, but holding made more.')+'</p>';
+  p+='<p>Your money was invested on about '+inPct.toFixed(0)+'% of days and sat in cash the other '+(100-inPct).toFixed(0)+'%. '+(S.trades?'Along the way the rules made '+S.trades+' round-trip trade'+(S.trades===1?'':'s')+' (a buy followed by a sell).':'No day met every condition, so the rules never made a trade.')+'</p>';
+  h+=sec('1 · The big picture',p);
+
+  /* 2. what was tested */
+  var phs=[],sgs=[];PH.forEach(function(q,k){if(o.al[k])phs.push(q.e+' '+q.n)});SIGNS.forEach(function(s,k){if(o.sg[k])sgs.push(s[1]+' '+s[0])});
+  p='<p>Money was invested only on days when <b>every</b> condition below was true at the same time. On any other day it waited in cash.</p><ul class="rl">'+
+    '<li><b>Moon phase</b> — '+phs.length+' of 8 selected: '+phs.join(', ')+'.</li>'+
+    '<li><b>Moon sign</b> — '+(sgs.length===12?'all 12 signs, so no sign filter.':sgs.length+' of 12 selected: '+sgs.join(', ')+'.')+'</li>'+
+    '<li><b>Mercury retrograde</b> — '+(o.ro?'moved to cash during retrograde.':'ignored.')+'</li>'+
+    '<li><b>Eclipses</b> — '+(o.eo?'moved to cash within 2 days of an eclipse.':'ignored.')+'</li></ul>'+
+    '<p>Starting money was '+usd(o.cap)+' and a fee of '+(o.fee*100).toFixed(2)+'% was charged on every buy and every sell. Buy &amp; hold is the comparison: one purchase on day one, never sold.</p>';
+  h+=sec('2 · What you tested',p);
+
+  /* 3. returns */
+  function row(a,b,c){return '<tr><td class="l">'+a+'</td><td>'+b+'</td><td>'+c+'</td></tr>'}
+  p='<div class="tw"><table><thead><tr><th class="l">Measure</th><th>Moon strategy</th><th>Buy &amp; hold</th></tr></thead><tbody>'+
+    row('Ends with',bd(cls(S.ret),usd(S.eq)),bd(cls(BH.ret),usd(BH.eq)))+
+    row('Profit or loss',bd(cls(S.eq-o.cap),sg(S.eq-o.cap)),bd(cls(BH.eq-o.cap),sg(BH.eq-o.cap)))+
+    row('Total return',bd(cls(S.ret),pc(S.ret*100,1)),bd(cls(BH.ret),pc(BH.ret*100,1)))+
+    row('Yearly pace',pc(S.cagr*100,1)+' / yr',pc(BH.cagr*100,1)+' / yr')+
+    row('Fees paid',usd(S.fees),usd(BH.fees))+
+    row('Days invested',Math.round(S.inM*span)+' of '+span,Math.round(BH.inM*span)+' of '+span)+'</tbody></table></div>';
+  if(days<365)p+='<p class="mut">Yearly pace stretches this '+dn(days)+' window to a full year, so read it as a rough size comparison, not a forecast.</p>';
+  h+=sec('3 · The returns, side by side',p);
+
+  /* 4. when the buys and sells happened */
+  if(!tl.length){
+    h+=sec('4 · When the buys and sells happened','<p>No buys or sells happened. Either the selected phases and signs never lined up on the same day, or the date range was too short. Try ticking more phases or signs.</p>');
+  }else{
+    var first=tl[0],last=tl[tl.length-1],holds=tl.map(function(t){return t.b-t.a});
+    p='<p>The first buy came on '+bd('gold',dt(D.t[first.a]))+' at about '+$$(D.c[first.a-1])+', with the Moon in '+moonS(first.a)+'. '+
+      (last.open?'The last trade is still open: it was bought on '+dt(D.t[last.a])+' and was still held at the end of the test, valued at '+$$(D.c[i1])+'.':'The last sell came on '+bd('gold',dt(D.t[last.b]))+' at about '+$$(D.c[last.b-1])+'.')+
+      ' A typical position was held for '+dn(med(holds))+'.</p>';
+    var bp=mode(tl.map(function(t){return D.ph[t.a]})),bs=mode(tl.map(function(t){return D.ms[t.a]})),sp=mode(closed.map(function(t){return D.ph[t.b]})),ss=mode(closed.map(function(t){return D.ms[t.b]}));
+    p+='<p>Buys most often began under the '+bd('gold',PH[bp.k].e+' '+PH[bp.k].n)+' ('+bp.n+' of '+bp.tot+') and with the Moon in '+bd('gold',SIGNS[bs.k][0])+' ('+bs.n+' of '+bs.tot+')'+
+      (sp?'. Sells most often came as the Moon reached '+bd('gold',PH[sp.k].e+' '+PH[sp.k].n)+' ('+sp.n+' of '+sp.tot+') and '+bd('gold',SIGNS[ss.k][0])+' ('+ss.n+' of '+ss.tot+').':'.')+'</p>';
+    var rc={phase:0,sign:0,retro:0,eclipse:0,other:0};closed.forEach(function(t){rc[why(t.b).k]++});
+    if(closed.length){var parts=[];if(rc.phase)parts.push(rc.phase+' by the Moon leaving a selected phase');if(rc.sign)parts.push(rc.sign+' by the Moon entering a sign you left out');if(rc.retro)parts.push(rc.retro+' by Mercury going retrograde');if(rc.eclipse)parts.push(rc.eclipse+' by an eclipse window');if(rc.other)parts.push(rc.other+' by other rule changes');
+      p+='<p>What triggered the '+closed.length+' sell'+(closed.length===1?'':'s')+': '+parts.join(', ')+'.</p>'}
+    p+='<canvas id="c6" class="plot" style="height:300px;margin-top:6px"></canvas><div class="legend"><span><i style="background:#9aa0b8"></i>Price (log scale)</span><span><i style="background:rgba(217,180,74,.45)"></i>Money invested</span><span><i style="background:#26a69a"></i>▲ Buy</span><span><i style="background:#ef5350"></i>▼ Sell</span></div>'+
+      '<h5>Result of each trade</h5><canvas id="c7" class="plot" style="height:190px"></canvas><div class="note">Each bar is one round-trip trade, in order, after fees. Green bars made money, red bars lost money.</div>';
+    h+=sec('4 · When the buys and sells happened',p);
+
+    /* 5. trade log */
+    var tr='';
+    tl.forEach(function(t,k){
+      var bi=t.a,si=t.open?i1:t.b,why_=t.open?'Still holding':why(t.b).t;
+      tr+='<tr><td>'+(k+1)+'</td><td class="l">'+dt(D.t[bi])+'</td><td>'+$$(D.c[bi-1])+'</td><td class="l">'+moonS(bi)+'</td><td class="l">'+(t.open?bd('gold','Open · '+dt(D.t[si])):dt(D.t[si]))+'</td><td>'+$$(t.open?D.c[i1]:D.c[t.b-1])+'</td><td class="l">'+(t.open?'—':moonS(t.b))+'</td><td class="l">'+why_+'</td><td>'+(t.b-t.a)+'</td><td>'+bd(cls(t.r),pc(t.r*100,2))+'</td><td>'+bd(cls(t.out-t.inn),sg(t.out-t.inn))+'</td><td>'+usd(t.out)+'</td></tr>';
+    });
+    p='<p>Every purchase and sale the strategy would have made, in order. Prices are the approximate market price at the moment of each trade (the previous day\'s close). “Money after” is your total once that trade finished.</p>'+
+      '<div class="tw" style="max-height:460px"><table class="log"><thead><tr><th>#</th><th class="l">Buy date</th><th>Buy price</th><th class="l">Moon at buy</th><th class="l">Sell date</th><th>Sell price</th><th class="l">Moon at sell</th><th class="l">Why it sold</th><th>Days</th><th>Result</th><th>Profit / loss</th><th>Money after</th></tr></thead><tbody>'+tr+'</tbody></table></div>'+
+      '<div class="row" style="margin-top:10px"><button class="btn gold" id="btCsv">Download trade log (CSV)</button><span class="mut" style="font-size:12px">Opens in Excel or Google Sheets.</span></div>';
+    h+=sec('5 · Historical buy and sell log',p);
+
+    /* 6. how the trades performed */
+    var rs=tl.map(function(t){return t.r}),wins=rs.filter(function(v){return v>0}),loss=rs.filter(function(v){return v<=0});
+    var avgW=wins.length?wins.reduce(function(a,b){return a+b},0)/wins.length:0,avgL=loss.length?loss.reduce(function(a,b){return a+b},0)/loss.length:0;
+    var bt=tl[0],wt=tl[0];tl.forEach(function(t){if(t.r>bt.r)bt=t;if(t.r<wt.r)wt=t});
+    function kk(t,v,s,c){return '<div class="kpi"><div class="t">'+t+'</div><div class="v '+(c||'')+'">'+v+'</div><div class="s">'+s+'</div></div>'}
+    function when(t){return dt(D.t[t.a])+' → '+(t.open?'still open':dt(D.t[t.b]))}
+    p='<div class="kpis">'+kk('Win rate',(S.win*100).toFixed(0)+'%',wins.length+' winners · '+loss.length+' losers')+kk('Average winner',pc(avgW*100,2),'per winning trade','up')+kk('Average loser',loss.length?pc(avgL*100,2):'—','per losing trade',loss.length?'dn':'')+
+      kk('Best trade',pc(bt.r*100,2),when(bt),'up')+kk('Worst trade',pc(wt.r*100,2),when(wt),wt.r<0?'dn':'')+kk('Typical hold',dn(med(holds)),'longest: '+dn(S.longIn))+kk('Longest wait in cash',dn(S.longOut),'between trades')+kk('Average trade',pc(S.avgTr*100,2),'after fees',cls(S.avgTr))+'</div>';
+    p+='<p>'+(wins.length>=loss.length?'More trades won than lost':'More trades lost than won')+', and the average winner was '+(loss.length&&avgL!==0?(Math.abs(avgW/avgL)).toFixed(1)+' times the size of the average loser':'not offset by any losing trades')+'. '+
+      (tl.length<30?'With only '+tl.length+' trade'+(tl.length===1?'':'s')+' this is a small sample, so one lucky or unlucky trade can swing these numbers a lot.':'With '+tl.length+' trades there is a fair amount of data here, though the results can still be driven by a few big moves.')+'</p>';
+    h+=sec('6 · How the trades performed',p);
+  }
+
+  /* 7. risk */
+  function ddText(r,E){if(r.mdd>=-1e-9)return 'never fell below a previous high';return bd('dn',pc(r.mdd*100,1))+' (from '+usd(E[r.ddPkI-i0])+' on '+dt(D.t[r.ddPkI])+' down to '+usd(E[r.mddI-i0])+' on '+dt(D.t[r.mddI])+')'}
+  function shT(v){return v<0?'negative, meaning the ups and downs were not paid for with extra return':v<.5?'weak':v<1?'modest':v<2?'solid':'very strong. Numbers this high are common on short windows and are often luck, so check them on other coins and dates'}
+  p='<p>The strategy\'s worst slide was '+ddText(S,S.E)+'. For buy &amp; hold it was '+ddText(BH,BH.E)+'. '+
+    (Math.abs(S.mdd)<Math.abs(BH.mdd)?'Sitting in cash part of the time made the ride '+((Math.abs(BH.mdd)-Math.abs(S.mdd))*100).toFixed(1)+' points smoother at the worst moment.':'The moon rules did not cushion the worst drop here.')+'</p>'+
+    '<p>The Sharpe ratio measures return for each unit of day-to-day bumpiness; above 1 is usually considered good. The strategy scored '+bd('gold',S.sharpe.toFixed(2))+' ('+shT(S.sharpe)+'), against '+BH.sharpe.toFixed(2)+' for holding.</p>';
+  h+=sec('7 · Risk: how rough was the ride?',p);
+
+  /* 8. period by period */
+  var yearly=days>800,rows=[],key=null,lastI=i0,pS=S.E[0],pBh=BH.E[0];
+  function pushP(k,li){var es=S.E[li-i0],eb=BH.E[li-i0];rows.push({k:k,s:es/pS-1,b:eb/pBh-1});pS=es;pBh=eb}
+  for(var ii=i0;ii<=i1;ii++){var d=new Date(D.t[ii]),k=yearly?String(d.getUTCFullYear()):d.toLocaleDateString('en-US',{timeZone:'UTC',month:'short',year:'numeric'});if(key!==null&&k!==key)pushP(key,lastI);key=k;lastI=ii}
+  pushP(key,lastI);
+  var win2=0,bestR=rows[0],worstR=rows[0];rows.forEach(function(r){if(r.s>r.b)win2++;if(r.s>bestR.s)bestR=r;if(r.s<worstR.s)worstR=r});
+  var trw='';rows.forEach(function(r){trw+='<tr><td class="l">'+r.k+'</td><td>'+bd(cls(r.s),pc(r.s*100,1))+'</td><td>'+bd(cls(r.b),pc(r.b*100,1))+'</td><td>'+bd(cls(r.s-r.b),pc((r.s-r.b)*100,1))+'</td></tr>'});
+  p='<p>The strategy beat buy &amp; hold in '+bd('gold',win2+' of '+rows.length)+' '+(yearly?'years':'months')+'. Its best '+(yearly?'year':'month')+' was '+bestR.k+' ('+pc(bestR.s*100,1)+') and its worst was '+worstR.k+' ('+pc(worstR.s*100,1)+'). The first and last rows may be partial '+(yearly?'years':'months')+'.</p>'+
+    '<div class="tw" style="max-height:380px"><table class="log"><thead><tr><th class="l">'+(yearly?'Year':'Month')+'</th><th>Moon strategy</th><th>Buy &amp; hold</th><th>Difference</th></tr></thead><tbody>'+trw+'</tbody></table></div>';
+  h+=sec('8 · '+(yearly?'Year':'Month')+' by '+(yearly?'year':'month'),p);
+
+  /* 9. which phases and signs paid */
+  var pa=[],sa=[],k2;for(k2=0;k2<8;k2++)pa.push({n:0,s:0,u:0});for(k2=0;k2<12;k2++)sa.push({n:0,s:0,u:0});
+  var inN=0,inS=0,outN=0,outS=0;
+  for(var j=i0+1;j<=i1;j++){var r=D.r[j],P=pa[D.ph[j]],Q=sa[D.ms[j]];P.n++;P.s+=r;if(r>0)P.u++;Q.n++;Q.s+=r;if(r>0)Q.u++;
+    var on=o.al[D.ph[j]]&&o.sg[D.ms[j]]&&!(o.ro&&D.retro[j])&&!(o.eo&&D.ecl[j]);if(on){inN++;inS+=r}else{outN++;outS+=r}}
+  function pick(a){var b=-1,w=-1;a.forEach(function(v,k){if(v.n<5)return;if(b<0||v.s/v.n>a[b].s/a[b].n)b=k;if(w<0||v.s/v.n<a[w].s/a[w].n)w=k});return{b:b,w:w}}
+  var pk=pick(pa),sk=pick(sa);
+  function tbl(a,names,inc,pr){var t='<div class="tw"><table><thead><tr><th class="l">'+pr+'</th><th>Days</th><th>Avg daily move</th><th>Up days</th><th>In your rules?</th></tr></thead><tbody>';
+    a.forEach(function(v,k){var m=v.n?v.s/v.n*100:0,c=k===(pr==='Moon phase'?pk.b:sk.b)?'gold':k===(pr==='Moon phase'?pk.w:sk.w)?'dn':'';t+='<tr><td class="l">'+names[k]+'</td><td>'+v.n+'</td><td>'+(v.n?bd(c||cls(m),pc(m,2)):'—')+'</td><td>'+(v.n?(v.u/v.n*100).toFixed(0)+'%':'—')+'</td><td>'+(inc[k]?'<b class="gold">Yes</b>':'<span class="mut">No</span>')+'</td></tr>'});
+    return t+'</tbody></table></div>'}
+  var avgIn=inN?inS/inN*100:0,avgOut=outN?outS/outN*100:0;
+  p='<p>This shows how '+nm+' itself behaved under each moon phase and sign during your test window, whether or not you were invested. On the days your rules had you invested ('+inN+' days) the coin moved an average of '+bd(cls(avgIn),pc(avgIn,2))+' per day. On the days you sat in cash ('+outN+' days) it moved '+bd(cls(avgOut),pc(avgOut,2))+' per day. '+
+    (avgIn>avgOut?'Your rules were mostly in the market on the better days.':'Your rules were mostly in the market on the weaker days.')+'</p>';
+  if(pk.b>=0)p+='<p>The strongest phase was '+bd('gold',PH[pk.b].e+' '+PH[pk.b].n)+' ('+pc(pa[pk.b].s/pa[pk.b].n*100,2)+' per day), which you '+(o.al[pk.b]?'included':'left out')+'. The weakest was '+bd('dn',PH[pk.w].e+' '+PH[pk.w].n)+' ('+pc(pa[pk.w].s/pa[pk.w].n*100,2)+' per day), which you '+(o.al[pk.w]?'included':'left out')+'. '+
+    'The strongest sign was '+bd('gold',SIGNS[sk.b][1]+' '+SIGNS[sk.b][0])+' ('+pc(sa[sk.b].s/sa[sk.b].n*100,2)+' per day, '+(o.sg[sk.b]?'included':'left out')+') and the weakest was '+bd('dn',SIGNS[sk.w][1]+' '+SIGNS[sk.w][0])+' ('+pc(sa[sk.w].s/sa[sk.w].n*100,2)+' per day, '+(o.sg[sk.w]?'included':'left out')+').</p>';
+  p+='<div class="grid2">'+tbl(pa,PH.map(function(q){return q.e+' '+q.n}),o.al,'Moon phase')+tbl(sa,SIGNS.map(function(q){return q[1]+' '+q[0]}),o.sg,'Moon sign')+'</div>'+
+    '<p class="mut">Each phase has only a few dozen days and each sign even fewer in a window this size, so small gaps between rows are normal noise.</p>';
+  h+=sec('9 · Which phases and signs paid?',p);
+
+  /* 10. real or luck */
+  var sr=res.slice().sort(function(a,b){return a-b}),prof=res.filter(function(v){return v>0}).length;
+  p='<p>To check whether the moon timing mattered, the same rules were re-run '+res.length+' times with the moon and sign calendar slid forward by a few days each time, so every run follows a <b>fake sky</b> on the real prices. In '+Math.round(prof/res.length*100)+'% of those runs the money grew; the middle fake-sky result was '+pc(med(res),1)+', with a range from '+pc(sr[0],1)+' to '+pc(sr[sr.length-1],1)+'.</p>'+
+    '<p>Your real sky returned '+bd(cls(S.ret),pc(S.ret*100,1))+' and beat '+bd(pB>=95?'gold':'',pB.toFixed(0)+'%')+' of the fake skies. '+(pB>=95?'That is a strong placing, but neighbouring fake calendars are only a few days apart and overlap a lot, so it is weaker proof than it sounds.':pB>=75?'That is better than average, but not enough to rule out luck.':'That is about what random calendars produce, so the moon timing added no clear edge in this test.')+'</p>';
+  h+=sec('10 · Real result or luck?',p);
+
+  /* 11. bottom line */
+  var small=S.trades<30||days<365,lbl,lc;
+  if(!beat){lbl='Holding did better in this test';lc='dn'}else if(pB>=95&&!small){lbl='Encouraging, but not proof';lc='gold'}else if(pB>=75){lbl='Promising, but could still be luck';lc='gold'}else{lbl='Ahead of holding, with no clear moon edge';lc=''}
+  p='<div class="verdict '+(lc==='dn'?'':'y')+'"><b class="'+lc+'" style="font-size:15px">'+lbl+'</b><br>'+
+    (beat?'The rules finished '+Math.abs(edge).toFixed(1)+' points ahead of buy &amp; hold and beat '+pB.toFixed(0)+'% of the fake skies':'Buy &amp; hold finished '+Math.abs(edge).toFixed(1)+' points ahead of the rules, which beat '+pB.toFixed(0)+'% of the fake skies')+
+    ', using '+S.trades+' trade'+(S.trades===1?'':'s')+' over '+dn(days)+'.</div>'+
+    '<ul class="rl"><li>This is a look at the past. A rule that worked before is not a promise it will work again.</li>'+
+    '<li>'+(small?'The sample is small ('+S.trades+' trade'+(S.trades===1?'':'s')+', '+dn(days)+'), so treat the result as an idea to test further, not a conclusion.':'The sample is reasonably sized, but check the same rules on other coins and other date ranges before putting weight on them.')+'</li>'+
+    '<li>Real trading adds costs this test only partly counts: spreads, slippage, taxes and missed fills.</li>'+
+    '<li>Moon, sign and Mercury positions use simplified formulas. This tool is for education and entertainment, not financial advice.</li></ul>';
+  h+=sec('11 · The bottom line',p);
+
+  box.innerHTML='<h3 style="margin-top:22px">Your back-test report</h3>'+h;
+  if(tl.length){
+    tradeChart('c6',i0,i1,tl);tradeBars('c7',tl);
+    var btn=$('btCsv');if(btn)btn.onclick=function(){
+      function q(v){return '"'+String(v).replace(/"/g,'""')+'"'}
+      var L=[['Trade','Buy date','Buy price','Buy moon phase','Buy moon sign','Sell date','Sell price','Sell moon phase','Sell moon sign','Status','Days held','Result % after fees','Profit or loss $','Money after trade $','Why it sold']];
+      tl.forEach(function(t,k){var si=t.open?i1:t.b;L.push([k+1,fd(D.t[t.a]),D.c[t.a-1],PH[D.ph[t.a]].n,SIGNS[D.ms[t.a]][0],fd(D.t[si]),t.open?D.c[i1]:D.c[t.b-1],t.open?'':PH[D.ph[t.b]].n,t.open?'':SIGNS[D.ms[t.b]][0],t.open?'Open':'Closed',t.b-t.a,(t.r*100).toFixed(2),(t.out-t.inn).toFixed(2),t.out.toFixed(2),t.open?'Still holding':why(t.b).t])});
+      var csv=L.map(function(r){return r.map(q).join(',')}).join('\r\n'),a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='moon-backtest-trades-'+String(D.name||'asset').replace(/[^A-Za-z0-9_-]+/g,'-')+'.csv';
+      document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)};
+  }
+}
+function tri(x,px_,py,up,col){x.fillStyle=col;x.strokeStyle='rgba(5,6,12,.9)';x.lineWidth=1.2;x.beginPath();if(up){x.moveTo(px_,py-1);x.lineTo(px_-6,py+10);x.lineTo(px_+6,py+10)}else{x.moveTo(px_,py+1);x.lineTo(px_-6,py-10);x.lineTo(px_+6,py-10)}x.closePath();x.fill();x.stroke()}
+function tradeChart(id,i0,i1,tl){
+  var o=setup(id),x=o.x,W=o.w,H=o.h,L=62,R=12,T=14,Bt=26,n=i1-i0+1,lo=Infinity,hi=-Infinity,i;
+  for(i=i0;i<=i1;i++){var v=D.c[i];if(v<lo)lo=v;if(v>hi)hi=v}
+  lo=Math.log(Math.max(lo,1e-9));hi=Math.log(Math.max(hi,1e-9));var pd=(hi-lo)*.08||.1;lo-=pd;hi+=pd;
+  var X=function(k){return L+(k-i0)/Math.max(1,n-1)*(W-L-R)},Y=function(v){return T+(1-(Math.log(Math.max(v,1e-9))-lo)/(hi-lo))*(H-T-Bt)};
+  x.font='11px system-ui';x.fillStyle='#9aa0b8';x.strokeStyle='rgba(160,170,210,.15)';x.lineWidth=1;x.textAlign='right';
+  for(var g=0;g<=4;g++){var lv=lo+(hi-lo)*g/4,y=Y(Math.exp(lv));x.beginPath();x.moveTo(L,y);x.lineTo(W-R,y);x.stroke();x.fillText('$'+px(Math.exp(lv)),L-6,y+4)}
+  x.textAlign='center';for(var k=0;k<=5;k++){var ii=Math.round((n-1)*k/5);x.fillText(fd(D.t[i0+ii]).slice(0,7),X(i0+ii),H-8)}
+  x.fillStyle='rgba(217,180,74,.16)';tl.forEach(function(t){var xa=X(t.a),xb=X(Math.min(t.b,i1));x.fillRect(xa,T,Math.max(1.5,xb-xa),H-T-Bt)});
+  x.strokeStyle='#9aa0b8';x.lineWidth=1.5;x.beginPath();var st=Math.max(1,Math.floor(n/((W-L-R)*1.5)));
+  for(i=i0;i<=i1;i+=st){var px2=X(i),py=Y(D.c[i]);if(i===i0)x.moveTo(px2,py);else x.lineTo(px2,py)}x.lineTo(X(i1),Y(D.c[i1]));x.stroke();
+  tl.forEach(function(t){tri(x,X(t.a),Y(D.c[t.a-1]),true,'#26a69a');if(!t.open)tri(x,X(t.b),Y(D.c[t.b-1]),false,'#ef5350')});
+}
+function tradeBars(id,tl){
+  var o=setup(id),x=o.x,W=o.w,H=o.h,L=52,R=12,T=14,Bt=22,n=tl.length,mx=0,mn=0;
+  tl.forEach(function(t){if(t.r>mx)mx=t.r;if(t.r<mn)mn=t.r});if(mx-mn<1e-6){mx+=.01;mn-=.01}
+  var Y=function(v){return T+(1-(v-mn)/(mx-mn))*(H-T-Bt)},bw=(W-L-R)/n;
+  x.font='11px system-ui';x.fillStyle='#9aa0b8';x.textAlign='right';x.strokeStyle='rgba(160,170,210,.15)';x.lineWidth=1;
+  [mx,0,mn].forEach(function(v){var y=Y(v);x.beginPath();x.moveTo(L,y);x.lineTo(W-R,y);x.stroke();x.fillText((v*100).toFixed(0)+'%',L-6,y+4)});
+  tl.forEach(function(t,k){var y0=Y(0),y1=Y(t.r);x.fillStyle=t.r>=0?'#26a69a':'#ef5350';x.fillRect(L+k*bw+Math.min(1.5,bw*.12),Math.min(y0,y1),Math.max(1,bw-Math.min(3,bw*.24)),Math.max(1,Math.abs(y1-y0)))});
+  x.textAlign='left';x.fillText('Trade 1',L,H-6);x.textAlign='right';x.fillText('Trade '+n,W-R,H-6);
 }
 function lineChartLog(id,series,i0,i1){
   var o=setup(id),x=o.x,W=o.w,H=o.h,L=62,R=12,T=12,Bt=26,lo=Infinity,hi=-Infinity,n=i1-i0+1;
