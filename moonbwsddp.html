@@ -837,8 +837,8 @@ function reportBT(o,i0,i1,S,BH,pB,res){
     var rc={phase:0,sign:0,retro:0,eclipse:0,other:0};closed.forEach(function(t){rc[why(t.b).k]++});
     if(closed.length){var parts=[];if(rc.phase)parts.push(rc.phase+' by the Moon leaving a selected phase');if(rc.sign)parts.push(rc.sign+' by the Moon entering a sign you left out');if(rc.retro)parts.push(rc.retro+' by Mercury going retrograde');if(rc.eclipse)parts.push(rc.eclipse+' by an eclipse window');if(rc.other)parts.push(rc.other+' by other rule changes');
       p+='<p>What triggered the '+closed.length+' sell'+(closed.length===1?'':'s')+': '+parts.join(', ')+'.</p>'}
-    p+='<canvas id="c6" class="plot" style="height:300px;margin-top:6px"></canvas><div class="legend"><span><i style="background:#9aa0b8"></i>Price (log scale)</span><span><i style="background:rgba(217,180,74,.45)"></i>Money invested</span><span><i style="background:#26a69a"></i>▲ Buy</span><span><i style="background:#ef5350"></i>▼ Sell</span></div>'+
-      '<h5>Result of each trade</h5><canvas id="c7" class="plot" style="height:190px"></canvas><div class="note">Each bar is one round-trip trade, in order, after fees. Green bars made money, red bars lost money.</div>';
+    p+='<canvas id="rp6" class="plot" style="height:300px;margin-top:6px"></canvas><div class="legend"><span><i style="background:#9aa0b8"></i>Price (log scale)</span><span><i style="background:rgba(217,180,74,.45)"></i>Money invested</span><span><i style="background:#26a69a"></i>▲ Buy</span><span><i style="background:#ef5350"></i>▼ Sell</span></div>'+
+      '<h5>Result of each trade</h5><canvas id="rp7" class="plot" style="height:190px"></canvas><div class="note">Each bar is one round-trip trade, in order, after fees. Green bars made money, red bars lost money.</div>';
     h+=sec('4 · When the buys and sells happened',p);
 
     /* 5. trade log */
@@ -923,7 +923,7 @@ function reportBT(o,i0,i1,S,BH,pB,res){
 
   box.innerHTML='<h3 style="margin-top:22px">Your back-test report</h3>'+h;
   if(tl.length){
-    tradeChart('c6',i0,i1,tl);tradeBars('c7',tl);
+    tradeChart('rp6',i0,i1,tl);tradeBars('rp7',tl);
     var btn=$('btCsv');if(btn)btn.onclick=function(){
       function q(v){return '"'+String(v).replace(/"/g,'""')+'"'}
       var L=[['Trade','Buy date','Buy price','Buy moon phase','Buy moon sign','Sell date','Sell price','Sell moon phase','Sell moon sign','Status','Days held','Result % after fees','Profit or loss $','Money after trade $','Why it sold']];
