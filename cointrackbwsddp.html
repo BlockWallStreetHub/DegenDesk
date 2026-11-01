@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" type="image/png" href="degendesk-favicon.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BWS Coin Tracker — Watch Coins &amp; Set Price Alerts</title>
@@ -172,7 +171,7 @@ function usd(n){n=+n;if(!isFinite(n))return '—';var a=Math.abs(n);
  if(a>=1)return '$'+n.toLocaleString(undefined,{maximumFractionDigits:2});if(a===0)return '$0';return '$'+n.toPrecision(3)}
 function px(n){n=+n;if(!isFinite(n)||!n)return '—';if(n>=1)return '$'+n.toLocaleString(undefined,{maximumFractionDigits:n>=1000?0:2});
  if(n>=0.01)return '$'+n.toFixed(4);return '$'+n.toPrecision(3).replace(/e-(\d+)/,function(m,e){return 'e-'+e})}
-function pc(n){n=+n;if(!isFinite(n))return '<span class="mut">—</span>';return '<span class="'+(n>=0?'up':'dn')+'">'+(n>=0?'+':'')+n.toFixed(Math.abs(n)<10?2:1)+'%</span>'}
+function pc(n){n=(n==null||n==='')?NaN:+n;if(!isFinite(n))return '<span class="mut">—</span>';return '<span class="'+(n>=0?'up':'dn')+'">'+(n>=0?'+':'')+n.toFixed(Math.abs(n)<10?2:1)+'%</span>'}
 function ago(t){var s=Math.max(0,(Date.now()-t)/1000);if(s<60)return Math.floor(s)+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'}
 function jf(u){return fetch(u).then(function(r){if(!r.ok)throw new Error(new URL(u).hostname+' answered '+r.status);return r.json()},function(){throw new Error('Could not reach '+new URL(u).hostname+' (offline, or an ad blocker is in the way)')})}
 function toast(m){var t=$('toast'),d=document.createElement('div');d.className='tt';d.title=String(m);
@@ -223,6 +222,21 @@ function addCoin(c){
 
 /* ---------- price checks ---------- */
 var busy=false;
+var hBusy=false;
+async function histFill(){
+ if(hBusy)return;hBusy=true;var did=false;
+ try{
+  for(var i=0;i<list.length;i++){var it=list[i];if(it.h&&Date.now()-it.h.t<1800000)continue;
+   try{var gid=await gtId(it.ch);if(!gid){it.h={t:Date.now(),na:1};did=true;continue}
+    var j=await gt('/networks/'+gid+'/pools/'+it.pair+'/ohlcv/day?aggregate=1&limit=31&currency=usd',1800000);
+    var L=(((j.data||{}).attributes||{}).ohlcv_list||[]).slice().sort(function(a,b){return b[0]-a[0]}),p=it.last&&it.last.p;
+    var chg=function(n){if(L.length<=n||!p)return null;var o=+L[n][1];return o>0?(p/o-1)*100:null};
+    it.h={t:Date.now(),c7:chg(7),c30:chg(30)};did=true;
+   }catch(e){if(e&&e.nf){it.h={t:Date.now(),na:1};did=true}else break}
+  }
+  if(did){save();var ae=document.activeElement;if(!(ae&&ae.closest&&ae.closest('.ap,#ltabs,#lbar,#bulk')))render()}
+ }finally{hBusy=false}
+}
 async function poll(){
  if(busy||!list.length)return;busy=true;$('chk').disabled=true;
  try{
@@ -238,6 +252,7 @@ async function poll(){
    }
   }
   save();
+  histFill();
   await evaluate();
   $('upd').textContent='Checked '+new Date().toLocaleTimeString();
  }finally{busy=false;$('chk').disabled=false;var ae=document.activeElement;if(!(ae&&ae.closest&&ae.closest('.ap,#ltabs,#lbar,#bulk')))render();else{$('upd').textContent=$('upd').textContent}}
@@ -305,18 +320,18 @@ function render(){
  renderChan();
  var vis=visible().slice();renderTabs();
  var SK=cfg.sort&&cfg.sort.k;
- if(SK){var dir=cfg.sort.d==='asc'?1:-1,val=function(it){var l=it.last||{};if(SK==='sym')return String(it.sym||'').toLowerCase();var v={p:l.p,c5:l.c5,c1:l.c1,c6:l.c6,c24:l.c24,mc:l.mc||l.fdv,liq:l.liq}[SK];return v==null||v===''||!isFinite(+v)?null:+v};
+ if(SK){var dir=cfg.sort.d==='asc'?1:-1,val=function(it){var l=it.last||{};if(SK==='sym')return String(it.sym||'').toLowerCase();var v={p:l.p,c5:l.c5,c1:l.c1,c6:l.c6,c24:l.c24,c7:(it.h||{}).c7,c30:(it.h||{}).c30,mc:l.mc||l.fdv,liq:l.liq}[SK];return v==null||v===''||!isFinite(+v)?null:+v};
   vis.sort(function(a,b){var x=val(a),y=val(b);if(x===null&&y===null)return 0;if(x===null)return 1;if(y===null)return -1;return x<y?-dir:x>y?dir:0})}
  function th(k,label,cls){var on=SK===k,ar=on?(cfg.sort.d==='asc'?' ▲':' ▼'):'';return '<th class="'+(cls||'')+' sortable'+(on?' sorted':'')+'" data-sort="'+k+'" tabindex="0" role="button" title="Click to sort high to low, again for low to high, a third time to clear">'+label+ar+'</th>'}
  if(!vis.length){$('tbl').innerHTML='<div class="empty">'+(list.length?'No coins in this list yet. Add a coin above, or open a coin in All and put it in this list.':'No coins yet. Add one above.')+'</div>'}
  else{
-  var h='<table><thead><tr>'+th('sym','Coin','')+th('p','Price','r')+th('c5','5m','r')+th('c1','1h','r')+th('c6','6h','r')+th('c24','24h','r')+th('mc','Market cap','r')+th('liq','Liquidity','r')+'<th>Alerts</th><th></th></tr></thead><tbody>';
+  var h='<table><thead><tr>'+th('sym','Coin','')+th('p','Price','r')+th('c5','5m','r')+th('c1','1h','r')+th('c6','6h','r')+th('c24','24h','r')+th('c7','7d','r')+th('c30','30d','r')+th('mc','Market cap','r')+th('liq','Liquidity','r')+'<th>Alerts</th><th></th></tr></thead><tbody>';
   vis.forEach(function(it){var l=it.last||{},n=it.alerts.filter(function(a){return a.on}).length,gt=DS2GT[it.ch];
    h+='<tr><td><b>'+esc(it.sym)+'</b> <span class="badge">'+esc(pretty(it.ch))+'</span><br><span class="mut" style="font-size:12px">'+esc(it.name||'')+'</span></td>'
-    +'<td class="r"><b>'+px(l.p)+'</b></td><td class="r">'+pc(l.c5)+'</td><td class="r">'+pc(l.c1)+'</td><td class="r">'+pc(l.c6)+'</td><td class="r">'+pc(l.c24)+'</td><td class="r">'+(l.mc?usd(l.mc):(l.fdv?'<span class="mut" title="Market cap not reported. This is the fully diluted value (FDV).">FDV '+usd(l.fdv)+'</span>':'<span class="mut">—</span>'))+'</td><td class="r mut">'+usd(l.liq)+'</td>'
+    +'<td class="r"><b>'+px(l.p)+'</b></td><td class="r">'+pc(l.c5)+'</td><td class="r">'+pc(l.c1)+'</td><td class="r">'+pc(l.c6)+'</td><td class="r">'+pc(l.c24)+'</td><td class="r" title="From daily candles. Dash = not enough history yet.">'+pc((it.h||{}).c7)+'</td><td class="r" title="From daily candles. Dash = not enough history yet.">'+pc((it.h||{}).c30)+'</td><td class="r">'+(l.mc?usd(l.mc):(l.fdv?'<span class="mut" title="Market cap not reported. This is the fully diluted value (FDV).">FDV '+usd(l.fdv)+'</span>':'<span class="mut">—</span>'))+'</td><td class="r mut">'+usd(l.liq)+'</td>'
     +'<td><button class="btn sec sm" type="button" data-tog="'+it.id+'">🔔 '+(n?n+' active':'Set alert')+'</button></td>'
     +'<td><a class="mut" target="_blank" rel="noopener" href="'+esc(it.url||('https://dexscreener.com/'+it.ch+'/'+it.pair))+'">DexScreener ↗</a>'+(gt?' · <a class="mut" target="_blank" rel="noopener" href="https://www.geckoterminal.com/'+gt+'/pools/'+esc(it.pair)+'">GeckoTerminal ↗</a>':'')+' <button class="btn dg sm" type="button" data-rm="'+it.id+'">Remove</button></td></tr>';
-   if(open[it.id])h+='<tr><td colspan="10" style="white-space:normal">'+panel(it)+'</td></tr>'});
+   if(open[it.id])h+='<tr><td colspan="12" style="white-space:normal">'+panel(it)+'</td></tr>'});
   $('tbl').innerHTML=h+'</tbody></table>';
  }
  putBack(keep);
@@ -386,9 +401,9 @@ $('lbar').addEventListener('click',function(e){
  if(id==='dlb'&&a){var b=e.target;if(b.getAttribute('data-sure')==='1'){list.forEach(function(x){x.lists=(x.lists||[]).filter(function(i){return i!==a.id})});lists=lists.filter(function(l){return l.id!==a.id});cfg.active='all';save();saveL();ss(K.cfg,cfg);render()}else{b.setAttribute('data-sure','1');b.textContent='Tap again. Coins stay in All';setTimeout(function(){if(b.isConnected){b.removeAttribute('data-sure');b.textContent='Delete this list'}},3500)}return}
  if(id==='cpb'){var txt=visible().map(function(x){return x.addr}).join('\n');
   try{navigator.clipboard.writeText(txt).then(function(){toast('Copied '+visible().length+' addresses. You can paste them into "Paste a whole list" anywhere.')},function(){toast('Could not copy. Use Download CSV instead.')})}catch(er){toast('Could not copy. Use Download CSV instead.')}return}
- if(id==='csv'){var rows=[['List','Symbol','Name','Chain','Contract address','Pair','Price USD','24h %','Market cap USD','FDV USD','Liquidity USD']];
+ if(id==='csv'){var rows=[['List','Symbol','Name','Chain','Contract address','Pair','Price USD','24h %','7d %','30d %','Market cap USD','FDV USD','Liquidity USD']];
   visible().forEach(function(x){var l=x.last||{},nm=(x.lists||[]).map(function(i){var q=lists.filter(function(z){return z.id===i})[0];return q?q.name:''}).filter(Boolean).join(' | ');
-   rows.push([nm,x.sym,x.name||'',x.ch,x.addr,x.pair,l.p||'',l.c24==null?'':l.c24,l.mc||'',l.fdv||'',l.liq||''])});
+   rows.push([nm,x.sym,x.name||'',x.ch,x.addr,x.pair,l.p||'',l.c24==null?'':l.c24,(x.h&&x.h.c7!=null)?x.h.c7:'',(x.h&&x.h.c30!=null)?x.h.c30:'',l.mc||'',l.fdv||'',l.liq||''])});
   var csv='\ufeff'+rows.map(function(r){return r.map(function(c){c=String(c==null?'':c);if(/^[=+\-@]/.test(c))c="'"+c;return '"'+c.replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
   var u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),a2=document.createElement('a');a2.href=u;a2.download='coin-tracker-'+(a?a.name.replace(/[^A-Za-z0-9_-]+/g,'-'):'all')+'.csv';document.body.appendChild(a2);a2.click();a2.remove();setTimeout(function(){URL.revokeObjectURL(u)},2000)}
 });
