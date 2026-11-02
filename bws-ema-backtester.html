@@ -70,6 +70,31 @@ th:first-child,td:first-child{text-align:left}
 .heat small{display:block;font-size:11px;opacity:.85}
 .disc{margin-top:26px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;line-height:1.55}
 footer{text-align:center;margin-top:22px;color:var(--muted);font-size:12px;font-family:'DM Mono',monospace;letter-spacing:.12em}
+/* ---- Rule Matrix + Strategy Maker ---- */
+#mxStatus{margin-top:12px;font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);min-height:18px}
+#mxStatus.err{color:var(--red)} #mxStatus.ok{color:var(--green)}
+.chk{display:inline-flex!important;align-items:center;gap:7px;margin:0!important;text-transform:none!important;letter-spacing:0!important;font-size:14px!important;font-weight:500!important;color:var(--text)!important;background:var(--navy);border:1px solid var(--line);border-radius:9px;padding:8px 12px;cursor:pointer}
+.chk input{width:auto;padding:0;accent-color:var(--gold)}
+.chk:has(input:checked){border-color:var(--gold)}
+#mxYrs button.on{background:rgba(212,168,67,.18)}
+.hmg{display:grid;gap:6px;margin:8px 0}
+.hmg .hh{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;justify-content:center;font-weight:600}
+.hmg .hc{border-radius:9px;padding:10px 6px;text-align:center;border:1px solid var(--line);cursor:pointer;min-height:58px;display:flex;flex-direction:column;justify-content:center}
+.hmg .hc:hover{border-color:var(--gold)} .hmg .hc.sel{outline:2px solid var(--gold)}
+.hmg .hc b{font-family:'DM Mono',monospace;font-size:16px;font-weight:500}
+.hmg .hc span{font-size:11px;color:var(--muted);margin-top:2px}
+#mxTab tr.rk{cursor:pointer} #mxTab tr.rk:hover td{background:rgba(255,255,255,.04)} #mxTab tr.sel td{background:rgba(212,168,67,.10)}
+#mxTab th.s{cursor:pointer} #mxTab th.sorted{color:var(--gold)}
+#mxTab th:nth-child(2),#mxTab td:nth-child(2){text-align:left}
+.mxcv{width:100%;display:block;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:10px;cursor:crosshair}
+#mxTip{position:fixed;pointer-events:none;background:#06101f;border:1px solid var(--gold);border-radius:8px;padding:7px 10px;font-family:'DM Mono',monospace;font-size:12px;display:none;z-index:99998;white-space:nowrap;line-height:1.5}
+.spn{display:inline-block;width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:mxsp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes mxsp{to{transform:rotate(360deg)}}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.two{grid-template-columns:1fr}}
+#smTab tr.sel td{background:rgba(212,168,67,.10)}
+.verdict.y{border-left-color:var(--gold)}
+.aiBox{white-space:pre-wrap;line-height:1.6}
 </style>
 </head>
 <body>
@@ -77,7 +102,7 @@ footer{text-align:center;margin-top:22px;color:var(--muted);font-size:12px;font-
   <header>
     <div class="brand">BLOCK WALL STREET</div>
     <h1>EMA <span>BACKTESTER</span></h1>
-    <p class="sub">Enter any ticker or contract address, pick a timeframe and an EMA (20, 50, 100 or 200), set your dollars, and see what buying and selling on the signals would have done compared to just holding.</p>
+    <p class="sub">Enter any ticker or contract address, pick a timeframe and an EMA (20, 50, 100 or 200), set your dollars, and see what buying and selling on the signals would have done compared to just holding. Further down, the Rule Matrix tests every EMA on daily, weekly and monthly candles back up to 15 years, and the Strategy Maker shows how a rule could play out over the next 90, 180 or 365 days.</p>
   </header>
 
   <div class="card">
@@ -159,6 +184,7 @@ footer{text-align:center;margin-top:22px;color:var(--muted);font-size:12px;font-
       <button id="getsig">Get Signal</button>
       <button id="sigscan">Signal Scan</button>
       <button id="scan">Scan All Timeframes</button>
+      <button id="mxRun2">Rule Matrix (up to 15 yrs)</button>
     </div>
     <div id="status"></div>
   </div>
@@ -227,9 +253,90 @@ footer{text-align:center;margin-top:22px;color:var(--muted);font-size:12px;font-
     <div class="scroll" style="max-height:none"><table class="heat" id="heat"></table></div>
   </div>
 
+  <div class="card" id="mxCard">
+    <h2>Rule Matrix · every EMA on daily, weekly and monthly, back to 15 years</h2>
+    <div class="note" style="margin:0 0 12px">Buy when a candle <b>closes above</b> the EMA, sell when one <b>closes below</b> it. This runs the 20, 50, 100 and 200 EMA (and any you add) on daily, weekly and monthly candles side by side against buy-and-hold. It uses the ticker, data source and network from section 1 and your starting capital and fee from section 3.</div>
+    <div class="row" id="mxYrs" style="margin:0 0 12px">
+      <span class="note" style="margin:0">LOOK BACK</span>
+      <button data-yrs="15">15 years</button><button data-yrs="10">10 years</button><button data-yrs="5">5 years</button><button data-yrs="3">3 years</button><button data-yrs="1">1 year</button><button data-yrs="0">All data</button>
+    </div>
+    <div class="grid">
+      <div><label for="mxFrom">From</label><input id="mxFrom" type="date"></div>
+      <div><label for="mxTo">To</label><input id="mxTo" type="date"></div>
+      <div><label for="mxBuf">Buffer around the EMA (%)</label><input id="mxBuf" type="number" value="0" min="0" max="10" step="0.5"></div>
+      <div><label for="mxDelay">Act on the signal</label><select id="mxDelay"><option value="0">At the close that crossed</option><option value="1">One day later (more realistic)</option></select></div>
+      <div><label for="mxStart">At the start of the test</label><select id="mxStart"><option value="0">Wait for the first cross above</option><option value="1">Start invested if already above</option></select></div>
+    </div>
+    <label style="margin-top:14px">EMA lengths</label>
+    <div class="row" id="mxP" style="margin-top:0">
+      <label class="chk"><input type="checkbox" data-p="20" checked>20 EMA</label><label class="chk"><input type="checkbox" data-p="50" checked>50 EMA</label>
+      <label class="chk"><input type="checkbox" data-p="100" checked>100 EMA</label><label class="chk"><input type="checkbox" data-p="200" checked>200 EMA</label>
+      <input id="mxPc" type="text" placeholder="your own, e.g. 9, 21, 55" style="width:210px">
+    </div>
+    <label style="margin-top:14px">Candle size the EMA is read on</label>
+    <div class="row" id="mxT" style="margin-top:0">
+      <label class="chk"><input type="checkbox" data-tf="D" checked>Daily</label><label class="chk"><input type="checkbox" data-tf="W" checked>Weekly</label><label class="chk"><input type="checkbox" data-tf="M" checked>Monthly</label>
+    </div>
+    <div class="note">A 50 EMA on weekly candles is 50 weeks. A signal only counts when a candle <b>closes</b> on the other side, so wicks trigger nothing. The EMA is warmed up on all the history before your start date. Monthly 100 and 200 EMAs need about 8 and 17 years of history, so they only show up when the coin has that much.</div>
+    <div class="row"><button class="primary" id="mxRun">Run Rule Matrix</button></div>
+    <div id="mxStatus"></div>
+    <div class="note" id="mxData"></div>
+
+    <div id="mxOut" class="hide" style="margin-top:16px">
+      <div id="mxTop"></div>
+      <div class="row" style="margin:12px 0 4px"><label style="margin:0">Grid shows</label>
+        <select id="hmMetric" style="width:auto"><option value="ret">Total return</option><option value="vs">Beat buy-and-hold by</option><option value="cagr">Yearly return</option><option value="mdd">Worst drop</option><option value="win">Win rate</option></select></div>
+      <div id="hm"></div>
+      <div class="note" style="margin:10px 0 6px">Every rule. Click a heading to sort, click a row to open it below, tick the box to draw it on the chart.</div>
+      <div class="scroll" style="max-height:460px"><table id="mxTab"></table></div>
+      <div class="note">Worst drop is measured on daily closes while holding. Win rate counts finished round trips only. * means the last buy is still open.</div>
+
+      <h2 style="margin-top:22px">Growth of your money</h2>
+      <div class="row" style="margin-top:0"><label class="chk"><input type="checkbox" id="mxLog" checked>Log scale (fairer over many years)</label></div>
+      <div class="legend" id="mxLeg"></div>
+      <div class="cwrap"><canvas class="mxcv" id="mxEq" data-h="340" style="height:340px"></canvas></div>
+
+      <h2 style="margin-top:22px">Open one rule: every buy and sell</h2>
+      <div class="row" style="margin-top:0"><select id="mxSel" style="max-width:320px"></select></div>
+      <div id="mxDetTxt" style="margin-top:10px"></div>
+      <div class="legend"><span><i class="sw" style="background:#cfd3e6"></i> Price</span><span><i class="sw" style="background:var(--gold)"></i> EMA</span><span style="color:#3ecf8e">▲ Buy</span><span style="color:#ef5b5b">▼ Sell</span></div>
+      <div class="cwrap"><canvas class="mxcv" id="mxPx" data-h="360" style="height:360px"></canvas></div>
+      <div class="two" style="margin-top:14px">
+        <div><div class="note" style="margin:0 0 6px"><b>Year by year</b></div><div class="scroll" style="max-height:340px"><table id="mxYr"></table></div></div>
+        <div><div class="note" style="margin:0 0 6px"><b>Every trade (newest first)</b></div><div class="scroll" style="max-height:340px"><table id="mxTr"></table></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card hide" id="smCard">
+    <h2>Strategy Maker · the next 90, 180 or 365 days</h2>
+    <div class="note" style="margin:0 0 12px">Nobody can predict price, so this does not try to. It builds hundreds or thousands of possible futures by reshuffling real days from the coin's own past (in 20-day blocks, so crashes and rallies come in clumps like they really do), then runs the chosen rule through every one. You see the spread of outcomes, where the rule stands today, and the price that would flip it.</div>
+    <div class="grid">
+      <div><label for="smRule">Rule</label><select id="smRule"></select></div>
+      <div><label for="smLearn">Learn from the last</label><select id="smLearn"><option value="0">All the history loaded</option><option value="8">8 years</option><option value="4" selected>4 years</option><option value="2">2 years</option></select></div>
+      <div><label for="smDrift">Average drift of the futures</label><select id="smDrift"><option value="0" selected>Zero (neutral)</option><option value="0.5">Half of the past</option><option value="1">Same as the past</option></select></div>
+      <div><label for="smN">Futures to simulate</label><select id="smN"><option>500</option><option selected>1000</option><option>2000</option></select></div>
+      <div><label for="smH">Chart the next</label><select id="smH"><option value="90">90 days</option><option value="180">180 days</option><option value="365" selected>365 days</option></select></div>
+    </div>
+    <div class="row"><button class="primary" id="smGo">Build the strategy</button></div>
+    <div id="smOut" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card" id="aiCard">
+    <h2>Ask the EMA Desk (AI) <span class="note" style="font-size:12px;letter-spacing:0;text-transform:none">members only</span></h2>
+    <div class="note" style="margin:0 0 10px">Ask in plain words, for example: <i>Which rule would you pick for Bitcoin and why?</i> <i>Is the weekly 50 EMA about to flip?</i> <i>Why did the 200 EMA lag so much?</i> It reads the Rule Matrix, the Strategy Maker and the current signal you have on screen. Run the Rule Matrix first. Education only, not financial advice.</div>
+    <div class="row" style="margin-top:0"><input id="aiQ" type="text" maxlength="500" placeholder="Which EMA rule worked best and is it worth using now?" style="flex:1;min-width:240px"><button class="primary" id="aiGo">Ask</button></div>
+    <div class="row" id="aiChips" style="margin-top:8px"><button data-q="Which rule would you pick and why? Compare return against how bad the drops were.">Best rule?</button><button data-q="Where do the rules stand today, and which ones are closest to flipping?">Close to flipping?</button><button data-q="Did these rules actually beat buy and hold, or was it luck? What should worry me about this back-test?">Is this luck?</button></div>
+    <div class="row hide" id="aiCodeRow" style="margin-top:8px"><div><label for="aiCode">Access code</label><input id="aiCode" type="password" autocomplete="off" style="width:180px"></div><button id="aiUnlock" style="align-self:flex-end">Unlock</button></div>
+    <div class="row hide" id="aiSetup" style="margin-top:8px"><div style="flex:1;min-width:240px"><label for="aiUrl">AI helper address (from the setup guide)</label><input id="aiUrl" type="text" placeholder="https://moon-ask....workers.dev"></div><button id="aiSave" style="align-self:flex-end">Save</button></div>
+    <div class="note" id="aiStatus"></div>
+    <div id="aiOut" style="margin-top:8px"></div>
+  </div>
+
   <div class="disc">
     <b>Read this before you trade.</b> The signal strength score is a rule-of-thumb built from how fresh an EMA cross is and how long price stayed on the other side first. It has not been proven to predict anything, so test it with the backtest filters before leaning on it. This is an educational tool, not financial advice. Backtests use hindsight and do not predict future results. Signals execute at the close of the candle that triggered them, with no slippage, spreads or taxes. Only the fee you enter is modeled. The strategy is long-only spot: it holds the token or cash, with no leverage or shorting. EMA strategies often whipsaw in sideways markets, and past cycles may not repeat.
   </div>
+  <div id="mxTip"></div>
   <footer>BLOCK WALL STREET · BLOCKWALLSTREET.BIZ</footer>
 </div>
 
@@ -978,6 +1085,583 @@ $('csvfile').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return;
   const rd=new FileReader(); rd.onload=()=>{ $('csv').value=rd.result; status('Loaded '+f.name+'. Pick the matching timeframe and run.','ok'); }; rd.readAsText(f);
 });
+/* =====================================================================
+   RULE MATRIX + STRATEGY MAKER  (price closes above / below an EMA)
+   Reads the ticker, source, network, capital and fee from the cards above.
+   ===================================================================== */
+(function(){
+'use strict';
+const DAY=864e5, TFN={D:'Daily',W:'Weekly',M:'Monthly'}, TFK={D:'1d',W:'1w',M:'1M'};
+const COLS=['#f0c966','#5aa9ff','#c58bff','#ff8a5b','#3ecf8e','#ff6fb5','#5ee0e0','#c8d34a','#e2603f','#9b8cff','#8fd3ff','#ffd29b'];
+let PEND=null, DATA=null, RES=[], BH=null, W0=0, SEL=null, CHK=new Set(), SORT={k:'ret',d:-1}, SM=null, CF=null;
+const mxs=(m,t)=>{const s=$('mxStatus'); s.textContent=m||''; s.className=t||'';};
+const num=(v,d)=>v==null||!isFinite(v)?'-':v.toFixed(d==null?1:d);
+const ppct=v=>v==null||!isFinite(v)?'-':(v*100).toFixed(1)+'%';
+const dstr=t=>new Date(t).toISOString().slice(0,10);
+const ruleName=(P,tf)=>P+' EMA · '+TFN[tf];
+const keyOf=(P,tf)=>P+tf;
+function css(n,fb){return cssv(n,fb);}
+
+/* ---------- long daily history ---------- */
+async function ccCandles(q){
+  const sym=cleanSym(q); let out=[], to=Math.floor(Date.now()/1000);
+  for(let n=0;n<5;n++){
+    const j=await jget('https://min-api.cryptocompare.com/data/v2/histoday?fsym='+sym+'&tsym=USD&limit=2000&toTs='+to);
+    const a=((j.Data||{}).Data||[]).filter(x=>x.close>0);
+    if(!a.length) break;
+    out=a.map(x=>({t:x.time*1000,c:x.close})).concat(out); to=a[0].time-86400;
+    if(a.length<1500) break;
+  }
+  out=tidy(out,'1d');
+  if(out.length<200) throw new Error('not enough history');
+  return {candles:out,source:'CryptoCompare '+sym,label:sym};
+}
+async function loadLong(){
+  const raw=$('token').value.trim(), sel=$('source').value;
+  if(sel==='csv'){
+    const r=parseCSV(), c=r.candles, gaps=[];
+    for(let i=1;i<Math.min(c.length,60);i++) gaps.push(c[i].t-c[i-1].t);
+    gaps.sort((a,b)=>a-b);
+    if(gaps.length&&gaps[Math.floor(gaps.length/2)]>1.6*DAY) throw new Error('The Rule Matrix needs a DAILY price file. Weekly and monthly candles are built from the daily ones.');
+    return r;
+  }
+  if(!raw) throw new Error('Enter a ticker or contract address in section 1');
+  const addr=isAddr(raw); NET={fail:0,ok:0};
+  const errs=[]; let best=null;
+  const order=addr?['gecko']:(sel==='auto'?['binance','bybit','okx','coinbase']:[sel]);
+  for(const s of order){
+    mxs('Loading daily prices from '+SRC_NAME[s]+'...');
+    try{ const r=await SRC[s](raw,'1d',5600); if(r&&r.candles.length>=60){ best=r; break; } }catch(e){ errs.push(SRC_NAME[s]+': '+e.message); }
+  }
+  if(!addr&&(!best||best.candles.length<5300)){
+    mxs('Looking for more history on CryptoCompare...');
+    try{ const r=await ccCandles(raw); if(!best||r.candles[0].t<best.candles[0].t-200*DAY) best=r; }catch(e){ errs.push('CryptoCompare: '+e.message); }
+  }
+  if(!best&&!addr&&sel==='auto'){
+    try{ const r=await SRC.coingecko(raw,'1d'); if(r&&r.candles.length>=60) best=r; }catch(e){ errs.push('CoinGecko: '+e.message); }
+  }
+  if(!best){
+    if(NET.fail>0&&NET.ok===0) throw new Error('Your browser could not reach any data source. An ad blocker, VPN or a preview window that blocks outside requests is the usual cause.');
+    throw new Error('Could not load daily prices for '+(addr?raw.slice(0,10)+'...':raw.toUpperCase())+'. '+errs.join(' | '));
+  }
+  return best;
+}
+
+/* ---------- calendar helpers ---------- */
+const BK={D:t=>Math.floor(t/DAY),W:t=>bucketKey(t,'1w'),M:t=>bucketKey(t,'1M')};
+function compFor(tms,tf){ const f=BK[tf], o=new Uint8Array(tms.length); for(let i=0;i<tms.length;i++) o[i]=f(tms[i])!==f(tms[i]+DAY)?1:0; return o; }
+
+/* ---------- the trading engine ----------
+   One pass over daily closes. An EMA is read on completed D/W/M candles only.
+   Close above EMA (+buffer) = bullish, below EMA (-buffer) = bearish. A flip bullish buys, a flip bearish sells.
+   The same function runs the history and the simulated futures. */
+function newState(P){ return {P,k:2/(P+1),ema:0,nb:0,sum:0,side:0,seen:0,pos:0,eq:1,eqIn:1,ep:0,ei:-1,pend:null,peak:1,mdd:0,nt:0,dIn:0,fv:-1,lsi:-1,lsd:0}; }
+function engine(st,o,cl,comp,from,to,w0,rec,oe,om,oema){
+  const P=st.P,k=st.k,fee=o.fee,bu=1+o.buf,bd=1-o.buf;
+  for(let i=from;i<to;i++){
+    const c=cl[i];
+    if(i>w0&&st.pos) st.eq*=c/cl[i-1];
+    if(comp[i]){
+      st.nb++;
+      if(st.nb<=P){ st.sum+=c; if(st.nb===P){ st.ema=st.sum/P; st.fv=i; } }
+      else st.ema+=k*(c-st.ema);
+      if(st.nb>=P){
+        let ns=st.side;
+        if(c>st.ema*bu) ns=1; else if(c<st.ema*bd) ns=-1;
+        if(!st.seen){ if(ns!==0){ st.seen=1; st.side=ns; } }
+        else if(ns!==st.side){
+          st.side=ns; st.lsi=i; st.lsd=ns;
+          if(i>=w0){
+            const want=ns===1?1:0;
+            if(want!==st.pos){ if(o.delay===0) st.pend={day:i,pos:want}; else st.pend={day:i+1,pos:want}; }
+          }
+        }
+      }
+    }
+    if(i===w0&&o.startIn&&st.side===1&&st.nb>=P&&!st.pos&&!st.pend) st.pend={day:i,pos:1};
+    if(st.pend&&st.pend.day<=i){
+      const want=st.pend.pos; st.pend=null;
+      if(want&&!st.pos){ st.eqIn=st.eq; st.eq*=(1-fee); st.pos=1; st.ep=c; st.ei=i; }
+      else if(!want&&st.pos){ st.eq*=(1-fee); st.pos=0; st.nt++; if(rec) rec.push({ei:st.ei,xi:i,ep:st.ep,xp:c,ret:st.eq/st.eqIn-1}); }
+    }
+    if(i>=w0){
+      if(st.pos) st.dIn++;
+      if(st.eq>st.peak) st.peak=st.eq;
+      const dd=1-st.eq/st.peak; if(dd>st.mdd) st.mdd=dd;
+      if(oe) oe[i]=st.eq; if(om) om[i]=st.mdd;
+    }
+    if(oema) oema[i]=st.nb>=P?st.ema:NaN;
+  }
+}
+
+/* ---------- settings ---------- */
+function readMx(){
+  const Ps=[...document.querySelectorAll('#mxP input:checked')].map(x=>+x.dataset.p);
+  ($('mxPc').value||'').split(/[^0-9]+/).forEach(s=>{ const v=+s; if(v>=2&&v<=400&&Ps.indexOf(v)<0&&Ps.length<12) Ps.push(v); });
+  Ps.sort((a,b)=>a-b);
+  const tfs=['D','W','M'].filter(t=>document.querySelector('#mxT input[data-tf="'+t+'"]').checked);
+  if(!Ps.length) throw new Error('Tick at least one EMA length.');
+  if(!tfs.length) throw new Error('Tick at least one candle size.');
+  const cap=+$('capital').value, fee=Math.max(0,+$('fee').value)/100;
+  if(!(cap>0)) throw new Error('Starting capital must be above 0 (section 3).');
+  return {Ps,tfs,cap,fee,buf:Math.max(0,+$('mxBuf').value||0)/100,delay:+$('mxDelay').value,startIn:+$('mxStart').value===1,
+    from:$('mxFrom').value,to:$('mxTo').value};
+}
+function setYears(y){
+  if(!DATA) return;
+  const n=DATA.t.length, last=DATA.t[n-1];
+  $('mxTo').value=dstr(last);
+  $('mxFrom').value=dstr(y>0?Math.max(DATA.t[0],last-y*365.25*DAY):DATA.t[0]);
+  document.querySelectorAll('#mxYrs button').forEach(b=>b.classList.toggle('on',+b.dataset.yrs===y));
+}
+
+/* ---------- run the matrix ---------- */
+async function runMatrix(reload){
+  const btn=$('mxRun'); btn.disabled=true;
+  try{
+    const cfg=readMx();
+    if(reload||!DATA||DATA.key!==($('token').value.trim()+'|'+$('source').value+'|'+$('net').value)){
+      mxs('Loading daily prices...');
+      const r=await loadLong();
+      const t=[],c=[]; r.candles.forEach(x=>{ if(x.c>0&&(!t.length||x.t>t[t.length-1])){ t.push(x.t); c.push(x.c); } });
+      DATA={key:$('token').value.trim()+'|'+$('source').value+'|'+$('net').value,t,c,source:r.source,label:r.label||$('token').value.toUpperCase()};
+      if(t.length<120) throw new Error('Only '+t.length+' daily candles were found. That is not enough history.');
+      const yrs=(t[t.length-1]-t[0])/(365.25*DAY);
+      $('mxData').innerHTML='<b>'+esc0(DATA.label)+'</b>: '+t.length.toLocaleString()+' daily candles ('+yrs.toFixed(1)+' years, '+dstr(t[0])+' to '+dstr(t[t.length-1])+') from '+esc0(r.source)+'.';
+      setYears(PEND!=null?PEND:15); PEND=null;
+    }
+    const c2=readMx();
+    mxs('Running '+(c2.Ps.length*c2.tfs.length)+' rules...');
+    await new Promise(r=>setTimeout(r,30));
+    compute(c2);
+    mxs('Done. '+RES.filter(r=>r.ok).length+' rules tested on '+DATA.t.length.toLocaleString()+' days of '+DATA.label+'.','ok');
+    $('mxOut').classList.remove('hide'); $('smCard').classList.remove('hide');
+    render();
+    fillRuleSelects();
+  }catch(e){ mxs(e.message,'err'); }
+  btn.disabled=false;
+}
+const esc0=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function compute(c){
+  const t0=new Date(c.from+'T00:00:00Z').getTime(), t1=new Date(c.to+'T23:59:59Z').getTime();
+  let n=DATA.t.length; while(n>0&&DATA.t[n-1]>t1) n--;
+  let w0=0; while(w0<n&&DATA.t[w0]<t0) w0++;
+  if(n-w0<60) throw new Error('That date range is too short. Pick at least a few months.');
+  const tm=DATA.t.slice(0,n), cl=DATA.c.slice(0,n);
+  CF={...c,n,w0,tm,cl,comp:{}};
+  c.tfs.forEach(tf=>{ CF.comp[tf]=compFor(tm,tf); });
+  W0=w0;
+  const years=(tm[n-1]-tm[w0])/(365.25*DAY);
+  // buy and hold
+  const bh=new Float64Array(n).fill(NaN); let pk=1,bm=0;
+  for(let i=w0;i<n;i++){ bh[i]=(1-c.fee)*cl[i]/cl[w0]; if(bh[i]>pk) pk=bh[i]; bm=Math.max(bm,1-bh[i]/pk); }
+  BH={eq:bh,ret:bh[n-1]-1,mdd:bm,cagr:years>0?Math.pow(bh[n-1],1/years)-1:0,years};
+  RES=[];
+  c.Ps.forEach(P=>c.tfs.forEach(tf=>{
+    const st=newState(P), rec=[], oe=new Float64Array(n).fill(NaN), oema=new Float64Array(n).fill(NaN);
+    engine(st,{fee:c.fee,buf:c.buf,delay:c.delay,startIn:c.startIn},cl,CF.comp[tf],0,n,w0,rec,oe,null,oema);
+    const r={P,tf,key:keyOf(P,tf),name:ruleName(P,tf),st,trades:rec,eq:oe,ema:oema};
+    if(st.nb<P){ r.ok=false; r.why='Needs '+P+' '+TFN[tf].toLowerCase()+' candles, only '+st.nb+' exist in the data.'; }
+    else{
+      r.ok=true; r.ret=oe[n-1]-1; r.cagr=years>0?Math.pow(Math.max(oe[n-1],1e-9),1/years)-1:0; r.mdd=st.mdd;
+      r.open=st.pos?1:0; r.nt=rec.length+r.open; r.wins=rec.filter(x=>x.ret>0).length;
+      r.win=rec.length?r.wins/rec.length:null; r.inM=st.dIn/(n-w0); r.vs=r.ret-BH.ret; r.final=c.cap*(1+r.ret);
+      r.late=st.fv>w0;
+    }
+    RES.push(r);
+  }));
+  const ok=RES.filter(r=>r.ok);
+  CHK=new Set(ok.slice().sort((a,b)=>b.ret-a.ret).slice(0,3).map(r=>r.key));
+  SEL=(ok.slice().sort((a,b)=>b.ret-a.ret)[0]||RES[0]).key;
+  SM=null; $('smOut').innerHTML='';
+}
+
+/* ---------- rendering ---------- */
+function resBy(k){ return RES.find(r=>r.key===k); }
+function render(){ renderTop(); renderHeat(); renderTable(); renderEq(); renderDetail(); }
+const sgn=v=>v>0?'pos':v<0?'neg':'';
+
+function renderTop(){
+  const ok=RES.filter(r=>r.ok), n=CF.n, cap=CF.cap;
+  const yrs=BH.years;
+  if(!ok.length){ $('mxTop').innerHTML='<div class="verdict">None of these rules had enough candles in the date range. Try shorter EMAs or daily/weekly candles.</div>'; return; }
+  const byRet=ok.slice().sort((a,b)=>b.ret-a.ret), best=byRet[0];
+  const traded=ok.filter(r=>r.nt>0&&r.mdd>0.001);
+  const rr=traded.slice().sort((a,b)=>(b.ret/b.mdd)-(a.ret/a.mdd))[0];
+  const safe=(traded.length?traded:ok).slice().sort((a,b)=>a.mdd-b.mdd)[0];
+  const beat=ok.filter(r=>r.ret>BH.ret).length;
+  let h='<div class="verdict"><b>'+DATA.label+', '+dstr(CF.tm[W0])+' to '+dstr(CF.tm[n-1])+' ('+yrs.toFixed(1)+' years).</b> Buying and holding turned '+money(cap)+' into '+money(cap*(1+BH.ret))+' ('+pct(BH.ret,0)+') with a worst drop of '+ppct(BH.mdd)+'. ';
+  h+=beat+' of '+ok.length+' EMA rules finished ahead of holding'+(beat?'':', so in this window simply holding won')+'. ';
+  h+='The highest return came from the <b>'+best.name+'</b> rule ('+pct(best.ret,0)+', worst drop '+ppct(best.mdd)+'). ';
+  if(rr&&rr!==best) h+='The best return for the pain taken was <b>'+rr.name+'</b> ('+pct(rr.ret,0)+' with a worst drop of '+ppct(rr.mdd)+'). ';
+  if(safe) h+='The smoothest ride was <b>'+safe.name+'</b>, which never fell more than '+ppct(safe.mdd)+'.';
+  h+='</div>';
+  const kp=(k,v,c,s)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v '+(c||'')+'">'+v+'</div>'+(s?'<div class="note" style="margin:2px 0 0">'+s+'</div>':'')+'</div>';
+  h+='<div class="kpis">'+kp('Buy &amp; hold',pct(BH.ret,0),sgn(BH.ret),'worst drop '+ppct(BH.mdd))
+    +kp('Best rule',best.name,'gold',pct(best.ret,0)+' · '+best.nt+' trades')
+    +kp('Smoothest rule',safe.name,'gold','worst drop '+ppct(safe.mdd)+' · '+pct(safe.ret,0))
+    +kp('Rules that beat holding',beat+' / '+ok.length,beat?'pos':'neg','on return')+'</div>';
+  const late=ok.filter(r=>r.late);
+  if(late.length) h+='<div class="note">Heads up: '+late.map(r=>r.name).join(', ')+' could not start trading on day one because their EMA needed more candles first, so they sat in cash at the beginning.</div>';
+  const none=ok.filter(r=>r.nt===0);
+  if(none.length) h+='<div class="note">No trade ever happened for: '+none.map(r=>r.name).join(', ')+' (price never crossed it after the EMA was ready, so it just sat in cash).</div>';
+  const na=RES.filter(r=>!r.ok);
+  if(na.length) h+='<div class="note">Not enough history for: '+na.map(r=>r.name).join(', ')+'.</div>';
+  $('mxTop').innerHTML=h;
+}
+
+function metricOf(r,m){
+  if(!r.ok) return null;
+  if(m==='ret') return r.ret; if(m==='vs') return r.vs; if(m==='cagr') return r.cagr; if(m==='mdd') return r.mdd; if(m==='win') return r.win;
+  return null;
+}
+function heatColor(v,m,scale){
+  if(v==null) return 'transparent';
+  let x;
+  if(m==='mdd') x=-(v/Math.max(.01,scale.max)*2-1); // low drop = green
+  else if(m==='win') x=(v-.5)*3;
+  else x=Math.max(-1,Math.min(1,v/Math.max(1e-9,scale.abs)));
+  x=Math.max(-1,Math.min(1,x));
+  return x>=0?'rgba(62,207,142,'+(.12+.5*x)+')':'rgba(239,91,91,'+(.12+.5*-x)+')';
+}
+function renderHeat(){
+  const m=$('hmMetric').value, tfs=CF.tfs, Ps=CF.Ps;
+  const vals=RES.map(r=>metricOf(r,m)).filter(v=>v!=null);
+  const scale={abs:Math.max(.01,...vals.map(Math.abs)),max:Math.max(.01,...vals)};
+  const fmt=v=>m==='ret'||m==='cagr'?pct(v,0):m==='vs'?(v>=0?'+':'')+(v*100).toFixed(0)+' pts':ppct(v);
+  let h='<div class="hmg" style="grid-template-columns:70px repeat('+tfs.length+',1fr)"><div></div>'+tfs.map(t=>'<div class="hh">'+TFN[t]+'</div>').join('');
+  Ps.forEach(P=>{
+    h+='<div class="hh">'+P+' EMA</div>';
+    tfs.forEach(tf=>{
+      const r=resBy(keyOf(P,tf)), v=metricOf(r,m);
+      h+='<div class="hc'+(SEL===r.key?' sel':'')+'" data-k="'+r.key+'" style="background:'+heatColor(v,m,scale)+'">'+(r.ok&&v!=null?'<b>'+fmt(v)+'</b><span>'+r.nt+' trades · '+ppct(r.mdd)+' drop</span>':'<span>'+(r.ok?'no closed trades':'not enough history')+'</span>')+'</div>';
+    });
+  });
+  $('hm').innerHTML=h+'</div>';
+}
+
+const COLSPEC=[['name','Rule','l'],['ret','Return',''],['vs','vs hold',''],['cagr','Per year',''],['mdd','Worst drop',''],['nt','Trades',''],['win','Win rate',''],['inM','In market',''],['final','Ends with','']];
+function renderTable(){
+  const rows=RES.slice().sort((a,b)=>{
+    if(a.ok!==b.ok) return a.ok?-1:1;
+    const k=SORT.k; let x=k==='name'?a.name:a[k], y=k==='name'?b.name:b[k];
+    if(x==null) x=-Infinity; if(y==null) y=-Infinity;
+    return x<y?-SORT.d:x>y?SORT.d:0;
+  });
+  let h='<thead><tr><th class="l"></th>'+COLSPEC.map(c=>'<th class="'+c[2]+' s'+(SORT.k===c[0]?' sorted':'')+'" data-s="'+c[0]+'">'+c[1]+(SORT.k===c[0]?(SORT.d>0?' ▲':' ▼'):'')+'</th>').join('')+'</tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    const col=COLS[RESIDX(r)%COLS.length];
+    h+='<tr class="rk'+(SEL===r.key?' sel':'')+'" data-k="'+r.key+'"><td class="l">'+(r.ok?'<input type="checkbox" data-c="'+r.key+'"'+(CHK.has(r.key)?' checked':'')+' style="accent-color:'+col+';width:auto">':'')+'</td>'
+     +'<td class="l"><b style="color:'+(r.ok?col:'var(--muted)')+'">'+r.name+'</b></td>';
+    if(!r.ok) h+='<td colspan="8" class="l" style="color:var(--muted)">'+r.why+'</td></tr>';
+    else h+='<td class="'+sgn(r.ret)+'">'+pct(r.ret,0)+'</td><td class="'+sgn(r.vs)+'">'+(r.vs>=0?'+':'')+(r.vs*100).toFixed(0)+' pts</td><td class="'+sgn(r.cagr)+'">'+pct(r.cagr,1)+'</td><td class="neg">'+ppct(r.mdd)+'</td><td>'+r.nt+(r.open?'*':'')+'</td><td>'+(r.win==null?'-':(r.win*100).toFixed(0)+'%')+'</td><td>'+(r.inM*100).toFixed(0)+'%</td><td>'+money(r.final)+'</td></tr>';
+  });
+  h+='<tr><td class="l"></td><td class="l"><b style="color:#9aa7c2">Buy &amp; hold</b></td><td class="'+sgn(BH.ret)+'">'+pct(BH.ret,0)+'</td><td>-</td><td class="'+sgn(BH.cagr)+'">'+pct(BH.cagr,1)+'</td><td class="neg">'+ppct(BH.mdd)+'</td><td>1</td><td>-</td><td>100%</td><td>'+money(CF.cap*(1+BH.ret))+'</td></tr></tbody>';
+  $('mxTab').innerHTML=h;
+}
+const RESIDX=r=>RES.indexOf(r);
+
+function renderEq(){
+  const w0=W0,n=CF.n, ts=[],cap=CF.cap;
+  for(let i=w0;i<n;i++) ts.push(CF.tm[i]);
+  const ser=[{name:'Buy & hold',col:'#9aa7c2',w:1.6,dash:[5,4],y:Array.from(BH.eq.subarray(w0,n),v=>v*cap)}];
+  let leg='<span><i class="sw" style="background:#9aa7c2"></i> Buy &amp; hold</span>';
+  RES.filter(r=>r.ok&&CHK.has(r.key)).forEach(r=>{ const col=COLS[RESIDX(r)%COLS.length]; ser.push({name:r.name,col,w:1.9,y:Array.from(r.eq.subarray(w0,n),v=>(isFinite(v)?v:1)*cap)}); leg+='<span><i class="sw" style="background:'+col+'"></i> '+r.name+'</span>'; });
+  $('mxLeg').innerHTML=leg;
+  line($('mxEq'),{t:ts,series:ser,log:$('mxLog').checked,fmtY:money0});
+}
+const money0=v=>'$'+(Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e4?(v/1e3).toFixed(0)+'k':Math.abs(v)>=1e3?(v/1e3).toFixed(1)+'k':v.toFixed(0));
+
+function renderDetail(){
+  const r=resBy(SEL); if(!r||!r.ok){ $('mxDet').innerHTML='<div class="note">Pick a rule above that has enough history.</div>'; return; }
+  $('mxSel').value=r.key;
+  const c=CF, cap=c.cap, n=c.n, w0=W0;
+  const vs=r.final-cap*(1+BH.ret);
+  let txt='<div class="verdict"><b>'+r.name+'.</b> Buying when a '+TFN[r.tf].toLowerCase()+' candle closed above its '+r.P+' EMA'+(c.buf?' (plus a '+(c.buf*100).toFixed(1)+'% buffer)':'')+' and selling when it closed below'+(c.delay?', acting one day after each signal':'')+', '+money(cap)+' would have become <b>'+money(r.final)+'</b> ('+pct(r.ret,0)+') between '+dstr(c.tm[w0])+' and '+dstr(c.tm[n-1])+', against '+money(cap*(1+BH.ret))+' for holding. '
+   +(vs>=0?'That is '+money(vs)+' ahead. ':'That is '+money(-vs)+' behind. ')
+   +'It made '+r.nt+' trade'+(r.nt===1?'':'s')+(r.win!=null?', winning '+(r.win*100).toFixed(0)+'% of the finished ones':'')+', was invested '+(r.inM*100).toFixed(0)+'% of the time and its worst fall from a peak was '+ppct(r.mdd)+' (holding: '+ppct(BH.mdd)+').'
+   +(r.open?' The last buy is still open (marked *).':'')+'</div>';
+  $('mxDetTxt').innerHTML=txt;
+  // price chart with ema and markers
+  const ts=[],px0=[],em=[]; for(let i=w0;i<n;i++){ ts.push(c.tm[i]); px0.push(c.cl[i]); em.push(isFinite(r.ema[i])?r.ema[i]:null); }
+  const mk=[]; r.trades.forEach(x=>{ mk.push({i:x.ei-w0,t:'b'}); mk.push({i:x.xi-w0,t:'s'}); });
+  if(r.open) mk.push({i:r.st.ei-w0,t:'b'});
+  line($('mxPx'),{t:ts,series:[{name:'Price',col:'#cfd3e6',w:1.3,y:px0},{name:r.P+' EMA ('+TFN[r.tf]+')',col:css('--gold','#d4a843'),w:1.8,y:em}],log:true,fmtY:v=>v>=1?(v>=1000?(v/1000).toFixed(v>=1e4?0:1)+'k':v.toFixed(v>=100?0:2)):v.toPrecision(2),markers:mk.filter(m=>m.i>=0)});
+  // years
+  const yrs=[]; let prevEq=1,prevBh=BH.eq[w0],prevY=new Date(c.tm[w0]).getUTCFullYear(),startI=w0;
+  for(let i=w0;i<n;i++){
+    const y=new Date(c.tm[i]).getUTCFullYear(), last=i===n-1||new Date(c.tm[i+1]).getUTCFullYear()!==y;
+    if(last){ const e=isFinite(r.eq[i])?r.eq[i]:1; yrs.push({y,part:new Date(c.tm[startI]).getUTCMonth()!==0||i===n-1&&new Date(c.tm[i]).getUTCMonth()!==11,s:e/prevEq-1,b:BH.eq[i]/prevBh-1}); prevEq=e; prevBh=BH.eq[i]; startI=i+1; }
+  }
+  let yh='<thead><tr><th class="l">Year</th><th>Rule</th><th>Holding</th><th>Difference</th></tr></thead><tbody>';
+  yrs.forEach(x=>{ yh+='<tr><td class="l">'+x.y+(x.part?' <span class="note">(part)</span>':'')+'</td><td class="'+sgn(x.s)+'">'+pct(x.s,0)+'</td><td class="'+sgn(x.b)+'">'+pct(x.b,0)+'</td><td class="'+sgn(x.s-x.b)+'">'+((x.s-x.b)>=0?'+':'')+((x.s-x.b)*100).toFixed(0)+' pts</td></tr>'; });
+  $('mxYr').innerHTML=yh+'</tbody>';
+  // trades
+  let th='<thead><tr><th class="l">Buy date</th><th>Buy price</th><th class="l">Sell date</th><th>Sell price</th><th>Result</th></tr></thead><tbody>';
+  const all=r.trades.slice(); if(r.open) all.push({ei:r.st.ei,xi:null,ep:r.st.ep,xp:null,ret:r.st.eq/r.st.eqIn-1});
+  all.slice().reverse().forEach(x=>{ th+='<tr><td class="l buy">'+dstr(c.tm[x.ei])+'</td><td>'+px(x.ep)+'</td><td class="l sell">'+(x.xi==null?'still open':dstr(c.tm[x.xi]))+'</td><td>'+(x.xp==null?px(c.cl[n-1]):px(x.xp))+'</td><td class="'+sgn(x.ret)+'">'+pct(x.ret,0)+'</td></tr>'; });
+  if(!all.length) th+='<tr><td class="l" colspan="5">No trades in this window.</td></tr>';
+  $('mxTr').innerHTML=th+'</tbody>';
+}
+
+function fillRuleSelects(){
+  const ok=RES.filter(r=>r.ok), opt=ok.map(r=>'<option value="'+r.key+'">'+r.name+'</option>').join('');
+  $('mxSel').innerHTML=opt; $('mxSel').value=SEL;
+  const keep=$('smRule').value; $('smRule').innerHTML=opt; $('smRule').value=ok.some(r=>r.key===keep)?keep:SEL;
+}
+
+/* ---------- canvas line chart with hover ---------- */
+function nice(span,cnt){ const raw=span/cnt, p=Math.pow(10,Math.floor(Math.log10(raw))), f=raw/p; return (f<1.5?1:f<3?2:f<7?5:10)*p; }
+function line(cv,o){
+  cv._o=o; draw(cv,-1);
+  if(!cv._h){ cv._h=1;
+    const tip=$('mxTip');
+    cv.addEventListener('mousemove',e=>{ const q=cv._o; if(!q) return; const r=cv.getBoundingClientRect(), n=q.t.length, L=cv._L||64, R=cv._R||10, x=e.clientX-r.left; const i=Math.max(0,Math.min(n-1,Math.round((x-L)/Math.max(1,r.width-L-R)*(n-1)))); draw(cv,i);
+      let h='<b>'+(q.tfmt?q.tfmt(i):dstr(q.t[i]))+'</b>'; q.series.forEach(s=>{ const v=s.y[i]; if(v!=null&&isFinite(v)&&!s.band) h+='<br><span style="color:'+s.col+'">●</span> '+s.name+': '+(q.tipY?q.tipY(v):(q.fmtY?q.fmtY(v):v.toFixed(2))); });
+      tip.innerHTML=h; tip.style.display='block'; const tw=tip.offsetWidth; tip.style.left=Math.min(window.innerWidth-tw-8,e.clientX+14)+'px'; tip.style.top=(e.clientY+14)+'px'; });
+    cv.addEventListener('mouseleave',()=>{ tip.style.display='none'; draw(cv,-1); });
+  }
+}
+function draw(cv,hi){
+  const o=cv._o; if(!o) return;
+  const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight||+cv.dataset.h||340;
+  cv.width=W*dpr; cv.height=H*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const L=64,R=10,T=10,B=24; cv._L=L; cv._R=R;
+  const n=o.t.length; let lo=Infinity,hiV=-Infinity;
+  o.series.forEach(s=>s.y.forEach(v=>{ if(v!=null&&isFinite(v)&&(!o.log||v>0)){ lo=Math.min(lo,v); hiV=Math.max(hiV,v); } }));
+  if(!isFinite(lo)||n<2) return;
+  const log=!!o.log, f=v=>log?Math.log(v):v;
+  const a=f(lo), b=f(hiV), sp=(b-a)||1, pad=sp*.05, y0=a-pad, ys=sp+2*pad;
+  const yOf=v=>T+(H-T-B)*(1-(f(v)-y0)/ys), xOf=i=>L+(W-L-R)*i/(n-1);
+  const mut=css('--muted','#8fa0bf'), gl='rgba(143,160,191,.16)';
+  g.font='11px "DM Mono",monospace'; g.textAlign='right'; g.textBaseline='middle'; g.lineWidth=1;
+  // y ticks
+  const ticks=[];
+  if(log){ const lo2=Math.exp(y0), hi2=Math.exp(y0+ys); for(let p=Math.floor(Math.log10(lo2))-1;p<=Math.ceil(Math.log10(hi2));p++){ [1,2,5].forEach(m=>{ const v=m*Math.pow(10,p); if(v>=lo2&&v<=hi2) ticks.push(v); }); } if(ticks.length<3){ for(let q=0;q<=4;q++) ticks.push(Math.exp(y0+ys*q/4)); } }
+  else{ const st=nice(ys,5); for(let v=Math.ceil(y0/st)*st;v<=y0+ys;v+=st) ticks.push(v); }
+  ticks.forEach(v=>{ const y=yOf(v); g.strokeStyle=gl; g.beginPath(); g.moveTo(L,y); g.lineTo(W-R,y); g.stroke(); g.fillStyle=mut; g.fillText((o.fmtY||(x=>x.toFixed(2)))(v),L-6,y); });
+  // x ticks
+  g.textAlign='center'; g.textBaseline='top'; g.fillStyle=mut;
+  if(o.xlab){ o.xlab.forEach(q=>{ const x=xOf(q.i); g.strokeStyle=gl; g.beginPath(); g.moveTo(x,T); g.lineTo(x,H-B); g.stroke(); g.fillText(q.s,x,H-B+6); }); }
+  else{
+    const t0=o.t[0], t1=o.t[n-1], yrs=(t1-t0)/(365.25*DAY), stepY=yrs>24?5:yrs>11?2:1;
+    if(yrs>=1.6){ let last=-1; for(let i=0;i<n;i++){ const d=new Date(o.t[i]); const y=d.getUTCFullYear(); if(y!==last&&d.getUTCMonth()<=0||(last===-1)){ if(y%stepY===0||last===-1){ const x=xOf(i); g.strokeStyle=gl; g.beginPath(); g.moveTo(x,T); g.lineTo(x,H-B); g.stroke(); if(x>L+14&&x<W-R-14) g.fillText(String(y),x,H-B+6); } last=y; } } }
+    else{ let last=-1; for(let i=0;i<n;i++){ const d=new Date(o.t[i]), m=d.getUTCFullYear()*12+d.getUTCMonth(); if(m!==last){ last=m; if(d.getUTCMonth()%(yrs<.6?1:2)===0){ const x=xOf(i); g.strokeStyle=gl; g.beginPath(); g.moveTo(x,T); g.lineTo(x,H-B); g.stroke(); if(x>L+14&&x<W-R-14) g.fillText(dstr(o.t[i]).slice(0,7),x,H-B+6); } } } }
+  }
+  // bands
+  o.series.forEach(s=>{ if(!s.band) return; g.fillStyle=s.col; g.globalAlpha=s.alpha||.15; g.beginPath(); let st=false;
+    for(let i=0;i<n;i++){ const v=s.y[i]; if(v==null||!isFinite(v)||(log&&v<=0)) continue; const x=xOf(i),y=yOf(v); if(!st){ g.moveTo(x,y); st=true; } else g.lineTo(x,y); }
+    for(let i=n-1;i>=0;i--){ const v=s.band[i]; if(v==null||!isFinite(v)||(log&&v<=0)) continue; g.lineTo(xOf(i),yOf(v)); }
+    g.closePath(); g.fill(); g.globalAlpha=1; });
+  // lines
+  o.series.forEach(s=>{ if(s.band) return; g.strokeStyle=s.col; g.lineWidth=s.w||1.6; g.setLineDash(s.dash||[]); g.beginPath(); let st=false;
+    for(let i=0;i<n;i++){ const v=s.y[i]; if(v==null||!isFinite(v)||(log&&v<=0)){ st=false; continue; } const x=xOf(i),y=yOf(v); if(!st){ g.moveTo(x,y); st=true; } else g.lineTo(x,y); }
+    g.stroke(); g.setLineDash([]); });
+  // markers
+  (o.markers||[]).forEach(m=>{ const s0=o.series[0], v=s0.y[m.i]; if(v==null||!isFinite(v)) return; const x=xOf(m.i), y=yOf(v), up=m.t==='b'; g.fillStyle=up?'#3ecf8e':'#ef5b5b'; g.beginPath(); if(up){ g.moveTo(x,y+3); g.lineTo(x-5,y+12); g.lineTo(x+5,y+12); } else { g.moveTo(x,y-3); g.lineTo(x-5,y-12); g.lineTo(x+5,y-12); } g.closePath(); g.fill(); });
+  if(hi>=0){ const x=xOf(hi); g.strokeStyle='rgba(212,168,67,.6)'; g.beginPath(); g.moveTo(x,T); g.lineTo(x,H-B); g.stroke();
+    o.series.forEach(s=>{ const v=s.y[hi]; if(s.band||v==null||!isFinite(v)) return; g.fillStyle=s.col; g.beginPath(); g.arc(x,yOf(v),3.2,0,7); g.fill(); }); }
+}
+
+/* =====================================================================
+   STRATEGY MAKER: thousands of possible futures, same rule run through each
+   ===================================================================== */
+function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function pctile(arr,p){ const a=Float64Array.from(arr).sort(); const i=(a.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i); return a[lo]+(a[hi]-a[lo])*(i-lo); }
+
+async function buildStrategy(){
+  const b=$('smGo'); b.disabled=true;
+  try{
+    if(!CF||!RES.length) throw new Error('Run the Rule Matrix first.');
+    const sel=resBy($('smRule').value); if(!sel||!sel.ok) throw new Error('Pick a rule that has enough history.');
+    const N=+$('smN').value, learn=+$('smLearn').value, driftF=+$('smDrift').value, HSEL=+$('smH').value, H=365;
+    $('smOut').innerHTML='<div class="note"><span class="spn"></span>Simulating '+N+' futures...</div>';
+    await new Promise(r=>setTimeout(r,40));
+    const n=CF.n, cl=CF.cl, tm=CF.tm, last=tm[n-1];
+    // pool of daily log returns
+    const i0=learn>0?Math.max(1,(()=>{ let i=0; while(i<n&&tm[i]<last-learn*365.25*DAY) i++; return i; })()):1;
+    const rs=[]; for(let i=Math.max(1,i0);i<n;i++) rs.push(Math.log(cl[i]/cl[i-1]));
+    if(rs.length<120) throw new Error('Not enough history to learn from. Pick a longer "learn from" window.');
+    const mean=rs.reduce((a,x)=>a+x,0)/rs.length, dm=rs.map(x=>x-mean+driftF*mean);
+    const vol=Math.sqrt(rs.reduce((a,x)=>a+(x-mean)*(x-mean),0)/rs.length)*Math.sqrt(365);
+    // future calendar
+    const ftm=new Float64Array(H+1); for(let k=0;k<=H;k++) ftm[k]=last+k*DAY;
+    const comp={}; CF.tfs.forEach(tf=>{ comp[tf]=compFor(Array.from(ftm),tf); });
+    // paths
+    const rand=rng(20260101), BL=20, price=new Float64Array(N*(H+1)), p0=cl[n-1];
+    for(let p=0;p<N;p++){ const base=p*(H+1); price[base]=p0; let k=1, lp=Math.log(p0);
+      while(k<=H){ const s=Math.floor(rand()*(dm.length-BL+1)); for(let j=0;j<BL&&k<=H;j++,k++){ lp+=dm[Math.min(dm.length-1,s+j)]; price[base+k]=Math.exp(lp); } } }
+    const HS=[90,180,365], rules=RES.filter(r=>r.ok);
+    const out={}, fan=new Float64Array(N*(H+1));
+    // buy and hold
+    const bh={ret:{90:[],180:[],365:[]},mdd:{90:[],180:[],365:[]}};
+    for(let p=0;p<N;p++){ const base=p*(H+1); let pk=p0,mm=0,hi=0; for(let k=1;k<=H;k++){ const v=price[base+k]; if(v>pk) pk=v; mm=Math.max(mm,1-v/pk); if(k===HS[hi]){ bh.ret[k].push(v/p0-1); bh.mdd[k].push(mm); hi++; } } }
+    const o={fee:CF.fee,buf:CF.buf,delay:CF.delay,startIn:false};
+    const oe=new Float64Array(H+1), om=new Float64Array(H+1), cp=new Float64Array(H+1);
+    for(const r of rules){
+      const R={ret:{90:[],180:[],365:[]},mdd:{90:[],180:[],365:[]},nt:{90:[],180:[],365:[]}};
+      for(let p=0;p<N;p++){
+        const base=p*(H+1); for(let k=0;k<=H;k++) cp[k]=price[base+k];
+        const st=Object.assign({},r.st,{eq:1,eqIn:1,peak:1,mdd:0,nt:0,dIn:0,pend:r.st.pend?{day:r.st.pend.day-(n-1),pos:r.st.pend.pos}:null});
+        oe[0]=1; om[0]=0;
+        // track trades by count at horizons
+        let nt90=0,nt180=0;
+        engine(st,o,cp,comp[r.tf],1,91,0,null,oe,om,null); nt90=st.nt; HS.length;
+        R.ret[90].push(oe[90]-1); R.mdd[90].push(om[90]); R.nt[90].push(nt90);
+        engine(st,o,cp,comp[r.tf],91,181,0,null,oe,om,null); R.ret[180].push(oe[180]-1); R.mdd[180].push(om[180]); R.nt[180].push(st.nt);
+        engine(st,o,cp,comp[r.tf],181,H+1,0,null,oe,om,null); R.ret[365].push(oe[365]-1); R.mdd[365].push(om[365]); R.nt[365].push(st.nt);
+        if(r.key===sel.key) for(let k=0;k<=H;k++) fan[p*(H+1)+k]=oe[k];
+      }
+      out[r.key]=R;
+      if(rules.indexOf(r)%3===2) await new Promise(rr=>setTimeout(rr,0));
+    }
+    SM={N,H,sel:sel.key,HSEL,out,bh,fan,price,vol,mean,learn,driftF,ftm,comp,p0,last,rs:rs.length};
+    renderStrategy();
+  }catch(e){ $('smOut').innerHTML='<div class="verdict" style="border-left-color:var(--red)">'+esc0(e.message)+'</div>'; }
+  b.disabled=false;
+}
+
+function flipInfo(r){
+  const st=r.st, o=CF, k=st.k, b=CF.buf, c=CF.cl[CF.n-1];
+  const cm=SM?SM.comp[r.tf]:compFor(Array.from({length:400},(_,i)=>CF.tm[CF.n-1]+i*DAY),r.tf);
+  let nd=-1; for(let i=1;i<cm.length;i++) if(cm[i]){ nd=i; break; }
+  const when=nd>0?dstr(CF.tm[CF.n-1]+nd*DAY):null;
+  let lvl=null, dir=null;
+  if(st.side===1){ lvl=(1-b)*(1-k)*st.ema/(1-(1-b)*k); dir='below'; }
+  else if(st.side===-1){ lvl=(1+b)*(1-k)*st.ema/(1-(1+b)*k); dir='above'; }
+  return {lvl,dir,when,c,ema:st.ema,pos:r.st.pos,side:st.side,lastFlip:st.lsi>=0?dstr(CF.tm[st.lsi]):null};
+}
+
+function renderStrategy(){
+  if(!SM) return;
+  const S=SM, sel=resBy(S.sel), H=S.HSEL, N=S.N, o=S.out[S.sel], cap=CF.cap;
+  const fi=flipInfo(sel);
+  const med=a=>pctile(a,.5);
+  const pbeat=(R,h)=>{ let c=0; for(let p=0;p<N;p++) if(R.ret[h][p]>S.bh.ret[h][p]) c++; return c/N; };
+  const ppos=(a)=>a.filter(v=>v>0).length/a.length;
+  const stat=(R,h)=>({p10:pctile(R.ret[h],.1),p25:pctile(R.ret[h],.25),p50:med(R.ret[h]),p75:pctile(R.ret[h],.75),p90:pctile(R.ret[h],.9),dd:med(R.mdd[h]),pb:pbeat(R,h),pp:ppos(R.ret[h]),nt:med(R.nt[h])});
+  const bhs=h=>({p10:pctile(S.bh.ret[h],.1),p25:pctile(S.bh.ret[h],.25),p50:med(S.bh.ret[h]),p75:pctile(S.bh.ret[h],.75),p90:pctile(S.bh.ret[h],.9),dd:med(S.bh.mdd[h]),pp:ppos(S.bh.ret[h])});
+  const s=stat(o,H), b=bhs(H);
+  let h='';
+  // where it stands today
+  h+='<div class="verdict"><b>Where '+sel.name+' stands today ('+dstr(S.last)+').</b> ';
+  if(fi.side===1&&sel.st.pos) h+='Price ('+px(fi.c)+') is above the '+sel.P+' '+TFN[sel.tf].toLowerCase()+' EMA ('+px(fi.ema)+'), so the rule says <b class="pos">be invested</b>'+(fi.lastFlip?' (last turned bullish '+fi.lastFlip+')':'')+'. ';
+  else if(fi.side===1) h+='Price ('+px(fi.c)+') is above the '+sel.P+' '+TFN[sel.tf].toLowerCase()+' EMA ('+px(fi.ema)+'), but the rule is <b>in cash</b> because it only buys right after a fresh cross from below. It would buy after the next sell signal and a new cross back above. ';
+  else h+='Price ('+px(fi.c)+') is below the '+sel.P+' '+TFN[sel.tf].toLowerCase()+' EMA ('+px(fi.ema)+'), so the rule says <b class="neg">stay in cash</b>'+(fi.lastFlip?' (last turned bearish '+fi.lastFlip+')':'')+'. ';
+  if(fi.lvl) h+='It would flip to '+(fi.side===1?'<b>sell</b>':'<b>buy</b>')+' if a '+({D:'day',W:'week',M:'month'})[sel.tf]+' candle closes '+fi.dir+' about <b>'+px(fi.lvl)+'</b> ('+((fi.lvl/fi.c-1)*100).toFixed(1)+'% from the last close)'+(fi.when?', next decided at the close on '+fi.when:'')+'.';
+  h+='</div>';
+  // 3 horizon cards
+  h+='<div class="kpis">';
+  [90,180,365].forEach(hh=>{ const q=stat(o,hh), bq=bhs(hh);
+    h+='<div class="kpi"><div class="k">'+hh+' days · middle outcome</div><div class="v '+sgn(q.p50)+'">'+pct(q.p50,0)+'</div><div class="note" style="margin:3px 0 0">Holding: '+pct(bq.p50,0)+'<br>Bad case (10%): '+pct(q.p10,0)+' · Good case (90%): '+pct(q.p90,0)+'<br>Beats holding in '+(q.pb*100).toFixed(0)+'% of futures<br>Typical worst drop '+ppct(q.dd)+' vs '+ppct(bq.dd)+'</div></div>'; });
+  h+='</div>';
+  // plain English
+  h+='<div class="verdict y"><b>In plain words, over the next '+H+' days:</b> out of '+N.toLocaleString()+' possible futures built from '+(S.learn?'the last '+S.learn+' years':'all the history')+' of '+DATA.label+' (yearly swings of about '+(S.vol*100).toFixed(0)+'%), the <b>'+sel.name+'</b> rule ended in profit in <b>'+(s.pp*100).toFixed(0)+'%</b> of them (holding: '+(b.pp*100).toFixed(0)+'%). The middle result was <b>'+pct(s.p50,0)+'</b> ('+money(cap*(1+s.p50))+' from '+money(cap)+'), compared with '+pct(b.p50,0)+' for holding. The unlucky 1-in-10 future gave '+pct(s.p10,0)+' (holding: '+pct(b.p10,0)+') and the lucky 1-in-10 gave '+pct(s.p90,0)+' (holding: '+pct(b.p90,0)+'). '
+    +(s.dd<b.dd?'The rule usually cushioned the fall: typical worst drop '+ppct(s.dd)+' instead of '+ppct(b.dd)+'. ':'It did not cushion the fall in most futures: typical worst drop '+ppct(s.dd)+' vs '+ppct(b.dd)+'. ')
+    +(s.pb>=.5?'It beat just holding in '+(s.pb*100).toFixed(0)+'% of futures.':'It lagged holding more often than not (it won in '+(s.pb*100).toFixed(0)+'% of futures), which is normal in this setup: EMA rules give up some upside to protect against crashes.')
+    +(S.driftF===0?' The futures have no built-in uptrend, so holding is not carried by past gains.':S.driftF===1?' The futures keep the full uptrend the past had, which makes holding look better than it may be.':' The futures keep half of the uptrend the past had.')
+    +'</div>';
+  // fan chart
+  const days=[...Array(H+1).keys()];
+  const pc=q=>{ const out=new Float64Array(H+1); const col=new Float64Array(N); for(let k=0;k<=H;k++){ for(let p=0;p<N;p++) col[p]=S.fan[p*(S.H+1)+k]; out[k]=pctile(col,q)*cap; } return Array.from(out); };
+  const p10=pc(.1),p25=pc(.25),p50=pc(.5),p75=pc(.75),p90=pc(.9);
+  const bhm=days.map(k=>{ const col=new Float64Array(N); for(let p=0;p<N;p++) col[p]=S.price[p*(S.H+1)+k]/S.p0; return pctile(col,.5)*cap*(1-CF.fee); });
+  const gold=css('--gold','#d4a843');
+  const xl=[]; [0,30,60,90,120,150,180,210,240,270,300,330,365].forEach(d=>{ if(d<=H) xl.push({i:d,s:d===0?'Today':'+'+d+'d'}); });
+  h+='<h3 style="margin:16px 0 4px;font-size:15px">The range of outcomes for '+sel.name+'</h3><div class="legend"><span><i class="sw" style="background:'+gold+'"></i> Middle outcome of the rule</span><span><i class="sw" style="background:'+gold+';opacity:.5;height:9px"></i> Middle half of futures (25% to 75%)</span><span><i class="sw" style="background:'+gold+';opacity:.25;height:9px"></i> 10% to 90%</span><span><i class="sw" style="background:#9aa7c2"></i> Holding, middle</span></div><div class="cwrap"><canvas id="smFan" style="width:100%;height:320px;display:block"></canvas></div>';
+  // scoreboard
+  h+='<h3 style="margin:18px 0 6px;font-size:15px">Every rule, same futures (middle outcome of '+N.toLocaleString()+')</h3><div class="scroll"><table id="smTab"><thead><tr><th class="l">Rule</th><th>90 days</th><th>180 days</th><th>365 days</th><th>Beats holding ('+H+'d)</th><th>Profit ('+H+'d)</th><th>Typical worst drop</th><th>Today</th></tr></thead><tbody>';
+  const rows=RES.filter(r=>r.ok).map(r=>({r,q:{90:stat(S.out[r.key],90),180:stat(S.out[r.key],180),365:stat(S.out[r.key],365)}})).sort((a,b)=>b.q[H].p50-a.q[H].p50);
+  rows.forEach(({r,q})=>{ const f2=flipInfo(r);
+    h+='<tr class="'+(r.key===S.sel?'sel':'')+'" data-k="'+r.key+'" style="cursor:pointer"><td class="l"><b>'+r.name+'</b></td>'+[90,180,365].map(x=>'<td class="'+sgn(q[x].p50)+'">'+pct(q[x].p50,0)+'</td>').join('')+'<td>'+(q[H].pb*100).toFixed(0)+'%</td><td>'+(q[H].pp*100).toFixed(0)+'%</td><td class="neg">'+ppct(q[H].dd)+'</td><td>'+(f2.side===1?'<span class="pos">above EMA</span>':'<span class="neg">below EMA</span>')+' · '+(r.st.pos?'invested':'cash')+'</td></tr>'; });
+  h+='<tr><td class="l"><b style="color:#9aa7c2">Buy &amp; hold</b></td>'+[90,180,365].map(x=>{ const q=bhs(x); return '<td class="'+sgn(q.p50)+'">'+pct(q.p50,0)+'</td>'; }).join('')+'<td>-</td><td>'+(b.pp*100).toFixed(0)+'%</td><td class="neg">'+ppct(b.dd)+'</td><td></td></tr></tbody></table></div>';
+  h+='<div class="note">Click a row to chart that rule. These are not forecasts. They show how the rule behaves across many made-up futures that look like the past. If the real market behaves differently from its own history (a new kind of crash, a long sideways grind), results will differ. A rule that wins in the back-test and also in the futures is a better sign than one that wins in only one of them, but neither is a promise.</div>';
+  $('smOut').innerHTML=h;
+  const cvf=$('smFan');
+  line(cvf,{t:days,series:[
+    {name:'10%',col:gold,band:p90,alpha:.2,y:p10},{name:'25%',col:gold,band:p75,alpha:.35,y:p25},
+    {name:'Holding (middle)',col:'#9aa7c2',w:1.5,dash:[5,4],y:bhm},{name:'Rule: bad (10%)',col:'#ef5b5b',w:1,dash:[2,3],y:p10},{name:'Rule: middle',col:gold,w:2.2,y:p50},{name:'Rule: good (90%)',col:'#3ecf8e',w:1,dash:[2,3],y:p90}],
+    log:false,xlab:xl,fmtY:money0,tfmt:i=>i===0?'Today':'In '+i+' days ('+dstr(S.ftm[i])+')'});
+}
+
+/* ---------- wiring ---------- */
+function wire(){
+  $('mxRun').addEventListener('click',()=>runMatrix(false));
+  $('mxRun2').addEventListener('click',()=>{ $('mxCard').scrollIntoView({behavior:'smooth',block:'start'}); runMatrix(false); });
+  document.querySelectorAll('#mxYrs button').forEach(b=>b.addEventListener('click',()=>{ if(!DATA){ PEND=+b.dataset.yrs; runMatrix(false); return; } setYears(+b.dataset.yrs); runMatrix(false); }));
+  $('hmMetric').addEventListener('change',()=>{ if(CF) renderHeat(); });
+  $('mxLog').addEventListener('change',()=>{ if(CF) renderEq(); });
+  $('hm').addEventListener('click',e=>{ const c=e.target.closest('[data-k]'); if(!c) return; const r=resBy(c.dataset.k); if(!r||!r.ok) return; SEL=r.key; CHK.add(r.key); renderHeat(); renderTable(); renderEq(); renderDetail(); });
+  $('mxTab').addEventListener('click',e=>{
+    const ck=e.target.closest('[data-c]'); if(ck){ if(ck.checked) CHK.add(ck.dataset.c); else CHK.delete(ck.dataset.c); renderEq(); return; }
+    const th=e.target.closest('[data-s]'); if(th){ const k=th.dataset.s; SORT=SORT.k===k?{k,d:-SORT.d}:{k,d:k==='name'?1:-1}; renderTable(); return; }
+    const tr=e.target.closest('tr[data-k]'); if(tr){ const r=resBy(tr.dataset.k); if(r&&r.ok){ SEL=r.key; renderHeat(); renderTable(); renderDetail(); } } });
+  $('mxSel').addEventListener('change',()=>{ SEL=$('mxSel').value; renderHeat(); renderTable(); renderDetail(); });
+  $('smGo').addEventListener('click',buildStrategy);
+  $('smOut').addEventListener('click',e=>{ const tr=e.target.closest('tr[data-k]'); if(tr){ $('smRule').value=tr.dataset.k; buildStrategy(); } });
+  $('smH').addEventListener('change',()=>{ if(SM){ SM.HSEL=+$('smH').value; renderStrategy(); } });
+  $('smRule').addEventListener('change',()=>{ if(SM) buildStrategy(); });
+  window.addEventListener('resize',()=>{ ['mxEq','mxPx','smFan'].forEach(id=>{ const c=$(id); if(c&&c._o) draw(c,-1); }); });
+  document.addEventListener('ddtheme',()=>{ if(CF){ renderEq(); renderDetail(); } });
+}
+/* ---------- Ask the EMA Desk (AI, members only: needs the owner access code) ---------- */
+const ASK_URL='PASTE_YOUR_WORKER_URL_HERE';
+const lsG=k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}}, lsS=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const askUrl=()=>lsG('moonAskUrl')||ASK_URL, aiHist=[];
+function h53(str,seed){seed=seed||0;var h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(var i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
+const ais=(m,bad)=>{const e=$('aiStatus'); e.innerHTML=m||''; e.style.color=bad?'var(--gold2)':'';};
+const r1=(v,d)=>v==null||!isFinite(v)?null:+(+v).toFixed(d==null?3:d);
+function aiData(){
+  const d={asset:DATA.label,source:DATA.source,from:dstr(CF.tm[W0]),to:dstr(CF.tm[CF.n-1]),years:r1(BH.years,1),
+    settings:{startingCapital:CF.cap,feePerTradePct:r1(CF.fee*100,2),bufferPct:r1(CF.buf*100,1),acts:CF.delay?'one day after the signal':'at the close that crossed',start:CF.startIn?'invested if already above':'waits for first cross above'},
+    buyAndHold:{returnPct:r1(BH.ret*100,1),perYearPct:r1(BH.cagr*100,1),worstDropPct:r1(BH.mdd*100,1)},rules:[]};
+  RES.forEach(r=>{
+    if(!r.ok){ d.rules.push({rule:r.name,note:r.why}); return; }
+    const f=flipInfo(r);
+    d.rules.push({rule:r.name,returnPct:r1(r.ret*100,1),beatsHoldByPts:r1(r.vs*100,1),perYearPct:r1(r.cagr*100,1),worstDropPct:r1(r.mdd*100,1),trades:r.nt,winRatePct:r.win==null?null:r1(r.win*100,0),timeInMarketPct:r1(r.inM*100,0),endsWith:Math.round(r.final),
+      today:{aboveEma:f.side===1,investedNow:!!r.st.pos,lastPrice:r1(f.c,f.c<10?4:2),ema:r1(f.ema,f.ema<10?4:2),flipsIfCloseGoes:f.dir||null,flipPrice:f.lvl?r1(f.lvl,f.lvl<10?4:2):null,nextDecision:f.when,lastTurned:f.lastFlip}});
+  });
+  if(SM){ const S=SM, sel=resBy(S.sel), o=S.out[S.sel], N=S.N;
+    const q=(R,h)=>({median:r1(pctile(R.ret[h],.5)*100,1),bad10:r1(pctile(R.ret[h],.1)*100,1),good90:r1(pctile(R.ret[h],.9)*100,1),typicalWorstDrop:r1(pctile(R.mdd[h],.5)*100,1)});
+    d.futureSimulation={rule:sel.name,futures:N,learnedFromYears:S.learn||'all',drift:S.driftF===0?'zero':S.driftF===1?'same as past':'half of past',note:'percent returns; reshuffled real days, not a forecast',
+      rule_90d:q(o,90),rule_180d:q(o,180),rule_365d:q(o,365),holding_90d:{median:r1(pctile(S.bh.ret[90],.5)*100,1)},holding_180d:{median:r1(pctile(S.bh.ret[180],.5)*100,1)},holding_365d:{median:r1(pctile(S.bh.ret[365],.5)*100,1),typicalWorstDrop:r1(pctile(S.bh.mdd[365],.5)*100,1)}};
+  }
+  return d;
+}
+function aiPost(body){
+  body.code=lsG('moonAskCode');
+  return fetch(askUrl(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json().catch(()=>({error:'The helper sent back something unreadable.'})).then(j=>{ if(!r.ok&&!j.error) j.error='The helper said no (code '+r.status+').'; return j; }));
+}
+function aiGo(){
+  const q=($('aiQ').value||'').trim();
+  if(q.length<5){ ais('Type a question first.',1); return; }
+  if(!lsG('moonAskCode')){ $('aiCodeRow').classList.remove('hide'); ais('This box is for members. Enter your access code and press Unlock.',1); return; }
+  if(!/^https:\/\//.test(askUrl())){ $('aiSetup').classList.remove('hide'); ais('The AI helper is not connected yet. Paste the helper address below and press Save.',1); return; }
+  if(!CF||!RES.length){ ais('Run the Rule Matrix first so there is something to talk about.',1); return; }
+  const b=$('aiGo'); b.disabled=true; b.textContent='Thinking...'; ais('Reading your results...');
+  aiPost({mode:'ema',question:q,history:aiHist.slice(-3),data:aiData()}).then(j=>{
+    b.disabled=false; b.textContent='Ask';
+    if(j.badCode){ try{localStorage.removeItem('moonAskCode')}catch(e){} $('aiCodeRow').classList.remove('hide'); ais('That access code is not right. Enter it again.',1); return; }
+    if(j.error){ ais(esc0(j.error),1); return; }
+    aiHist.push({q:q,a:j.text}); ais('');
+    const e=document.createElement('div'); e.style.cssText='border-top:1px solid var(--line);padding-top:8px;margin-top:8px';
+    e.innerHTML='<div class="note"><b>You:</b> '+esc0(q)+'</div><div class="aiBox" style="margin-top:4px">'+esc0(j.text)+'</div>';
+    $('aiOut').insertBefore(e,$('aiOut').firstChild); $('aiQ').value='';
+  },()=>{ b.disabled=false; b.textContent='Ask'; ais('Could not reach the AI helper. Check the address and your connection.',1); });
+}
+function aiWire(){
+  $('aiGo').addEventListener('click',aiGo);
+  $('aiQ').addEventListener('keydown',e=>{ if(e.key==='Enter') aiGo(); });
+  $('aiChips').addEventListener('click',e=>{ const b=e.target.closest('[data-q]'); if(!b) return; $('aiQ').value=b.dataset.q; aiGo(); });
+  $('aiSave').addEventListener('click',()=>{ const v=($('aiUrl').value||'').trim(); if(!/^https:\/\/[^ ]+$/.test(v)){ ais('That does not look like a web address. It should start with https://',1); return; } lsS('moonAskUrl',v); $('aiSetup').classList.add('hide'); ais('Saved. Now press <b>Ask</b>.'); });
+  $('aiUnlock').addEventListener('click',()=>{ const code=($('aiCode').value||'').trim(); if(h53(code.toUpperCase())!==3310500657816984){ ais('That access code is not right.',1); return; } lsS('moonAskCode',code); $('aiCode').value=''; $('aiCodeRow').classList.add('hide'); ais('Unlocked. Ask your question.'); });
+}
+
+wire(); aiWire();
+})();
+
 syncUI();
 </script>
 </body>

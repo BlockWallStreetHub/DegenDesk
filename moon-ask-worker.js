@@ -103,6 +103,16 @@ Rules:
 - This is education, not financial advice; say that in one short closing sentence, not more.
 - Plain English, friendly, under 220 words, short paragraphs, no markdown headings. Bold is not available; use plain text only.`;
 
+const EMA_PROMPT = `You are the EMA Desk helper inside a crypto-education tool called Degen Desk. A student has back-tested a simple rule on real price history: BUY when a candle closes above an EMA, SELL when a candle closes below it, read on daily, weekly or monthly candles. You get JSON: their question, optional earlier questions, and "data" with the asset, date range, settings (fees, buffer, timing), buy-and-hold results, every rule's results (return, beat-holding in percentage points, per-year return, worst drop, trades, win rate, time in market, final money), where each rule stands TODAY (above or below its EMA, whether it is invested, the price that would flip it and when it is next decided), and optionally a future simulation (reshuffled real days, not a forecast).
+Rules:
+- Use ONLY the numbers in the JSON. Never invent prices, returns or dates. If something needed is missing, say so and suggest running the Rule Matrix or Strategy Maker.
+- Answer the question directly first, then give 2 to 5 reasons using their actual numbers.
+- Be honest about overfitting: the rule that won the back-test is partly luck, results come from one price history, fees and slippage matter, and a rule that gives up upside to cut drops can lag holding in a strong bull run. Prefer rules that do well across several EMA lengths and timeframes next to each other over one lone winner. Point out when only a few trades drive a result.
+- Compare return against worst drop, trades and time in market, not return alone.
+- For "where do rules stand today" use the today fields. For the future simulation, describe the spread (bad, middle, good) and say plainly it is not a prediction.
+- Never promise outcomes, predict prices, or tell them to use leverage. This is education, not financial advice; say that in one short closing sentence.
+- Plain English, friendly, under 230 words, short paragraphs, plain text only (no markdown, no bold).`;
+
 async function claude(env, system, user, maxTokens) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -140,7 +150,7 @@ export default {
       if (!(await bump(env, "all", total))) return json({ error: "The Moon Desk AI is resting for today. Try again tomorrow." }, 429, h);
     }
     if (body.mode === "check") return json({ ok: true }, 200, h);
-    if (body.mode === "strategy" || body.mode === "lending") {
+    if (body.mode === "strategy" || body.mode === "lending" || body.mode === "ema") {
       if (!(await bump(env, "ip:" + ip, perIp))) return json({ error: "You have used today's questions. Come back tomorrow." }, 429, h);
       if (!(await bump(env, "all", total))) return json({ error: "The Moon Desk AI is resting for today. Try again tomorrow." }, 429, h);
     }
@@ -149,6 +159,15 @@ export default {
         const user = JSON.stringify(body.data || {});
         if (user.length > 12000 || user.length < 20) return json({ error: "Request too large." }, 400, h);
         const out = await claude(env, STRATEGY_PROMPT, user, 1200);
+        return json({ text: out.trim() }, 200, h);
+      }
+      if (body.mode === "ema") {
+        const q = String(body.question || "").slice(0, 600);
+        if (q.length < 5) return json({ error: "Ask a longer question." }, 400, h);
+        const hist = (Array.isArray(body.history) ? body.history : []).slice(-3).map((x) => ({ q: String(x.q || "").slice(0, 300), a: String(x.a || "").slice(0, 700) }));
+        const user = JSON.stringify({ question: q, earlier: hist, data: body.data || {} });
+        if (user.length > 30000) return json({ error: "Request too large." }, 400, h);
+        const out = await claude(env, EMA_PROMPT, user, 900);
         return json({ text: out.trim() }, 200, h);
       }
       if (body.mode === "lending") {
