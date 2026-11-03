@@ -132,6 +132,10 @@ footer{border-top:1px solid var(--line);padding:22px 5vw 40px;font-size:12.5px;c
 @media(max-width:700px){input,select,textarea{font-size:16px !important}button,.btn,a.btn{min-height:40px}}
 @media(max-width:900px){.top{overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:none;padding-left:12px;padding-right:12px}.top::-webkit-scrollbar{display:none}.top>*{flex-shrink:0}.top .brand svg{display:none}.top .brand{font-size:17px;padding:10px 0}.tl{padding:12px 4px}.top .sp{flex:1 0 8px}.tape,.tapes{display:none}.bar{display:none}}
 .top{top:56px !important}@media (max-width:900px){.rail{top:113px !important}}
+.cstat{margin-top:10px;font-size:14.5px;color:var(--mute)}.cstat.ok{color:var(--up)}.cstat.bad{color:var(--down)}
+.gr td:last-child,.gr th:last-child{text-align:right}.gr .ov td{border-top:2px solid var(--brass);color:var(--brass-hi);font-weight:500}
+.cert .og{font-family:var(--disp);font-weight:800;font-size:26px;letter-spacing:.06em;text-transform:uppercase;color:var(--brass-hi);margin-top:8px}
+@media print{.gr{display:none}}
 </style>
 </head>
 <body>
@@ -524,10 +528,14 @@ var L=[
   var need=L.filter(function(l){return l.id!=='final'&&!prog.done[l.id]});
   var c=$('cert');
   if(need.length){c.innerHTML='<div class="verdict">Still to finish: '+need.map(function(l){return '<a href="#/'+l.id+'">'+l.title.split(':')[0]+'</a>'}).join(', ')+'.</div>';return}
-  c.innerHTML='<div class="lab"><h4>Your certificate</h4><p class="hint">Type your name as you want it to appear, then print or save it as a PDF.</p><div class="row"><input type="text" id="cn" placeholder="Your name" maxlength="40" value="'+(prog.name||'').replace(/"/g,'&quot;')+'"><button class="btn" id="pr">Print certificate</button></div></div>'
-   +'<div class="cert"><svg viewBox="0 0 640 520" aria-hidden="true"><use href="#mgdef"/></svg><div class="a">Certificate of completion</div><div class="nm" id="cnm">'+(prog.name||'Your name')+'</div><p>has completed every lesson of the</p><p><b>Block Wall Street Degen Desk Course</b></p><p class="note" id="cdt"></p></div>';
+  c.innerHTML='<div class="lab"><h4>Your certificate</h4><p class="hint">Type your name as you want it to appear, then download your certificate as a picture, or print it. Your grade for each lesson and your overall grade are emailed to Block Wall Street when you download.</p><div class="row"><input type="text" id="cn" placeholder="Your name" maxlength="40" value="'+(prog.name||'').replace(/"/g,'&quot;')+'"><input type="text" id="ce" placeholder="Your email (optional)" maxlength="80" value="'+(prog.email||'').replace(/"/g,'&quot;')+'"></div><div class="row"><button class="btn" id="dl">Download certificate</button><button class="btn ghost" id="pr">Print certificate</button></div><div class="cstat" id="cs" aria-live="polite"></div><div id="cprev"></div></div>'
+   +gradesTableHTML()
+   +'<div class="cert"><svg viewBox="0 0 640 520" aria-hidden="true"><use href="#mgdef"/></svg><div class="a">Certificate of completion</div><div class="nm" id="cnm">'+(prog.name||'Your name')+'</div><p>has completed every lesson of the</p><p><b>Block Wall Street Degen Desk Course</b></p><div class="og" id="cog"></div><p class="note" id="cdt"></p></div>';
   $('cdt').textContent=new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+  var R0=gradeReport();$('cog').textContent=R0.pct==null?'':'Overall grade '+R0.pct+'% ('+R0.letter+')';
   $('cn').oninput=function(){prog.name=this.value;save();$('cnm').textContent=this.value||'Your name'};
+  $('ce').oninput=function(){prog.email=this.value;save()};
+  $('dl').onclick=downloadCertificate;
   $('pr').onclick=function(){window.print()};
  },
  quiz:{q:'Which of these is safe to paste into the Lending Account Manager?',o:['Your 12-word seed phrase','Your wallet private key','A public wallet or DSA address','Your exchange password'],a:2,why:'The desk is read-only and only needs a public address. Anyone who asks for your seed phrase or private key is trying to steal from you.'}}
@@ -535,6 +543,100 @@ var L=[
 
 /* hidden symbol for the certificate emblem */
 document.body.insertAdjacentHTML('afterbegin','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="mgdef"><path d="M20 200 L320 16 L620 200 Z" fill="none" stroke="#caa24a" stroke-width="16" stroke-linejoin="round"/><polyline points="150,176 225,156 285,162 355,112 420,120 480,80" fill="none" stroke="#52d39a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><g fill="#caa24a"><rect x="30" y="204" width="580" height="18"/><rect x="68" y="232" width="42" height="190"/><rect x="170" y="232" width="42" height="190"/><rect x="272" y="232" width="42" height="190"/><rect x="372" y="232" width="42" height="190"/><rect x="474" y="232" width="42" height="190"/><rect x="20" y="430" width="600" height="16"/><rect x="0" y="448" width="640" height="16"/><rect x="-12" y="466" width="664" height="16"/></g></g></defs></svg>');
+
+
+/* ---------- grades, certificate picture, emailed report ---------- */
+var WEB3_KEY='cbde23f6-f617-4b16-953f-7b0aab0e9f58';
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function letterOf(p){return p>=90?'A':p>=80?'B':p>=70?'C':p>=60?'D':'F'}
+/* a lesson is graded by tries: right first time = 100%, each wrong try lowers it (4 answers: 100, 67, 33, 0) */
+function lessonGrade(l){var r=(prog.res||{})[l.id];if(!r||!r.fin)return null;var n=Math.max(1,l.quiz.o.length-1);return {w:r.w,pct:Math.round(100*Math.max(0,n-r.w)/n)}}
+function gradeReport(){
+  var rows=L.filter(function(l){return l.id!=='final'}).map(function(l,i){return {n:i+1,code:l.code,label:l.title.split(':')[0],g:lessonGrade(l)}});
+  var gr=rows.filter(function(r){return r.g}),sum=gr.reduce(function(a,r){return a+r.g.pct},0);
+  var pct=gr.length?Math.round(sum/gr.length):null;
+  return {rows:rows,graded:gr.length,total:rows.length,pct:pct,letter:pct==null?'':letterOf(pct)};
+}
+function gradesTableHTML(){
+  var R=gradeReport();
+  return '<div class="lab gr"><h4>Your grades</h4><p class="hint">Each lesson is graded by tries: right on the first try is 100 percent, and every wrong try lowers it. Open a finished lesson and press Retake to improve a grade.</p><table class="t"><tr><th>Lesson</th><th>Wrong tries</th><th>Grade</th></tr>'
+   +R.rows.map(function(r){return '<tr><td>'+r.n+'. '+esc(r.label)+'</td><td>'+(r.g?r.g.w:'-')+'</td><td>'+(r.g?r.g.pct+'% ('+letterOf(r.g.pct)+')':'not graded')+'</td></tr>'}).join('')
+   +'<tr class="ov"><td>Overall</td><td></td><td>'+(R.pct==null?'-':R.pct+'% ('+R.letter+')')+'</td></tr></table></div>';
+}
+function certId(name,email,date,R){var h=5381,t=[name,email,date,R.rows.map(function(r){return r.g?r.g.pct:'x'}).join(',')].join('|');for(var i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))>>>0;return 'DD-'+h.toString(36).toUpperCase().padStart(7,'0')}
+function certCanvas(name,R,date,id){
+  var fl=['900 100px "Big Shoulders Display"','800 40px "Big Shoulders Display"','22px "IBM Plex Mono"','30px "IBM Plex Sans"'].map(function(f){return document.fonts&&document.fonts.load?document.fonts.load(f).catch(function(){}):Promise.resolve()});
+  return Promise.all(fl).then(function(){return new Promise(function(res){
+    var g=document.getElementById('mgdef');if(!g){res(null);return}
+    var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 520" width="640" height="520">'+new XMLSerializer().serializeToString(g)+'</svg>';
+    var im=new Image();im.onload=function(){res(im)};im.onerror=function(){res(null)};im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+  })}).then(function(emb){
+    var W=1754,H=1240,c=document.createElement('canvas');c.width=W;c.height=H;var x=c.getContext('2d');
+    var BR='#caa24a',HI='#f1d98a',TP='#eadfc4',MU='#9fb3a6',LN='#2c4638';
+    var DISP=function(px,w){return (w||900)+' '+px+'px "Big Shoulders Display","Arial Narrow",Impact,sans-serif'},MONO='"IBM Plex Mono",Consolas,monospace',BODY='"IBM Plex Sans","Segoe UI",Arial,sans-serif';
+    var fit=function(t,maxW,px,w){var s2=px;do{x.font=DISP(s2,w);s2-=2}while(x.measureText(t).width>maxW&&s2>20)};
+    var rg=x.createRadialGradient(W/2,0,100,W/2,0,1500);rg.addColorStop(0,'#14382b');rg.addColorStop(1,'#081a13');x.fillStyle=rg;x.fillRect(0,0,W,H);
+    x.strokeStyle=BR;x.lineWidth=9;x.strokeRect(36,36,W-72,H-72);x.lineWidth=2;x.strokeRect(62,62,W-124,H-124);
+    if(emb)x.drawImage(emb,W/2-49,74,98,80);
+    x.textAlign='center';x.fillStyle=BR;x.font='24px '+MONO;if('letterSpacing' in x)x.letterSpacing='8px';
+    x.fillText('BLOCK WALL STREET  ·  DEGEN DESK',W/2,184);if('letterSpacing' in x)x.letterSpacing='0px';
+    var T='CERTIFICATE OF COMPLETION';x.fillStyle=HI;fit(T,1500,124);x.fillText(T,W/2,314);
+    x.fillStyle=MU;x.font='28px '+BODY;x.fillText('This certifies that',W/2,362);
+    var nm=name.toUpperCase();x.fillStyle=TP;fit(nm,1300,112);x.fillText(nm,W/2,462);
+    x.strokeStyle=BR;x.lineWidth=2;x.beginPath();x.moveTo(W/2-500,484);x.lineTo(W/2+500,484);x.stroke();
+    x.fillStyle=MU;x.font='28px '+BODY;x.fillText('has completed every lesson of the',W/2,534);
+    var C='BLOCK WALL STREET DEGEN DESK COURSE';x.fillStyle=BR;fit(C,1300,64);x.fillText(C,W/2,598);
+    var colW=490,gap=40,per=7,cols=Math.ceil(R.rows.length/per),sx=(W-(cols*colW+(cols-1)*gap))/2,top=668,rh=36;
+    x.font='21px '+MONO;
+    R.rows.forEach(function(r,i){
+      var col=Math.floor(i/per),row=i%per,lx=sx+col*(colW+gap),y=top+row*rh;
+      var pc=r.g?r.g.pct+'%':'-',pw=x.measureText(pc).width+16,lab=(r.n<10?'0':'')+r.n+'  '+r.label;
+      while(x.measureText(lab).width>colW-pw&&lab.length>6)lab=lab.slice(0,-2);
+      if(lab!==(r.n<10?'0':'')+r.n+'  '+r.label)lab=lab.replace(/\s+$/,'')+'…';
+      x.textAlign='left';x.fillStyle=TP;x.fillText(lab,lx,y);
+      x.textAlign='right';x.fillStyle=HI;x.fillText(pc,lx+colW,y);
+      x.strokeStyle=LN;x.lineWidth=1;x.beginPath();x.moveTo(lx,y+10);x.lineTo(lx+colW,y+10);x.stroke();
+    });
+    x.textAlign='center';x.fillStyle=HI;
+    var ov=R.pct==null?'COURSE COMPLETE':'OVERALL GRADE  '+R.pct+'%  ('+R.letter+')';fit(ov,1300,88);x.fillText(ov,W/2,1004);
+    x.fillStyle=MU;x.font='18px '+MONO;
+    x.fillText(R.graded<R.total?(R.total-R.graded)+' lesson(s) finished before grading began are not counted.':'Each lesson is graded by tries: first try 100%, each wrong try lowers the grade.',W/2,1042);
+    x.textAlign='left';x.font='22px '+MONO;x.fillStyle=MU;x.fillText('Date: '+date,120,1112);x.fillText('Certificate ID: '+id,120,1146);
+    x.textAlign='right';x.fillStyle=BR;x.font=DISP(40,800);x.fillText('BLOCK WALL STREET',W-120,1112);
+    x.fillStyle=MU;x.font='20px '+MONO;x.fillText('Chicago, IL  ·  blockwallstreet.biz',W-120,1146);
+    x.textAlign='center';x.fillStyle='#6f857a';x.font='18px '+BODY;x.fillText('Education only. Not financial advice.',W/2,1140);
+    return c;
+  });
+}
+function mailReport(name,email,date,id,R){
+  var lines=R.rows.map(function(r){return (r.n<10?'0':'')+r.n+' '+r.label+': '+(r.g?r.g.pct+'% ('+letterOf(r.g.pct)+'), '+r.g.w+' wrong '+(r.g.w===1?'try':'tries'):'not graded (finished before grading began)')}).join('\n');
+  var overall=R.pct==null?'n/a':R.pct+'% ('+R.letter+')';
+  var body={access_key:WEB3_KEY,subject:'Course completed: '+name+' | Degen Desk Course | '+overall,from_name:'BWS Course Report',name:name,course:'Degen Desk Course',overall_grade:overall,
+    message:'Participant: '+name+'\nEmail: '+(email||'(not given)')+'\nCourse: Degen Desk Course\nCompleted: '+date+'\nCertificate ID: '+id+'\n\nLESSON GRADES\n'+lines+'\n\nOVERALL GRADE: '+overall+' ('+R.graded+' of '+R.total+' lessons graded)\n\nGrading: each lesson quiz is graded by tries (first try 100%, each wrong try lowers it).'};
+  if(email)body.email=email;
+  return fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json().catch(function(){return {}}).then(function(j){return !!(r.ok&&j.success)})});
+}
+function todayStr(){return new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}
+function downloadCertificate(){
+  var st=$('cs'),name=($('cn').value||'').trim(),email=($('ce').value||'').trim();
+  if(!name){st.className='cstat bad';st.textContent='Please type your name first.';$('cn').focus();return}
+  if(email&&!/^\S+@\S+\.\S+$/.test(email)){st.className='cstat bad';st.textContent='That email does not look right. Fix it or leave it empty.';return}
+  prog.name=name;prog.email=email;if(!prog.certDate)prog.certDate=todayStr();save();
+  var R=gradeReport(),id=certId(name,email,prog.certDate,R);
+  st.className='cstat';st.textContent='Making your certificate...';
+  certCanvas(name,R,prog.certDate,id).then(function(cv){
+    var url=cv.toDataURL('image/png'),a=document.createElement('a');
+    a.href=url;a.download='Degen_Desk_Certificate_'+name.replace(/[^A-Za-z0-9]+/g,'_')+'.png';document.body.appendChild(a);a.click();a.remove();
+    $('cprev').innerHTML='<img src="'+url+'" alt="Your certificate" style="width:100%;height:auto;border:1px solid var(--line2);border-radius:6px;margin-top:12px">';
+    var sig=JSON.stringify([name,email,R.rows.map(function(r){return r.g?r.g.pct:null})]);
+    if(prog.sent===sig){st.className='cstat ok';st.textContent='Downloaded. Your grades were already emailed to Block Wall Street.';return}
+    st.textContent='Downloaded. Sending your grades to Block Wall Street...';
+    mailReport(name,email,prog.certDate,id,R).then(function(ok){
+      if(ok){prog.sent=sig;save();st.className='cstat ok';st.textContent='Downloaded. Your lesson grades and overall grade were emailed to Block Wall Street.'}
+      else{st.className='cstat bad';st.textContent='Your certificate downloaded, but the email did not go through. Check your internet and press Download again.'}
+    }).catch(function(){st.className='cstat bad';st.textContent='Your certificate downloaded, but the email did not go through. Check your internet and press Download again.'});
+  });
+}
 
 /* ---------- render ---------- */
 var cur=0;
@@ -559,15 +661,18 @@ function show(){
    +'<div class="nav"><button class="btn ghost" id="pv" '+(cur===0?'disabled':'')+'>Back</button><button class="btn" id="nx" '+(prog.done[l.id]?'':'disabled')+'>'+(cur===L.length-1?'Finish':'Next lesson')+'</button></div></article>';
   l.widget($('wg'));
   function mark(){prog.done[l.id]=1;save();$('nx').disabled=false;updateProg()}
+  var rt=(window._rt===l.id);window._rt=null;prog.res=prog.res||{};
   document.querySelectorAll('#qo button').forEach(function(b){
-    if(prog.done[l.id]&&+b.dataset.a===l.quiz.a)b.classList.add('right');
+    if(prog.done[l.id]&&!rt&&+b.dataset.a===l.quiz.a)b.classList.add('right');
     b.onclick=function(){
+      var r=prog.res[l.id]||(prog.res[l.id]={w:0,fin:0});
       var ok=+b.dataset.a===l.quiz.a;
-      if(ok){document.querySelectorAll('#qo button').forEach(function(x){x.disabled=true});b.classList.add('right');$('qw').innerHTML='<b class="up">Right.</b> '+l.quiz.why;mark()}
-      else{b.classList.add('wrong');b.disabled=true;$('qw').innerHTML='<b class="dn">Not quite.</b> Try another answer.'}
+      if(ok){r.fin=1;save();document.querySelectorAll('#qo button').forEach(function(x){x.disabled=true});b.classList.add('right');$('qw').innerHTML='<b class="up">Right.</b> '+l.quiz.why;mark()}
+      else{if(!r.fin){r.w++;save()}b.classList.add('wrong');b.disabled=true;$('qw').innerHTML='<b class="dn">Not quite.</b> Try another answer.'}
     };
   });
-  if(prog.done[l.id])$('qw').innerHTML='<b class="up">Done.</b> '+l.quiz.why;
+  if(prog.done[l.id]&&!rt){var rr=prog.res[l.id];$('qw').innerHTML='<b class="up">Done.</b> '+l.quiz.why+(rr&&rr.fin?' <div style="margin-top:10px"><button class="btn ghost" id="rq">Retake for a new grade</button></div>':'');
+    if($('rq'))$('rq').onclick=function(){prog.res[l.id]={w:0,fin:0};save();window._rt=l.id;show()}}
   $('pv').onclick=function(){go(cur-1)};
   $('nx').onclick=function(){if(cur<L.length-1)go(cur+1);else window.scrollTo(0,0)};
   updateProg();window.scrollTo(0,0);
