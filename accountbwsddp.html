@@ -101,7 +101,7 @@ input:focus,textarea:focus{border-color:var(--gold)}
 (function(){
 var $=function(i){return document.getElementById(i)};
 var W3F_KEY="cbde23f6-f617-4b16-953f-7b0aab0e9f58",JOIN_URL="https://buy.stripe.com/5kQ28t4vu3mvfPEabe2sM0y",PORTAL_URL="";  /* paste your Stripe customer-portal link here to show a Manage billing button */
-var PLANS={"d5928e9755858f44262658e63b66018191d238ae49c870465d724a86197f643b":"Member free trial (4 days)","660ae5657730f2071da61e346233eeb4d56346fe348a11bee3e5be2a7930c470":"Owner","52e71e659a57bb374b413ad23a8f0fdca8820afeb98b31bba5f9ad127fef2d2c":"New Money Matrix Discord trial (7 days)"};
+var PLANS={"d5928e9755858f44262658e63b66018191d238ae49c870465d724a86197f643b":"Member free trial (5 days)","3e35b63f4bff25e944b16dde7bc60066c36ff610f20602da877e2f833ef29025":"Paid member (30 days)","660ae5657730f2071da61e346233eeb4d56346fe348a11bee3e5be2a7930c470":"Owner","52e71e659a57bb374b413ad23a8f0fdca8820afeb98b31bba5f9ad127fef2d2c":"New Money Matrix Discord trial (7 days)"};
 var OWNER_H="660ae5657730f2071da61e346233eeb4d56346fe348a11bee3e5be2a7930c470";
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){return null}}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
