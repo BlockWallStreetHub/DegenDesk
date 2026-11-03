@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cyan">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Degen Desk Course | Block Wall Street</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070D1B;--panel:#0B1429;--panel2:#101B38;--line:#1F2D52;--ink:#E6ECFA;--mute:#8E9BC0;--a:#35F0FF;--a-hi:#8CF7FF;--a-ink:#04121a;--good:#5FD39A;--bad:#FF6B7D;--warn:#F5B84B;
+--display:'Inter','Segoe UI Variable','Segoe UI',system-ui,sans-serif;--body:'Inter','Segoe UI Variable','Segoe UI',system-ui,sans-serif;--mono:'DM Mono',Consolas,'Cascadia Mono','Courier New',monospace}
+html[data-theme="gold"]{--a:#E8B84A;--a-hi:#F3D58A}
+html[data-theme="violet"]{--a:#A07CFF;--a-hi:#C9B6FF}
+*{box-sizing:border-box}
+html{font-size:18px;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+header.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-row{display:flex;align-items:center;gap:.6rem;padding:.55rem 1rem;max-width:1100px;margin:0 auto;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:1.6rem;letter-spacing:.06em;color:var(--a);margin-right:auto}
+.tbtn{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.35rem .7rem;font-size:.85rem;font-weight:600}
+.tbtn:hover{border-color:var(--a)}
+.pills{display:flex;gap:.35rem;overflow-x:auto;padding:0 1rem .55rem;max-width:1100px;margin:0 auto;scrollbar-width:thin}
+.pill{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--mute);border-radius:999px;padding:.2rem .8rem;font-size:.82rem;font-weight:600}
+.pill.on{background:var(--a);color:var(--a-ink);border-color:var(--a)}
+.pill.done::after{content:" ✓";color:var(--good)}
+.pill.on.done::after{color:var(--a-ink)}
+#prog{height:4px;background:var(--panel2)}#prog i{display:block;height:100%;width:0;background:var(--a);transition:width .4s}
+main{max-width:780px;margin:0 auto;padding:2rem 1.1rem 5rem}
+.view{display:none}.view.on{display:block}
+h1,h2{font-family:var(--display);font-weight:900;text-transform:uppercase;letter-spacing:.02em;line-height:1;margin:0;color:var(--a)}
+h1{font-size:clamp(3rem,10vw,5.4rem);color:var(--ink)}
+h2.st{font-size:clamp(2.5rem,8vw,3.6rem)}
+h3{font-size:1.3rem;line-height:1.25;margin:2.2rem 0 .5rem;color:var(--a-hi)}
+p{margin:.8rem 0}li{margin:.45rem 0}
+.sub{color:var(--mute);font-size:1.1rem;margin-top:.8rem}
+.meta{font-family:var(--mono);font-size:.82rem;color:var(--mute);margin:.7rem 0 1.4rem}
+.jump{display:inline-block;margin:.3rem 0 .6rem;font-weight:600;color:var(--a)}
+.box{border-radius:12px;padding:1.1rem 1.3rem;margin:1.6rem 0;background:var(--panel);border:1px solid var(--line)}
+.box h4{margin:0 0 .4rem;font-size:1.05rem;color:var(--a)}
+.box p:last-child,.box ul:last-child,.box ol:last-child{margin-bottom:0}
+.story{border-left:6px solid var(--a);background:var(--panel2)}
+.story h4{font-family:var(--display);font-weight:900;font-size:1.7rem;letter-spacing:.03em}
+.simple{border:2px solid var(--a)}
+.warn{border-color:#ffb347}.warn h4{color:#ffb347}
+li::marker{color:var(--a)}
+table{width:100%;border-collapse:collapse;margin:1.2rem 0;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:.55rem .6rem;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--a)}td:first-child{font-weight:700}
+.btn{display:inline-block;background:linear-gradient(180deg,var(--a-hi),var(--a));color:var(--a-ink);border:0;border-radius:6px;padding:.75rem 1.5rem;font-family:var(--display);font-weight:900;font-size:1.35rem;letter-spacing:.05em;text-transform:uppercase;line-height:1;text-decoration:none}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;color:var(--a-hi);border:1.5px solid var(--a)}
+.btn.ghost:hover{background:rgba(202,162,74,.12)}
+.row{display:flex;gap:.7rem;flex-wrap:wrap;margin:1.4rem 0}
+.map{display:grid;gap:.6rem;margin:1.2rem 0;padding:0;list-style:none}
+.map li{margin:0}
+.map button{width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:.8rem 1rem;display:flex;gap:1rem;align-items:center;font-size:1rem}
+.map button:hover{border-color:var(--a)}
+.map .n{font-family:var(--display);font-weight:800;font-size:2rem;color:var(--a);width:2rem;line-height:1}
+.map small{display:block;color:var(--mute);font-size:.85rem}
+.map .t{flex:1;font-weight:600}
+.map .m{font-family:var(--mono);font-size:.8rem;color:var(--mute)}
+.quiz{margin-top:3rem;border-top:2px solid var(--a);padding-top:1.5rem}
+.qh{font-family:var(--display);font-weight:900;font-size:2.4rem;color:var(--a);margin:0 0 .3rem}
+.qcount{font-family:var(--mono);font-size:.85rem;color:var(--mute)}
+.qbar{height:6px;background:var(--panel2);border-radius:3px;margin:.4rem 0 1.2rem}.qbar i{display:block;height:100%;background:var(--a);border-radius:3px;transition:width .3s}
+.qq{font-size:1.3rem;font-weight:600;line-height:1.4;margin:.4rem 0 1rem}
+.opt{display:flex;gap:.8rem;width:100%;text-align:left;background:var(--panel);border:2px solid var(--line);color:var(--ink);border-radius:12px;padding:.8rem 1rem;margin:.55rem 0;font-size:1.02rem;line-height:1.45}
+.opt:hover:not(:disabled){border-color:var(--a)}
+.opt .l{font-family:var(--mono);color:var(--a);flex:0 0 1.2rem}
+.opt.right{border-color:var(--good);background:rgba(82,211,154,.12)}.opt.wrong{border-color:var(--bad);background:rgba(229,88,76,.12)}
+.opt:disabled{cursor:default}
+.why{margin:1rem 0;padding:.9rem 1.1rem;border-radius:10px;background:var(--panel2);border-left:5px solid var(--good)}.why.bad{border-left-color:var(--bad)}
+.score{font-family:var(--display);font-weight:900;font-size:5rem;color:var(--a);line-height:1}
+.badge{display:inline-block;font-family:var(--mono);font-size:.85rem;padding:.2rem .7rem;border-radius:999px;border:1px solid var(--line)}
+.badge.pass{border-color:var(--good);color:var(--good)}.badge.fail{border-color:var(--bad);color:var(--bad)}
+.review details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.5rem .9rem;margin:.5rem 0}
+.review summary{cursor:pointer;font-weight:600}
+.pager{display:flex;justify-content:space-between;gap:1rem;margin-top:2.5rem;flex-wrap:wrap}
+input.nameIn,select.nameIn,textarea.nameIn{font-family:var(--body);font-size:1.05rem;padding:.6rem .8rem;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:min(100%,22rem)}
+textarea.nameIn{width:100%;min-height:5rem}
+label.fl{display:block;font-family:var(--mono);font-size:.8rem;color:var(--mute);margin:.9rem 0 .25rem}
+.cstat{font-family:var(--mono);font-size:.85rem;color:var(--mute);margin:.6rem 0}
+.cstat.ok{color:var(--good)}.cstat.bad{color:var(--bad)}
+.privacy{font-size:.82rem;color:var(--mute)}
+#certImg{width:100%;height:auto;border:1px solid var(--line);border-radius:8px;margin:1rem 0;display:block}
+.cta{border:2px solid var(--a);border-radius:14px;padding:1.4rem;margin:2rem 0;background:var(--panel2);text-align:center}
+.cta h3{margin:.2rem 0 .4rem;font-family:var(--display);font-weight:900;font-size:2rem}
+@media (max-width:560px){html{font-size:17px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media print{body *{visibility:hidden}#certImg,#certImg *{visibility:visible}#certImg{position:absolute;left:0;top:0;width:100%;border:0}}
+/* ---- Desk look: navy, Inter, solid accent buttons ---- */
+h1,h2,.brand,.btn,.qh,.score,.cta h3,.story h4,.map .n{text-transform:none;font-family:var(--display)}
+h1{font-size:clamp(2.2rem,7vw,3.6rem);font-weight:800;letter-spacing:-.02em;line-height:1.05;color:var(--ink)}
+h2.st{font-size:clamp(1.9rem,6vw,2.6rem);font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.brand{font-size:1.15rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.qh{font-size:1.6rem;font-weight:800}.score{font-size:3.6rem;font-weight:800}.cta h3{font-size:1.6rem;font-weight:800}
+.story h4{font-size:1.15rem;font-weight:700;letter-spacing:0}.map .n{font-size:1.5rem;font-weight:800}
+.btn{background:var(--a);border-radius:8px;padding:.7rem 1.3rem;font-size:1rem;font-weight:700;letter-spacing:0}
+.btn.ghost{background:transparent;color:var(--a-hi);border:1.5px solid var(--a)}
+.btn.ghost:hover{background:color-mix(in srgb,var(--a) 14%,transparent)}
+.opt.right{background:rgba(95,211,154,.12)}.opt.wrong{background:rgba(255,107,125,.12)}
+.warn{border-color:var(--warn)}.warn h4{color:var(--warn)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <div class="brand">BWS DEGEN DESK</div>
+    <button class="tbtn" id="themeBtn" title="Change the accent color">Accent: Cyan</button>
+    <button class="tbtn" id="fsm" aria-label="Smaller text">A−</button>
+    <button class="tbtn" id="fsp" aria-label="Bigger text">A+</button>
+  </div>
+  <nav class="pills" id="pills" aria-label="Course sections"></nav>
+  <div id="prog"><i></i></div>
+</header>
+<main id="app"></main>
+<script>
+/* ======= SETTINGS YOU CAN CHANGE ======= */
+const JOIN_URL='https://buy.stripe.com/5kQ28t4vu3mvfPEabe2sM0y';   // Degen Desk subscription payment link
+const DESK_URL='https://degendesk.blockwallstreet.biz';
+const WEB3_KEY='cbde23f6-f617-4b16-953f-7b0aab0e9f58';             // grades + RSVPs are emailed to Block Wall Street
+const COURSE_NAME='The Degen Desk Course';
+/* ======================================= */
+
+const SECS=[];
+const Q=(q,a,b,c,d,w)=>({q:q,o:[a,b,c,d],w:w});
+
+SECS.push({id:'s1',title:'WELCOME TO THE DESK',short:'The Desk',mins:8,
+sub:'What the Degen Desk is, how to move around it, and the mindset that keeps you alive.',
+html:`
+<div class="box story"><h4>On the Desk: One Screen, Many Eyes</h4>
+<p>A trading floor has people watching prices, news, risk and positions all at once. The Degen Desk puts that view on one screen for you: prices, trends, heat maps, your lending accounts, your liquidity pools, flows, news and alerts.</p>
+<p>The Desk <strong>shows</strong> you things. It never makes the decision. You do.</p></div>
+
+<h3>Getting around</h3>
+<ul>
+<li>A <strong>Home button</strong> is always visible, so you can never get lost.</li>
+<li>A <strong>left sidebar</strong> and <strong>top tabs</strong> take you to each tool.</li>
+</ul>
+
+<h3>What “degen” means</h3>
+<p><strong>Degen</strong> is crypto slang, short for “degenerate,” for someone who takes big, high-risk bets. The name is a wink. This course teaches you to use the Desk like a professional: a plan first, then the tools.</p>
+
+<h3>Your tools in this course</h3>
+<table><tr><th>Lesson</th><th>Tool</th><th>Question it answers</th></tr>
+<tr><td>2</td><td>Trending Coins</td><td>What is everybody looking at?</td></tr>
+<tr><td>3</td><td>Heat Map</td><td>How is the whole market doing?</td></tr>
+<tr><td>4</td><td>EMAs and Backtester</td><td>What is the trend, and would a rule have worked?</td></tr>
+<tr><td>5</td><td>Lending Account Manager</td><td>How close am I to being liquidated?</td></tr>
+<tr><td>6</td><td>Flows and Positioning</td><td>What are the big players doing?</td></tr>
+<tr><td>7</td><td>LP Position Manager</td><td>Is my liquidity position still working?</td></tr>
+<tr><td>8</td><td>Alerts and Your Rules</td><td>How do I get warned only about what I care about?</td></tr></table>
+
+<div class="box simple"><h4>In plain words</h4>
+<p>The Desk is a dashboard. A dashboard helps you follow a plan you wrote in advance. It is not a crystal ball, and no single reading should ever push you to act.</p></div>
+
+<div class="box warn"><h4>Read this</h4>
+<p>Everything here is education and information, not financial advice. Crypto is risky and you can lose money. Never use money you cannot afford to lose.</p></div>
+
+<h3>When a panel shows an error</h3>
+<p>Prices come from outside data sources. Sometimes a source is busy or limits how many requests it will answer, and a panel can show a message like “Failed to fetch.” Your coins are fine. Wait a minute and refresh.</p>
+`,
+quiz:[
+Q('What is the Degen Desk?','A terminal that brings BWS crypto tools together on one screen','A coin you can buy','A bank account','A signal service that guarantees profit','It collects prices, trends, loans, pools, flows and alerts in one place.'),
+Q('Who decides what to do with a reading on the Desk?','You do','The Desk, automatically','Block Wall Street','Your exchange','The Desk shows information. The decision is yours.'),
+Q('Why check more than one tool before acting?','One signal alone can be wrong, and agreement across tools is stronger','More tabs is always better','Tools never disagree','It is required by law','Confirmation across several readings lowers the chance of acting on noise.'),
+Q('What does “degen” mean in crypto slang?','Someone who takes big, high-risk bets','A licensed financial advisor','A long-term saver','A miner','It is short for “degenerate” and is used with a wink.'),
+Q('A panel says “Failed to fetch.” What is a common cause?','The data source is busy or limiting requests, so wait and refresh','Your coins are gone','The market is closed','Your wallet was hacked','Outside data sources can be rate-limited for a short time.'),
+Q('Are Desk readings financial advice?','No, they are information for your own research','Yes, always','Only the paid ones','Only the alerts','Block Wall Street teaches and informs. It does not tell you what to buy or sell.'),
+Q('What is the best way to treat the Desk?','As a dashboard that supports a plan you wrote in advance','As a crystal ball','As a replacement for thinking','As a casino','A plan first, tools second.'),
+Q('What should come first?','Your plan and your risk limits','The biggest position you can open','A tip from social media','Borrowing as much as possible','Decide how much you can lose before you look at any chart.')
+]});
+
+SECS.push({id:'s2',title:'TRENDING COINS',short:'Trending',mins:9,
+sub:'How to read what the crowd is watching without becoming exit liquidity.',
+html:`
+<div class="box story"><h4>On the Desk: The Loudest Table in the Room</h4>
+<p>Walk into a casino and the loudest table is the one where somebody just won. The Trending Coins panel is that table. It lists coins that people are searching for and trading right now.</p>
+<p>Loud does not mean good. By the time a coin is loud, a lot of the move may be over.</p></div>
+
+<h3>What “trending” really measures</h3>
+<p>Trending is mostly <strong>attention</strong>: searches, trading volume and social buzz. Attention can come from real news, a new listing, a celebrity post, or a coordinated pump.</p>
+
+<h3>Four numbers to look at next to any trending coin</h3>
+<ul>
+<li><strong>Market cap</strong> = price × circulating supply. It tells you how big the coin really is.</li>
+<li><strong>Volume</strong> = how much traded in a period. Big volume with a tiny pool of money behind it is a warning sign.</li>
+<li><strong>Liquidity</strong> = how easily you can sell without moving the price. Thin liquidity means you may get stuck or lose a lot to slippage.</li>
+<li><strong>Age and contract</strong> = a brand-new token is far riskier. Always confirm the <strong>contract address</strong>, because copycat tokens use the same name and ticker.</li>
+</ul>
+
+<h3>Common traps</h3>
+<ul>
+<li><strong>Pump and dump:</strong> insiders push the price up with hype and sell into the buyers.</li>
+<li><strong>Rug pull:</strong> creators drain the liquidity or abandon the project and the token becomes worthless.</li>
+<li><strong>FOMO:</strong> fear of missing out. A coin up 300 percent in a day makes you feel late and tempts you to chase.</li>
+</ul>
+
+<div class="box simple"><h4>In plain words</h4>
+<p>Use Trending as a <strong>starting point for research</strong>, never as a shopping list.</p></div>
+`,
+quiz:[
+Q('What does a trending list mostly measure?','Attention, such as searches, volume and buzz','Safety','Fair value','Long-term quality','Attention can come from real news or from a pump.'),
+Q('Does a coin trending mean it is a good investment?','No, trending only means people are looking at it','Yes','Only if it is green','Only if it is new','Popularity is not the same as quality.'),
+Q('How is market cap calculated?','Price × circulating supply','Volume × price','Price ÷ supply','Supply − volume','It shows how big the coin is.'),
+Q('Why is thin liquidity a problem?','You may not be able to sell without moving the price a lot','It makes fees lower','It makes the coin safer','It increases supply','Low liquidity means large slippage and possibly being stuck.'),
+Q('What is a rug pull?','Creators drain liquidity or abandon a project, leaving a worthless token','A price dip','A new exchange listing','A staking reward','The people holding the token are left with nothing.'),
+Q('Why verify the contract address?','Copycat tokens can share a real token’s name and ticker','It makes trades cheaper','It is required by exchanges','It shows the price','Only the contract address identifies the real token.'),
+Q('A coin is up 300 percent today and everyone is talking about it. What is the main risk of buying now?','Chasing a move that may be mostly over, driven by FOMO','Nothing, momentum always continues','The fees are too low','Regulators will cancel it','Late buyers often become the exit liquidity for early holders.'),
+Q('What is the best use of the Trending panel?','A starting point for your own research','A list of coins to buy','Proof a coin is safe','A guarantee of profit','Research first, then decide with your plan.')
+]});
+
+SECS.push({id:'s3',title:'THE HEAT MAP',short:'Heat Map',mins:8,
+sub:'Reading the whole market in one glance: size, color, timeframe and breadth.',
+html:`
+<div class="box story"><h4>On the Desk: The Weather Map of Crypto</h4>
+<p>A weather map shows storms and sunshine across a whole country at once. The Heat Map does the same for the market. You see in seconds whether it is a market-wide storm or just one coin having a bad day.</p></div>
+
+<h3>How to read it</h3>
+<ul>
+<li><strong>Tile size</strong> usually shows market cap. Bigger tile, bigger coin.</li>
+<li><strong>Tile color</strong> shows the price change over the period you choose. Green is up and red is down. A darker shade means a bigger move.</li>
+<li><strong>Timeframe</strong> changes the story. One hour is mostly noise. Seven days or thirty days shows the trend.</li>
+</ul>
+
+<h3>Three useful ideas</h3>
+<p><strong>Breadth.</strong> How many coins are rising compared with falling. If almost everything is red, your coin is falling with the market, which says little about the coin itself.</p>
+<p><strong>Relative strength.</strong> A small green tile in a sea of red is a coin holding up better than the market. That is worth a closer look.</p>
+<p><strong>Sector rotation.</strong> Money often moves from one category to another, for example from large coins into smaller ones, or from one chain’s ecosystem to another. The map shows where the heat is moving.</p>
+
+<div class="box simple"><h4>In plain words</h4>
+<p>The Heat Map tells you <strong>what already happened</strong>. It does not predict what happens next. Use it to see context before you look at a single coin.</p></div>
+`,
+quiz:[
+Q('On a typical crypto heat map, what does tile size show?','Market cap','Age of the coin','Number of holders','Fees','Bigger tile means a bigger coin by market cap.'),
+Q('What does tile color show?','Price change over the chosen period','Safety rating','Volume only','Who owns the coin','Green is up, red is down, darker is a bigger move.'),
+Q('Why switch the timeframe?','One hour is mostly noise, while seven or thirty days shows the trend','Colors only work on one setting','To change the coin list','To lower fees','Different timeframes tell different stories.'),
+Q('Almost every tile is red and your coin is red too. What does that suggest?','Your coin is moving with the whole market','Your coin has a unique problem','The Desk is broken','The coin will recover tomorrow','A market-wide move says little about one coin.'),
+Q('A small green tile sits in a sea of red tiles. What is it showing?','Relative strength','A rug pull','A bug','Low liquidity only','It is holding up better than the market.'),
+Q('What is market breadth?','How many assets are rising compared with falling','The price of Bitcoin','The size of the biggest coin','The number of exchanges','Wide participation in a move is a stronger signal.'),
+Q('What is sector rotation?','Money moving from one category of coins to another','Mining rewards changing','A wallet upgrade','A new exchange','The map shows where the heat is moving.'),
+Q('What can the Heat Map NOT do?','Predict what happens next','Show what moved today','Show relative strength','Show market breadth','It shows the past and present only.')
+]});
+
+SECS.push({id:'s4',title:'EMAs AND THE BACKTESTER',short:'EMAs',mins:12,
+sub:'The 20, 50, 100 and 200 EMA, daily-close crosses, and how to test a rule honestly.',
+html:`
+<div class="box story"><h4>On the Desk: Gold Stars and Blue Moons</h4>
+<p>On the EMA Backtester chart, a <strong>gold star</strong> marks where a rule would have bought and a <strong>blue moon</strong> marks where it would have sold. You enter a token and an amount, pick a timeframe, and see what the rule would have done in the past.</p></div>
+
+<h3>What is an EMA?</h3>
+<p>An <strong>EMA</strong> is an exponential moving average. It is the average price over a number of candles, with <strong>more weight on recent prices</strong> than a simple average gives. That makes it react faster to new moves.</p>
+<table><tr><th>EMA</th><th>Think of it as</th></tr>
+<tr><td>20</td><td>Short-term trend</td></tr>
+<tr><td>50</td><td>Medium-term trend</td></tr>
+<tr><td>100</td><td>Longer trend</td></tr>
+<tr><td>200</td><td>The big-picture trend</td></tr></table>
+<p>Price above a rising EMA is generally a healthier picture. Price that loses an EMA is a warning. The longer the EMA, the more important and slower the signal.</p>
+
+<h3>Crosses and the daily close</h3>
+<p>A <strong>cross</strong> happens when price or a faster EMA moves across a slower one. When the 50 crosses above the 200, traders call it a <strong>golden cross</strong>. The opposite is a <strong>death cross</strong>.</p>
+<p>A <strong>daily-close cross</strong> means you wait for the daily candle to <strong>finish</strong> before calling it. A price can poke through an EMA during the day and snap back. Waiting for the close filters out many of those false alarms.</p>
+<p>Timeframes matter too. Signals on the weekly and monthly charts are slower and rarer, and usually more important than signals on the 1-hour chart.</p>
+
+<h3>Backtesting honestly</h3>
+<ul>
+<li><strong>The past is not a promise.</strong> A rule that worked before can fail next time.</li>
+<li><strong>Count the costs.</strong> Fees and slippage reduce real results.</li>
+<li><strong>Beware overfitting.</strong> If you try dozens of settings and keep the one that looked best, you fitted the past, not found an edge.</li>
+<li><strong>Short history is weak evidence.</strong> A token with a few months of data cannot teach you much.</li>
+</ul>
+
+<div class="box simple"><h4>In plain words</h4>
+<p>EMAs describe the trend. Backtests show how a rule behaved. Neither one tells you the future.</p></div>
+`,
+quiz:[
+Q('What makes an EMA different from a simple average?','It gives more weight to recent prices','It ignores recent prices','It uses only the high price','It is always shorter','That is why an EMA reacts faster to new moves.'),
+Q('Which of these EMAs reflects the longest-term trend?','200','20','50','They are all the same','The longer the EMA, the slower and bigger-picture it is.'),
+Q('What is a golden cross?','The 50 EMA crossing above the 200 EMA','Price hitting a new low','A coin listing on a big exchange','Two coins merging','The reverse is called a death cross.'),
+Q('What does a “daily-close cross” mean?','The cross is confirmed only after the daily candle finishes','The cross happens at midnight','It happens every day','It only counts on weekends','Waiting for the close avoids false moves during the day.'),
+Q('Why wait for the close?','Price can poke through an EMA and snap back before the candle ends','Exchanges are closed','To pay lower fees','To avoid using charts','Intraday wicks create false signals.'),
+Q('On the Backtester chart, what do a gold star and a blue moon mark?','Gold star = buy, blue moon = sell','Gold star = sell, blue moon = buy','Both mark buys','Both mark news events','They show where the rule would have bought and sold.'),
+Q('Which problem happens when you test many settings and keep only the best-looking one?','Overfitting','Slippage','Staking','Halving','You fitted the past rather than found a real edge.'),
+Q('What is true about weekly and monthly signals compared with 1-hour signals?','They are slower and rarer, and usually more important','They are faster and noisier','They are identical','They are less reliable in every case','Longer timeframes filter out a lot of noise.')
+]});
+
+SECS.push({id:'s5',title:'THE LENDING ACCOUNT MANAGER',short:'Lending',mins:12,
+sub:'Collateral, debt, health factor, liquidation, and how to see danger coming.',
+html:`
+<div class="box story"><h4>On the Desk: The Margin Call You Never Get</h4>
+<p>On a lending protocol there is no person who calls you when your loan is in trouble. The code watches your numbers and, if they cross a line, a stranger’s bot closes part of your position and keeps a fee from your collateral. The Lending Account Manager is built to watch those numbers for you.</p></div>
+
+<h3>The basics</h3>
+<ul>
+<li><strong>Collateral</strong> is the crypto you deposit as security.</li>
+<li><strong>Debt</strong> is what you borrow, often a stablecoin.</li>
+<li><strong>LTV (loan-to-value)</strong> is your debt divided by the value of your collateral.</li>
+<li><strong>Liquidation</strong> happens when your debt becomes too large for your collateral. Part of your collateral is sold, and you pay a <strong>liquidation penalty</strong>.</li>
+</ul>
+
+<h3>Health factor</h3>
+<p>The <strong>health factor</strong> is one number that sums it up. <strong>Above 1 is alive. At or below 1.0 your position can be liquidated.</strong> The higher the number, the bigger your cushion.</p>
+<p>If your collateral falls 20 percent and your debt stays the same, your health factor falls. If your <strong>debt</strong> is in a volatile coin and that coin rises, your debt grows and your health factor falls too.</p>
+
+<h3>Ways to raise your health factor</h3>
+<ul>
+<li>Add more collateral.</li>
+<li>Repay part of the debt.</li>
+<li>Swap volatile collateral into a stablecoin, which protects you from further price drops.</li>
+</ul>
+<p>All of these take time to do and cost fees, and prices can move fast. That is why you want a warning <strong>well before</strong> 1.0. A very tight alert level, such as 1.02, leaves almost no room to react.</p>
+
+<h3>Swap windows</h3>
+<p>Two decisions come up again and again: <strong>when to swap collateral</strong> into something safer, and <strong>when to swap debt</strong>. A good rule does not rely on a feeling. It uses a checklist, for example: the collateral coin has lost its 20 EMA on the weekly and monthly charts <em>and</em> your health factor is below a level you chose. When every box on your list is ticked at once, that is a swap window. You set the list. Lesson 8 shows how.</p>
+
+<div class="box warn"><h4>Risk</h4>
+<p>Borrowing against crypto keeps your upside, but it adds liquidation risk. A fast drop can liquidate you before you act. Swaps cost fees, and debt swaps into volatile coins can increase your risk. Learn the mechanics with small amounts first.</p></div>
+`,
+quiz:[
+Q('What does a health factor at or below 1.0 mean?','Your position can be liquidated','Your position is safest','You earn more interest','Your debt is zero','Above 1 is alive, at or below 1 can be liquidated.'),
+Q('Which health factor gives the biggest cushion?','2.5','1.5','1.1','1.02','A higher number is safer.'),
+Q('What is LTV?','Debt divided by the value of your collateral','Price of your collateral','Interest rate','The number of coins you own','It measures how much you borrowed against what you put up.'),
+Q('What is collateral?','Crypto you deposit as security for a loan','The loan itself','A fee','A type of stablecoin','If the loan goes bad, the collateral is what gets sold.'),
+Q('Your collateral falls 20 percent and your debt stays the same. What happens to your health factor?','It falls','It rises','It stays the same','It becomes zero immediately','Less collateral against the same debt is less safe.'),
+Q('Which action directly lowers liquidation risk?','Repaying part of the debt','Borrowing more','Waiting','Closing the Desk','Less debt means a higher health factor.'),
+Q('Why set warnings well above 1.0?','Prices move fast, and fixing a position takes time and fees','Because 1.0 never happens','To pay less interest','Because alerts are free','A cushion gives you time to act before liquidation.'),
+Q('What is a liquidation penalty?','A fee taken from your collateral when you are liquidated','A reward for borrowing','A tax from the exchange','A yield bonus','It makes liquidation more expensive than acting early.')
+]});
+
+SECS.push({id:'s6',title:'FLOWS AND POSITIONING',short:'Flows',mins:11,
+sub:'ETF flows, treasuries, options and futures: reading what big money is doing.',
+html:`
+<div class="box story"><h4>On the Desk: Following the Footprints</h4>
+<p>Prices are the result. Flows and positioning are the footprints that led there. The Flow Watch panel tracks where big money is going so you can see the crowd before the crowd shows up in the price.</p></div>
+
+<h3>ETF flows</h3>
+<p>Crypto ETFs are funds that hold crypto and trade like stocks. A <strong>net inflow</strong> means more money went in than out that day, which is buying pressure. A <strong>net outflow</strong> means the opposite. Daily, weekly and monthly views help you separate a one-day blip from a trend.</p>
+
+<h3>Treasuries</h3>
+<p>Some companies and organizations hold crypto on their balance sheets. Watching the largest holders, and whether they are adding or selling, shows how committed the big players are.</p>
+
+<h3>Options</h3>
+<ul>
+<li>A <strong>call</strong> option gives the right to buy at a set price. Calls are usually bullish bets.</li>
+<li>A <strong>put</strong> option gives the right to sell at a set price. Puts are usually bearish bets or hedges.</li>
+<li><strong>Open interest</strong> is the total number of contracts still open. The <strong>put/call ratio</strong> compares the two. A high ratio means more bearish positioning or hedging.</li>
+</ul>
+
+<h3>Futures</h3>
+<p>Futures let traders bet on price using leverage. The <strong>long/short ratio</strong> shows how many are betting up versus down. When it is extremely lopsided, the crowd is crowded.</p>
+<p>When price moves against a crowded side, leveraged traders get <strong>liquidated</strong>, which forces them to close. That forced selling or buying pushes price further and liquidates more people. This chain reaction is a <strong>liquidation cascade</strong>.</p>
+
+<div class="box simple"><h4>In plain words</h4>
+<p>Positioning is a gauge of crowding and conviction. It is not a guarantee. A crowded trade can stay crowded for a long time, so use it as context, not as a trigger by itself.</p></div>
+`,
+quiz:[
+Q('What does a net ETF inflow mean?','More money went in than out, which is buying pressure','Prices must rise tomorrow','The ETF is closing','Fees went up','It shows demand for the fund’s crypto.'),
+Q('What does a call option give you?','The right to buy at a set price','The right to sell at a set price','A guaranteed profit','A loan','Calls are usually bullish bets.'),
+Q('What does a put option give you?','The right to sell at a set price','The right to buy at a set price','Free coins','A staking reward','Puts are bearish bets or hedges.'),
+Q('What does a high put/call ratio suggest?','More bearish positioning or hedging','More bullish positioning','No trading','Higher fees','More puts than calls.'),
+Q('What is open interest?','The total number of contracts that are still open','The price of a contract','The number of traders','Trading volume only','It shows how much positioning exists.'),
+Q('What does an extremely lopsided long/short ratio suggest?','The trade is crowded, which raises the risk of a squeeze','Prices must go up','The market is calm','Traders have no leverage','Crowded sides get hurt when price moves against them.'),
+Q('What is a liquidation cascade?','Forced closes push price, which triggers more forced closes','A gradual price rise','A coin burn','A new listing','Each wave of liquidations feeds the next.'),
+Q('How should you use positioning data?','As context, not as a trigger by itself','As a guarantee','As the only signal','As financial advice','Crowded trades can stay crowded for a long time.')
+]});
+
+SECS.push({id:'s7',title:'THE LP POSITION MANAGER',short:'LP',mins:11,
+sub:'Liquidity pools, ranges, impermanent loss, and when to hold, rebalance or close.',
+html:`
+<div class="box story"><h4>On the Desk: Being the Market Maker</h4>
+<p>When you swap one token for another on a decentralized exchange like Uniswap, Raydium or Aerodrome, you trade against a pool of tokens. People called <strong>liquidity providers (LPs)</strong> put those tokens in the pool and earn a share of the trading fees. The LP Position Manager helps you watch that position.</p></div>
+
+<h3>Ranges</h3>
+<p>In concentrated liquidity pools you choose a <strong>price range</strong> for your tokens.</p>
+<ul>
+<li><strong>In range:</strong> your liquidity is being used and you earn fees.</li>
+<li><strong>Out of range:</strong> the price moved past your range. You stop earning fees and your position turns fully into one of the two tokens.</li>
+</ul>
+<table><tr><th>Range</th><th>Upside</th><th>Downside</th></tr>
+<tr><td>Narrow</td><td>More fees per dollar while in range</td><td>Goes out of range quickly</td></tr>
+<tr><td>Wide</td><td>Stays in range longer</td><td>Fewer fees per dollar</td></tr></table>
+
+<h3>Impermanent loss</h3>
+<p><strong>Impermanent loss</strong> is the difference in value between providing liquidity and simply holding the same tokens. It appears when the two token prices move apart. Fees can offset it, but not always.</p>
+
+<h3>Hold, rebalance or close</h3>
+<ul>
+<li><strong>Hold</strong> when the position is in range and conditions look stable.</li>
+<li><strong>Rebalance</strong> by resetting your range around the current price. It costs gas, swap fees and slippage, so doing it too often can eat your earnings.</li>
+<li><strong>Close</strong> when the reason you opened the position is gone, or the risk is bigger than the fees.</li>
+</ul>
+<p>The manager’s Hold, Rebalance or Close meter reads market conditions and gives you a nudge. The decision is yours.</p>
+
+<div class="box warn"><h4>Risk</h4>
+<p>Pools can be hacked, tokens can collapse and impermanent loss is real. Start small, and never put in money you cannot lose.</p></div>
+`,
+quiz:[
+Q('What do liquidity providers earn?','A share of the trading fees from swaps in the pool','Interest from a bank','A guaranteed profit','New tokens for free','Fees paid by traders go to LPs.'),
+Q('What happens when your position goes out of range?','You stop earning fees and hold mostly one token','You earn double','The pool closes','Your tokens vanish','Out of range liquidity is not used by traders.'),
+Q('What is impermanent loss?','The value difference versus holding because token prices moved apart','A fee for withdrawing','A hack','A tax','Fees can offset it, but not always.'),
+Q('What is the tradeoff of a narrow range?','More fees while in range but it goes out of range quickly','Fewer fees but more stable','No fees','No risk','Narrow ranges are more efficient but need more attention.'),
+Q('What is the cost of rebalancing?','Gas, swap fees and slippage','Nothing','Only time','A bonus','Rebalancing too often can eat your earnings.'),
+Q('Which of these is a decentralized exchange?','Uniswap','A bank','A wallet backup','A stablecoin','Uniswap, Raydium and Aerodrome are DEXs.'),
+Q('What does the Hold/Rebalance/Close meter do?','Gives you a nudge based on market conditions; you decide','Makes the trade for you','Guarantees profit','Predicts the future exactly','The Desk informs and you decide.'),
+Q('When might closing a position make sense?','When the reason for opening it is gone or the risk exceeds the fees','Never','Only on weekends','Only when price is green','Have an exit reason written in advance.')
+]});
+
+SECS.push({id:'s8',title:'ALERTS AND YOUR RULES',short:'Alerts',mins:12,
+sub:'Alerts you set yourself, at-risk accounts, swap windows, and rules that protect you from you.',
+html:`
+<div class="box story"><h4>On the Desk: Only the Alerts You Asked For</h4>
+<p>Imagine a phone that buzzes every time anything happens anywhere. You would switch it off in a day. The right setup is the opposite: <strong>no rule, no alert, no email.</strong> Every alert comes from a rule you set, and for each rule you choose whether it only shows on the Desk screen or also lands in your email.</p></div>
+
+<h3>How an alert rule works</h3>
+<ol>
+<li><strong>What</strong> to watch, such as a lending account, a coin or a pool.</li>
+<li><strong>Condition</strong>, such as health factor below 1.15, or a daily close under the 20 EMA.</li>
+<li><strong>Where</strong> it appears: on-screen only, or on-screen plus email.</li>
+<li><strong>Cool-down</strong>, so the same alert does not repeat over and over.</li>
+</ol>
+
+<h3>Lending-market alerts you can set</h3>
+<ul>
+<li><strong>At-risk account:</strong> health factor falls below a level you pick, with a second, tighter “critical” level.</li>
+<li><strong>Bounce from the low:</strong> health factor rises a set percent from its daily low, a sign you may have room again.</li>
+<li><strong>Collateral swap window:</strong> every condition on your checklist is true at once, for example the collateral coin closed below its 20 EMA on the weekly and the monthly, and your health factor is under your comfort level.</li>
+<li><strong>Debt swap window:</strong> the same idea, using a checklist you wrote for your debt.</li>
+</ul>
+<p>The key word is <strong>checklist</strong>. A swap window is only called when <em>all</em> the boxes you ticked are true at the same moment. It is a rule-based signal, not a prediction, and nobody can promise the “best” time.</p>
+
+<h3>Other alerts worth having</h3>
+<ul>
+<li><strong>Daily-close EMA crosses</strong> on your short list of coins.</li>
+<li><strong>Divergence:</strong> price makes a higher high while an indicator like RSI makes a lower high. That is a <strong>bearish divergence</strong>, a sign momentum is fading.</li>
+<li><strong>Big liquidations</strong> across the market.</li>
+</ul>
+
+<h3>News, social posts and AI summaries</h3>
+<p>News and social posts can move prices, and rumors spread faster than facts. Check the original source before acting. An AI summary of a post is a draft, not a fact, and it can be wrong.</p>
+
+<h3>Rules that protect you from you</h3>
+<ul>
+<li><strong>Position sizing:</strong> decide how much you can lose on one idea <em>before</em> you enter.</li>
+<li><strong>Pre-set exits:</strong> know where you will get out, including a stop-loss level, before you click buy.</li>
+<li><strong>Leverage:</strong> it multiplies gains and losses equally.</li>
+<li><strong>Write the rules down</strong> while you are calm. Emotions are loudest when money moves.</li>
+</ul>
+
+<div class="box simple"><h4>In plain words</h4>
+<p>Fewer, better alerts. You set the rules, you choose which ones email you, and you stay in charge of every decision.</p></div>
+`,
+quiz:[
+Q('What is the best principle for alert emails?','Email only for the alerts you set and turned on','Email every alert','Never use alerts','Email once a week','No rule, no alert, no email.'),
+Q('What is a bearish divergence?','Price makes a higher high while an indicator makes a lower high','Price and indicator both fall','Price is flat','A coin gets delisted','It suggests momentum is fading.'),
+Q('When is a swap window called?','When all the conditions on your checklist are true at once','When one condition is true','When news is positive','Every Monday','A checklist avoids acting on a single signal.'),
+Q('Can any tool promise the “best” time to swap?','No, it is a rule-based signal, not a prediction','Yes, always','Yes, if it is paid','Yes, on the weekly chart','Nobody can promise the future.'),
+Q('A post on social media claims a big announcement. What should you do first?','Check the original source','Buy immediately','Share it','Sell everything','Rumors travel faster than facts.'),
+Q('How should you treat an AI summary of a post?','As a draft that can be wrong','As verified fact','As financial advice','As a guarantee','Always check the original.'),
+Q('What does position sizing mean?','Deciding how much you can lose on one idea before entering','Buying the biggest position possible','Choosing a coin','Setting a password','Size is how you survive being wrong.'),
+Q('What does leverage do?','Multiplies both gains and losses','Only multiplies gains','Removes risk','Lowers fees','It makes liquidation more likely.')
+]});
+
+const FINAL=[
+/* The Desk */
+Q('Which description best fits the Degen Desk?','A dashboard that supports a plan you wrote in advance','A crystal ball','An advisor that decides for you','A coin','The decision stays with you.'),
+Q('What should you do when a panel shows “Failed to fetch”?','Wait a minute and refresh, since the data source may be busy','Sell your coins','Delete your account','Ignore every panel forever','Outside data sources can be temporarily limited.'),
+Q('What is the first step before using any tool?','Set your plan and risk limits','Open the biggest position','Follow a trend on social media','Borrow to the maximum','Know what you can lose first.'),
+/* Trending */
+Q('A coin is trending. What is the right next step?','Research it: market cap, volume, liquidity, age and contract address','Buy it right away','Tell friends','Ignore all risk','Trending is only a starting point.'),
+Q('What is a pump and dump?','Insiders hype a coin up and then sell into the buyers','A staking reward','A halving','A free airdrop','Late buyers become their exit.'),
+Q('Why can high volume with thin liquidity be a warning?','You may be unable to sell without a big price drop','It means the coin is safe','It lowers fees','It increases supply','Slippage can be severe.'),
+/* Heat map */
+Q('What does tile color show on the Heat Map?','Price change over the chosen timeframe','Safety','Age','Ownership','Green up, red down.'),
+Q('Almost every tile is red. What does that tell you about your own red coin?','It is probably moving with the market','It has a unique flaw','It will certainly rebound','Nothing is happening','Breadth matters.'),
+Q('Which statement about the Heat Map is true?','It shows what has happened, not what will happen','It predicts tomorrow','It guarantees profit','It replaces research','It is context.'),
+/* EMAs */
+Q('What does EMA stand for?','Exponential moving average','Exchange market analysis','Estimated margin amount','Early market alert','It weights recent prices more.'),
+Q('Which crossing is called a golden cross?','The 50 EMA moving above the 200 EMA','Price below the 20 EMA','The 200 above the 50','Two coins swapping','The reverse is a death cross.'),
+Q('What is a risk of backtesting many settings and picking the best?','Overfitting to the past','Lower fees','More liquidity','Faster signals','You find noise, not an edge.'),
+/* Lending */
+Q('At what health factor can a position be liquidated?','At or below 1.0','Above 2.0','At exactly 5','Never','1.0 is the line.'),
+Q('Which move raises your health factor?','Repaying debt or adding collateral','Borrowing more','Waiting for a pump','Closing the Desk','Less debt or more collateral helps.'),
+Q('Why would you set a warning well above 1.0?','To have time to act before liquidation','Because 1.0 is safe','To lower interest','To avoid fees','Prices can move fast.'),
+/* Flows */
+Q('What is a put option?','The right to sell at a set price','The right to buy at a set price','A free coin','A loan','Puts are bearish bets or hedges.'),
+Q('What can happen when a very crowded long trade is wrong?','A liquidation cascade','A halving','A hard fork','A lower fee','Forced selling can feed on itself.'),
+Q('What does a net ETF outflow mean?','More money left the funds than entered','More money entered','Nothing changed','The ETF is new','It is selling pressure.'),
+/* LP */
+Q('What happens to fee earnings when your LP position goes out of range?','They stop','They double','They triple','They are refunded','Out of range liquidity is not used.'),
+Q('What is impermanent loss?','The difference versus simply holding when token prices diverge','A hack','A fee','A tax','Fees may or may not offset it.'),
+Q('Who decides to rebalance or close an LP position?','You do, with the meter as a nudge','The Desk automatically','The DEX','The exchange','The Desk informs.'),
+/* Alerts */
+Q('What does “no rule, no alert, no email” mean?','Only the alerts you set can notify you','All alerts email you','Alerts never work','Emails are optional on every event','You choose what reaches your inbox.'),
+Q('What is a swap window in this course?','A moment when every condition on your checklist is true at once','Any time price moves','A guarantee of the best price','A feature of the exchange','It is rule-based, not a prediction.'),
+Q('Which habit protects you from emotional decisions?','Writing your rules and exits down before you enter','Deciding in the moment','Following the loudest voice','Using maximum leverage','Rules made calm beat decisions made in panic.')
+];
+
+/* =========================================================
+   APP CODE
+   ========================================================= */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const LS='bwsDegenDeskCourseV1';
+const PASS=0.7;
+let state={scores:{},final:null,name:'',email:'',view:'welcome',fs:18,accent:'red',sentSig:null,certDate:null};
+try{const raw=localStorage.getItem(LS);if(raw)state=Object.assign(state,JSON.parse(raw));}catch(e){}
+function save(){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}}
+function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+const app=$('#app');
+const totalSecQs=SECS.reduce((a,s)=>a+s.quiz.length,0);
+const totalMins=SECS.reduce((a,s)=>a+s.mins,0);
+
+function ctaBlock(){
+  return `<div class="cta"><h3>READY FOR THE REAL DESK?</h3>
+<p>Everything in this course is built into the Degen Desk. Join with a monthly subscription, or reserve your spot and we will follow up.</p>
+<div class="row" style="justify-content:center"><button class="btn" data-go="join">Join the Desk →</button></div></div>`;
+}
+
+function buildWelcome(){
+  return `
+<h1>THE DEGEN DESK COURSE</h1>
+<p class="sub">Learn every tool on the Block Wall Street Degen Desk, how to read it, and how to protect yourself while you use it.</p>
+<p class="meta">${SECS.length} lessons · ${totalSecQs} quiz questions · ${FINAL.length}-question final exam · About 2 hours with quizzes</p>
+
+<p>Most people open a trading screen and stare at the price. Professionals open it with a <strong>plan</strong>, a list of what would change their mind, and a limit on what they can lose. This course gives you that habit, tool by tool.</p>
+
+<div class="box simple"><h4>How the course works</h4>
+<ul>
+<li>Read each lesson, then take its <strong>8-question quiz</strong> at the bottom. Retry as many times as you want.</li>
+<li>A ✓ appears when you score 70 percent or better.</li>
+<li>After all ${SECS.length} lessons, take the <strong>final exam</strong>. Pass it to unlock your <strong>downloadable certificate of completion</strong>.</li>
+<li>Your grade for each lesson and your overall grade are emailed to Block Wall Street when you make your certificate.</li>
+<li>Progress is saved on this device. Use A− and A+ for text size.</li>
+</ul></div>
+
+<h3>Your roadmap</h3>
+<ul class="map" id="map"></ul>
+<div class="row"><button class="btn" data-go="s1">Start Lesson 1 →</button><button class="btn ghost" data-go="join">Join the Desk</button></div>
+<p class="meta">Education only. Not financial advice. Crypto is risky and you can lose money.</p>`;
+}
+
+function buildSection(sec,idx){
+  const prev=idx>0?SECS[idx-1]:null,next=idx<SECS.length-1?SECS[idx+1]:null;
+  return `
+<h2 class="st">${idx+1}. ${sec.title}</h2>
+<p class="sub">${sec.sub}</p>
+<p class="meta">Lesson ${idx+1} of ${SECS.length} · About ${sec.mins} minutes to read, plus a ${sec.quiz.length}-question quiz</p>
+<a class="jump" href="#quiz-${sec.id}" data-jump="${sec.id}">Skip to the quiz ↓</a>
+${sec.html}
+<section class="quiz" id="quiz-${sec.id}"></section>
+<div class="pager">
+  <button class="btn ghost" data-go="${prev?prev.id:'welcome'}">← ${prev?'Back: '+prev.short:'Back to start'}</button>
+  <button class="btn" data-go="${next?next.id:'final'}">${next?'Next: '+next.short+' →':'Final exam →'}</button>
+</div>`;
+}
+
+function buildFinal(){
+  return `
+<h2 class="st">THE FINAL EXAM</h2>
+<p class="sub">${FINAL.length} questions covering all ${SECS.length} lessons. Questions come in a random order each time.</p>
+<p class="meta">Pass mark: 70 percent · Unlimited retries · Your best score is saved</p>
+<div class="box"><h4>Your lesson scores</h4><div id="scoreList"></div></div>
+<section class="quiz" id="quiz-final"></section>
+<div id="certWrap"></div>
+<div class="pager"><button class="btn ghost" data-go="s8">← Back: Alerts</button><button class="btn ghost" data-go="welcome">Back to start</button></div>`;
+}
+
+function buildJoin(){
+  return `
+<h2 class="st">JOIN THE DEGEN DESK</h2>
+<p class="sub">Use every tool from this course on the real Desk.</p>
+<div class="box simple"><h4>What you are joining</h4>
+<ul>
+<li>Trending Coins, Heat Map, EMA Backtester and Flow Watch</li>
+<li>The Lending Account Manager with alerts you set yourself</li>
+<li>The LP Position Manager</li>
+<li>News, alerts and the tools covered in this course</li>
+</ul>
+<p>It is a monthly subscription, and you can join any day of the month. You will see the price at checkout.</p></div>
+<div class="row"><a class="btn" id="joinBtn" href="${JOIN_URL}" target="_blank" rel="noopener">Start my subscription →</a></div>
+
+<h3>Not ready to pay yet? RSVP</h3>
+<p>Leave your details and Block Wall Street will reach out with next steps. This does not charge you.</p>
+<form id="rsvpForm" novalidate>
+<label class="fl" for="rName">YOUR NAME</label><input class="nameIn" id="rName" required autocomplete="name">
+<label class="fl" for="rEmail">YOUR EMAIL</label><input class="nameIn" id="rEmail" type="email" required autocomplete="email">
+<label class="fl" for="rPlan">I WANT TO</label>
+<select class="nameIn" id="rPlan">
+<option>Join the Degen Desk (monthly subscription)</option>
+<option>Reserve my spot, I will pay soon</option>
+<option>I have questions first</option>
+</select>
+<label class="fl" for="rNote">ANYTHING ELSE? (OPTIONAL)</label><textarea class="nameIn" id="rNote"></textarea>
+<div class="row"><button class="btn" type="submit">Send my RSVP</button></div>
+<div id="rsvpStatus" aria-live="polite"></div>
+<p class="privacy">Your name, email and choice are sent to Block Wall Street.</p>
+</form>
+<div class="pager"><button class="btn ghost" data-go="welcome">Back to start</button></div>`;
+}
+
+function mount(){
+  const views=[];
+  views.push(`<div class="view" id="v-welcome">${buildWelcome()}</div>`);
+  SECS.forEach((s,i)=>views.push(`<div class="view" id="v-${s.id}">${buildSection(s,i)}</div>`));
+  views.push(`<div class="view" id="v-final">${buildFinal()}</div>`);
+  views.push(`<div class="view" id="v-join">${buildJoin()}</div>`);
+  app.innerHTML=views.join('');
+  $('#map').innerHTML=SECS.map((s,i)=>`<li><button data-go="${s.id}"><span class="n">${i+1}</span><span class="t">${s.title}<small>${s.sub}</small></span><span class="m">~${s.mins} min</span></button></li>`).join('')+
+   `<li><button data-go="final"><span class="n">★</span><span class="t">THE FINAL EXAM<small>${FINAL.length} questions across the whole course. Pass to earn your certificate.</small></span><span class="m">~15 min</span></button></li>`;
+  const pills=[['welcome','Start'],...SECS.map((s,i)=>[s.id,(i+1)+'. '+s.short]),['final','Final exam'],['join','Join the Desk']];
+  $('#pills').innerHTML=pills.map(([id,l])=>`<button class="pill" data-go="${id}" data-pill="${id}">${l}</button>`).join('');
+  SECS.forEach(s=>mountQuiz($('#quiz-'+s.id),s.quiz,s.id,{title:'QUIZ: '+s.short.toUpperCase(),shuffleQs:false,next:nextTarget(s.id)}));
+  mountQuiz($('#quiz-final'),FINAL,'final',{title:'FINAL EXAM',shuffleQs:true,next:null,final:true});
+  $('#rsvpForm').addEventListener('submit',submitRsvp);
+}
+function nextTarget(id){const i=SECS.findIndex(s=>s.id===id);return i<SECS.length-1?SECS[i+1].id:'final';}
+
+function passed(key){
+  if(key==='final')return state.final!==null&&state.final>=Math.ceil(FINAL.length*PASS);
+  const s=SECS.find(x=>x.id===key);return s&&state.scores[key]!==undefined&&state.scores[key]>=Math.ceil(s.quiz.length*PASS);
+}
+
+function show(id,noScroll){
+  $$('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+id));
+  state.view=id;save();
+  if(!noScroll)window.scrollTo(0,0);
+  if(id==='final'){renderScores();renderCert();}
+  refreshChrome();
+}
+function refreshChrome(){
+  $$('.pill').forEach(p=>{const id=p.dataset.pill;p.classList.toggle('on',id===state.view);p.classList.toggle('done',id!=='welcome'&&id!=='join'&&passed(id));});
+  const n=SECS.filter(s=>passed(s.id)).length+(passed('final')?1:0);
+  $('#prog i').style.width=(n/(SECS.length+1)*100)+'%';
+  const on=$('.pill.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'});
+}
+document.addEventListener('click',e=>{
+  const go=e.target.closest('[data-go]');
+  if(go){e.preventDefault();show(go.dataset.go);return;}
+  const jp=e.target.closest('[data-jump]');
+  if(jp){e.preventDefault();$('#quiz-'+jp.dataset.jump).scrollIntoView({behavior:'smooth'});}
+});
+
+/* ---- generic quiz engine ---- */
+function mountQuiz(el,qs,key,opts){
+  const L=['A','B','C','D'];
+  let order,i,score,missed;
+  function start(){order=opts.shuffleQs?shuffle(qs.map((_,k)=>k)):qs.map((_,k)=>k);i=0;score=0;missed=[];render();}
+  function render(){
+    if(i>=order.length)return result();
+    const q=qs[order[i]];
+    const opt=shuffle(q.o.map((t,k)=>({t:t,ok:k===0})));
+    el.innerHTML=`<h3 class="qh">${opts.title}</h3><div class="qcount">Question ${i+1} of ${order.length} · Correct so far: ${score}</div><div class="qbar"><i style="width:${i/order.length*100}%"></i></div><div class="qq"></div><div class="opts"></div><div class="fb"></div>`;
+    $('.qq',el).textContent=q.q;
+    const box=$('.opts',el);
+    opt.forEach((o,k)=>{
+      const b=document.createElement('button');b.className='opt';
+      b.innerHTML='<span class="l">'+L[k]+'</span><span></span>';
+      b.lastChild.textContent=o.t;
+      b.onclick=()=>pick(q,opt,k);
+      box.appendChild(b);
+    });
+  }
+  function pick(q,opt,k){
+    const ok=opt[k].ok;if(ok)score++;else missed.push(q);
+    $$('.opt',el).forEach((b,j)=>{b.disabled=true;if(opt[j].ok)b.classList.add('right');else if(j===k)b.classList.add('wrong');});
+    const fb=$('.fb',el);
+    fb.innerHTML=`<div class="why ${ok?'':'bad'}"><strong>${ok?'Correct.':'Not quite.'}</strong> <span></span></div><button class="btn" id="nx">${i<order.length-1?'Next question →':'See my score →'}</button>`;
+    $('span',$('.why',fb)).textContent=q.w;
+    const nx=$('#nx',fb);nx.focus({preventScroll:true});
+    nx.onclick=()=>{i++;render();el.scrollIntoView({behavior:'smooth'});};
+  }
+  function result(){
+    const total=order.length,need=Math.ceil(total*PASS),ok=score>=need;
+    const prev=key==='final'?state.final:state.scores[key];
+    const best=Math.max(prev||0,score);
+    if(key==='final')state.final=best;else state.scores[key]=best;
+    save();refreshChrome();
+    if(opts.final){renderScores();renderCert();}
+    const pct=Math.round(score/total*100);
+    const msg=pct>=90?"Locked in. That is real knowledge.":pct>=70?"Solid work. Review what you missed below and you are there.":"No stress. Scroll up, re-read the lesson, and run it back.";
+    let rev='';
+    if(missed.length){rev='<div class="review"><h4>What you missed</h4>'+missed.map((q,n)=>`<details><summary>${n+1}. ${esc(q.q)}</summary><p><strong>Answer:</strong> ${esc(q.o[0])}</p><p>${esc(q.w)}</p></details>`).join('')+'</div>';}
+    el.innerHTML=`<h3 class="qh">${opts.final?'EXAM':'QUIZ'} DONE</h3>
+<div class="score">${score}<span style="font-size:2.2rem;color:var(--mute)"> / ${total}</span></div>
+<p><span class="badge ${ok?'pass':'fail'}">${pct}% · ${ok?'PASSED':'Pass mark is '+need+' of '+total}</span> <span class="badge">Best: ${best} / ${total}</span></p>
+<p style="font-size:1.1rem">${msg}</p>
+<div class="row"><button class="btn ghost" id="rt">Try again</button>${opts.next?'<button class="btn" data-go="'+opts.next+'">'+(opts.next==='final'?'Go to the final exam →':'Next lesson →')+'</button>':''}</div>${rev}`;
+    $('#rt',el).onclick=()=>{start();el.scrollIntoView({behavior:'smooth'});};
+  }
+  start();
+}
+
+/* ---- grades, email, certificate ---- */
+const GRADE={
+  letter(p){return p>=90?'A':p>=80?'B':p>=70?'C':p>=60?'D':'F';},
+  report(rows){
+    let s=0,t=0;
+    const out=rows.map(r=>{s+=r.score;t+=r.total;const p=Math.round(r.score/r.total*100);return {label:r.label,score:r.score,total:r.total,pct:p,letter:this.letter(p)};});
+    const p=Math.round(s/t*100);
+    return {rows:out,score:s,total:t,pct:p,letter:this.letter(p)};
+  }
+};
+function certId(name,email,date,scores){
+  let h=5381;const s=[name,email,date,scores.join(',')].join('|');
+  for(let i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))>>>0;}
+  return 'DD-'+h.toString(36).toUpperCase().padStart(7,'0');
+}
+async function postForm(body){
+  const res=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(Object.assign({access_key:WEB3_KEY},body))});
+  const j=await res.json().catch(()=>({}));
+  return !!(res.ok&&j.success);
+}
+async function submitRsvp(e){
+  e.preventDefault();
+  const st=$('#rsvpStatus');
+  const name=$('#rName').value.trim(),email=$('#rEmail').value.trim();
+  if(!name||!/^\S+@\S+\.\S+$/.test(email)){st.innerHTML='<p class="cstat bad">Please enter your name and a valid email.</p>';return;}
+  st.innerHTML='<p class="cstat">Sending…</p>';
+  let ok=false;
+  try{ok=await postForm({subject:'Degen Desk RSVP: '+name,from_name:'BWS Degen Desk Course',name:name,email:email,plan:$('#rPlan').value,message:'Degen Desk RSVP\nName: '+name+'\nEmail: '+email+'\nChoice: '+$('#rPlan').value+'\nNote: '+($('#rNote').value||'(none)')});}catch(err){ok=false;}
+  st.innerHTML=ok?'<p class="cstat ok">✓ Got it. Block Wall Street will be in touch. You can also start your subscription any time with the button above.</p>':'<p class="cstat bad">That did not go through. Check your internet and try again.</p>';
+}
+function renderScores(){
+  const list=SECS.map((s,i)=>`<p style="margin:.3rem 0"><strong>${i+1}. ${s.short}:</strong> ${state.scores[s.id]!==undefined?state.scores[s.id]+' / '+s.quiz.length:'<span style="color:var(--mute)">not taken yet</span>'}</p>`).join('');
+  const f=state.final!==null?`<p style="margin:.8rem 0 0"><strong>Final exam best:</strong> ${state.final} / ${FINAL.length}</p>`:'<p style="margin:.8rem 0 0;color:var(--mute)">Final exam not taken yet</p>';
+  $('#scoreList').innerHTML=list+f;
+}
+function renderCert(){
+  const w=$('#certWrap');
+  if(!passed('final')){w.innerHTML='';return;}
+  const missing=SECS.filter(s=>state.scores[s.id]===undefined);
+  if(missing.length){w.innerHTML='<div class="box warn"><h4>One more step</h4><p>You passed the final exam. To get your certificate, also take the quiz for: '+missing.map(s=>esc(s.short)).join(', ')+'.</p></div>';return;}
+  w.innerHTML=`<h3>Get your certificate</h3><p>You passed. Type your name and email, then tap the button. Your certificate will appear below and you can download it. Your grade for each lesson and your overall grade will be emailed to Block Wall Street.</p>
+<div class="row"><input class="nameIn" id="nameIn" placeholder="Your name" aria-label="Your name" autocomplete="name"><input class="nameIn" id="emailIn" type="email" placeholder="Your email (optional)" aria-label="Your email" autocomplete="email"></div>
+<div class="row" style="margin-top:0"><button class="btn" id="mkCert">Make my certificate</button></div>
+<p class="privacy">When you make your certificate, your name, email and scores are sent to Block Wall Street.</p>
+<div id="certStatus" aria-live="polite"></div><div id="certOut"></div>${ctaBlock()}`;
+  $('#nameIn').value=state.name||'';$('#emailIn').value=state.email||'';
+  $('#mkCert').onclick=makeCert;
+}
+function today(){return new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});}
+async function makeCert(){
+  const st=$('#certStatus');
+  const name=($('#nameIn').value||'').trim(),email=($('#emailIn').value||'').trim();
+  if(!name){st.innerHTML='<p class="cstat bad">Please type your name first.</p>';$('#nameIn').focus();return;}
+  if(email&&!/^\S+@\S+\.\S+$/.test(email)){st.innerHTML='<p class="cstat bad">That email does not look right. Fix it or leave it empty.</p>';return;}
+  state.name=name;state.email=email;if(!state.certDate)state.certDate=today();save();
+  const rows=SECS.map(s=>({label:s.short,score:state.scores[s.id],total:s.quiz.length})).concat([{label:'Final exam',score:state.final,total:FINAL.length}]);
+  const rep=GRADE.report(rows);
+  const id=certId(name,email,state.certDate,rows.map(r=>r.score));
+  await drawCertificate(name,rep,id,state.certDate);
+  const sig=JSON.stringify([name,email,rows.map(r=>r.score)]);
+  if(state.sentSig===sig){st.innerHTML='<p class="cstat ok">✓ Your grades were already emailed to Block Wall Street.</p>';return;}
+  st.innerHTML='<p class="cstat">Sending your grades to Block Wall Street…</p>';
+  const lines=rep.rows.map(r=>r.label+': '+r.score+'/'+r.total+' = '+r.pct+'% ('+r.letter+')').join('\n');
+  let ok=false;
+  try{ok=await postForm(Object.assign({
+    subject:'Course completed: '+name+' | '+COURSE_NAME+' | '+rep.pct+'% ('+rep.letter+')',
+    from_name:'BWS Course Report',name:name,course:COURSE_NAME,overall_grade:rep.pct+'% ('+rep.letter+')',
+    message:'Participant: '+name+'\nEmail: '+(email||'(not given)')+'\nCourse: '+COURSE_NAME+'\nCompleted: '+state.certDate+'\nCertificate ID: '+id+'\n\nSECTION GRADES\n'+lines+'\n\nOVERALL GRADE: '+rep.score+'/'+rep.total+' = '+rep.pct+'% ('+rep.letter+')\n\nGrades use the participant\'s best score on each quiz. Pass mark is 70%.'
+  },email?{email:email}:{}));}catch(err){ok=false;}
+  if(ok){state.sentSig=sig;save();st.innerHTML='<p class="cstat ok">✓ Your lesson grades and overall grade were emailed to Block Wall Street.</p>';}
+  else{st.innerHTML='<p class="cstat bad">Your certificate is ready, but the email did not go through. Check your internet and tap the button again.</p>';}
+}
+async function drawCertificate(name,rep,id,date){
+  try{await Promise.all([document.fonts.load('800 100px "Inter"'),document.fonts.load('26px "DM Mono"'),document.fonts.load('30px "Inter"')]);}catch(e){}
+  const W=1754,H=1240,c=document.createElement('canvas');c.width=W;c.height=H;
+  const x=c.getContext('2d');
+  const cs=getComputedStyle(document.documentElement);
+  const A=(cs.getPropertyValue('--a')||'#35F0FF').trim(),HI=(cs.getPropertyValue('--a-hi')||'#8CF7FF').trim();
+  const TEXT='#E6ECFA',MUTE='#8E9BC0',LINE='#1F2D52';
+  const SANS='"Inter","Segoe UI Variable","Segoe UI",system-ui,sans-serif',MONO='"DM Mono",Consolas,monospace';
+  const f=(w,px)=>w+' '+px+'px '+SANS;
+  const fit=(t,maxW,px,w)=>{let s=px;do{x.font=f(w||800,s);s-=2;}while(x.measureText(t).width>maxW&&s>20);};
+  const bg=x.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0B1429');bg.addColorStop(1,'#070D1B');
+  x.fillStyle=bg;x.fillRect(0,0,W,H);
+  x.strokeStyle=A;x.lineWidth=6;x.strokeRect(40,40,W-80,H-80);
+  x.lineWidth=2;x.strokeStyle=LINE;x.strokeRect(62,62,W-124,H-124);
+  x.textAlign='center';x.fillStyle=A;x.font='26px '+MONO;
+  if('letterSpacing' in x)x.letterSpacing='8px';
+  x.fillText('BLOCK WALL STREET  ·  DEGEN DESK',W/2,135);
+  if('letterSpacing' in x)x.letterSpacing='0px';
+  const T='CERTIFICATE OF COMPLETION';x.fillStyle=TEXT;fit(T,1450,104);x.fillText(T,W/2,255);
+  x.fillStyle=MUTE;x.font=f(400,30);x.fillText('This certifies that',W/2,335);
+  x.fillStyle=HI;fit(name,1300,120);x.fillText(name,W/2,455);
+  x.strokeStyle=A;x.lineWidth=2;x.beginPath();x.moveTo(W/2-500,485);x.lineTo(W/2+500,485);x.stroke();
+  x.fillStyle=MUTE;x.font=f(400,30);x.fillText('has successfully completed',W/2,545);
+  x.fillStyle=TEXT;const C='The Degen Desk Course';fit(C,1200,66);x.fillText(C,W/2,615);
+  const secRows=rep.rows.slice(0,SECS.length),colW=720,gap=80,startX=W/2-colW-gap/2,top=705,rh=44;
+  x.font='26px '+MONO;
+  secRows.forEach((r,i)=>{
+    const col=i<4?0:1,row=i%4,lx=startX+col*(colW+gap),y=top+row*rh;
+    x.textAlign='left';x.fillStyle=TEXT;x.fillText((i+1)+'  '+r.label,lx,y);
+    x.textAlign='right';x.fillStyle=HI;x.fillText(r.score+'/'+r.total+'   '+r.pct+'%  '+r.letter,lx+colW,y);
+    x.strokeStyle=LINE;x.lineWidth=1;x.beginPath();x.moveTo(lx,y+12);x.lineTo(lx+colW,y+12);x.stroke();
+  });
+  const fin=rep.rows[rep.rows.length-1];
+  x.textAlign='center';x.fillStyle=TEXT;x.font='32px '+MONO;
+  x.fillText('Final exam: '+fin.score+'/'+fin.total+'  '+fin.pct+'%  ('+fin.letter+')',W/2,top+4*rh+34);
+  const ov='OVERALL GRADE  '+rep.pct+'%  ('+rep.letter+')';
+  x.fillStyle=A;fit(ov,1300,96);x.fillText(ov,W/2,top+4*rh+140);
+  x.fillStyle=MUTE;x.font='26px '+MONO;
+  x.textAlign='left';x.fillText('Date: '+date,120,H-150);
+  x.fillText('Certificate ID: '+id,120,H-112);
+  x.textAlign='right';x.fillStyle=A;x.font=f(800,34);
+  x.fillText('BLOCK WALL STREET',W-120,H-148);
+  x.fillStyle=MUTE;x.font='24px '+MONO;x.fillText('Chicago, IL  ·  blockwallstreet.biz',W-120,H-112);
+  x.textAlign='center';x.fillStyle='#6b7799';x.font=f(400,20);
+  x.fillText('Education only. Not financial advice.',W/2,H-88);
+  const url=c.toDataURL('image/png');
+  const fname='Degen_Desk_Certificate_'+name.replace(/[^A-Za-z0-9]+/g,'_')+'.png';
+  $('#certOut').innerHTML='<img id="certImg" alt="Certificate of completion for '+esc(name)+'" src="'+url+'">'+
+   '<div class="row"><a class="btn" id="dlCert" href="'+url+'" download="'+fname+'">Download certificate (PNG)</a><button class="btn ghost" id="prCert">Print or save as PDF</button></div>';
+  $('#prCert').onclick=()=>window.print();
+}
+
+
+/* ---- accent: same three accents and same saved choice as the Desk (bwsDesk.theme) ---- */
+const THEMES=[['cyan','Cyan'],['gold','Gold'],['violet','Violet']];
+function getTheme(){try{const t=localStorage.getItem('bwsDesk.theme');if(THEMES.some(x=>x[0]===t))return t;}catch(e){}return 'cyan';}
+function setTheme(t,saveIt){document.documentElement.setAttribute('data-theme',t);const b=document.getElementById('themeBtn');if(b)b.textContent='Accent: '+THEMES.find(x=>x[0]===t)[1];if(saveIt){try{localStorage.setItem('bwsDesk.theme',t);}catch(e){}}}
+(function(){const b=document.getElementById('themeBtn');setTheme(getTheme(),false);if(b)b.onclick=()=>{const i=THEMES.findIndex(x=>x[0]===getTheme());setTheme(THEMES[(i+1)%3][0],true);};})();
+
+/* ---- toolbar ---- */
+function applyPrefs(){
+  document.documentElement.style.fontSize=state.fs+'px';
+}
+$('#fsm').onclick=()=>{state.fs=Math.max(14,state.fs-1);applyPrefs();save();};
+$('#fsp').onclick=()=>{state.fs=Math.min(28,state.fs+1);applyPrefs();save();};
+
+mount();applyPrefs();
+show(state.view&&$('#v-'+state.view)?state.view:'welcome',true);
+</script>
+</body>
+</html>

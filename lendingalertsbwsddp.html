@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cyan">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lending Alert Rules | Degen Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070D1B;--panel:#0B1429;--panel2:#101B38;--line:#1F2D52;--ink:#E6ECFA;--mute:#8E9BC0;--a:#35F0FF;--a-hi:#8CF7FF;--a-ink:#04121a;--good:#5FD39A;--bad:#FF6B7D;--warn:#F5B84B;
+--display:'Inter','Segoe UI Variable','Segoe UI',system-ui,sans-serif;--body:'Inter','Segoe UI Variable','Segoe UI',system-ui,sans-serif;--mono:'DM Mono',Consolas,'Cascadia Mono','Courier New',monospace}
+html[data-theme="gold"]{--a:#E8B84A;--a-hi:#F3D58A}
+html[data-theme="violet"]{--a:#A07CFF;--a-hi:#C9B6FF}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.55;font-size:16px}
+header{display:flex;gap:.6rem;align-items:center;padding:.8rem 1rem;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:1.8rem;letter-spacing:.06em;color:var(--a);margin-right:auto}
+main{max-width:980px;margin:0 auto;padding:1.2rem 1rem 4rem}
+h1{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:3.4rem;line-height:1;color:var(--ink);margin:.2rem 0;letter-spacing:.02em}
+h2{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:2rem;color:var(--a);margin:2rem 0 .5rem;letter-spacing:.03em}
+.sub{color:var(--mute)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem;margin:.8rem 0}
+.card.on{border-color:var(--a)}
+.card h3{margin:0;font-size:1.1rem;color:var(--ink)}
+.card p{margin:.3rem 0;color:var(--mute);font-size:.92rem}
+.top{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+.top .grow{flex:1;min-width:14rem}
+.tog{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.8rem;color:var(--ink);cursor:pointer;user-select:none}
+.tog input{accent-color:var(--a);width:1.15rem;height:1.15rem}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.5rem 1rem;margin-top:.7rem;padding-top:.7rem;border-top:1px dashed var(--line)}
+.f{font-size:.88rem}
+.f label{display:block;color:var(--mute);margin-bottom:.15rem}
+.f input[type=number],.f input[type=text],.f select{background:#000;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.35rem .5rem;font:inherit;width:100%}
+.f.ck label{display:flex;gap:.45rem;align-items:center;color:var(--ink)}
+.f.ck input{accent-color:var(--a);width:1.1rem;height:1.1rem}
+.btn{background:linear-gradient(180deg,var(--a-hi),var(--a));color:var(--a-ink);border:0;border-radius:6px;padding:.6rem 1.1rem;cursor:pointer;font-family:var(--display);font-weight:900;font-size:1.2rem;letter-spacing:.05em;text-transform:uppercase;line-height:1}
+.btn.ghost{background:transparent;color:var(--a-hi);border:1.5px solid var(--a)}
+.btn:hover{filter:brightness(1.1)}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;margin:.8rem 0}
+table{width:100%;border-collapse:collapse;font-size:.9rem;margin:.6rem 0}
+th,td{border:1px solid var(--line);padding:.4rem .5rem;text-align:left}
+th{color:var(--a);background:var(--panel2)}
+td input{width:5.5rem;background:#000;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem;font:inherit}
+.log .al{border-left:5px solid var(--line);background:var(--panel2);padding:.6rem .8rem;margin:.5rem 0;border-radius:8px}
+.al.critical{border-left-color:var(--bad)}.al.warn{border-left-color:var(--warn)}.al.window{border-left-color:var(--good)}.al.info{border-left-color:var(--a)}
+.al b{display:block}
+.tag{font-family:var(--mono);font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:.05rem .5rem;margin-right:.3rem;color:var(--mute)}
+.tag.em{border-color:var(--good);color:var(--good)}
+.note{font-size:.85rem;color:var(--mute);border:1px dashed var(--line);border-radius:10px;padding:.7rem .9rem;margin:.8rem 0}
+.hide{display:none}
+/* ---- Desk look ---- */
+h1,h2,.brand,.btn{text-transform:none;font-family:var(--display)}
+h1{font-size:2.6rem;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+h2{font-size:1.5rem;font-weight:800;letter-spacing:-.01em}
+.brand{font-size:1.05rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.btn{background:var(--a);border-radius:8px;padding:.6rem 1.1rem;font-size:.95rem;font-weight:700;letter-spacing:0}
+.btn.ghost{background:transparent;color:var(--a-hi);border:1.5px solid var(--a)}
+.tbtn{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.35rem .7rem;font:600 .85rem var(--body);cursor:pointer}
+.tbtn:hover{border-color:var(--a)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">DEGEN DESK · LENDING ALERT RULES</div>
+  <button class="tbtn" id="themeBtn" title="Change the accent color">Accent: Cyan</button>
+</header>
+<main>
+<h1>ALERTS YOU SET</h1>
+<p class="sub">Nothing is on until you turn it on. Every rule has two switches: <strong>On</strong> (show it on the Desk) and <strong>Email</strong> (also send it to your inbox). A rule with Email off never emails you.</p>
+
+<div class="card on">
+  <div class="top">
+    <div class="grow"><h3>Email settings</h3><p>Emails go only for rules where you switched Email on. One email per check, never one per alert, and a daily cap protects your inbox.</p></div>
+    <label class="tog"><input type="checkbox" id="emailMaster"> Email master switch</label>
+  </div>
+  <div class="fields">
+    <div class="f"><label>Most emails per day</label><input type="number" id="maxPerDay" min="1" max="100"></div>
+    <div class="f ck"><label><input type="checkbox" id="practice"> Practice mode (show the email here, do not send)</label></div>
+  </div>
+</div>
+
+<h2>YOUR RULES</h2>
+<div id="rules"></div>
+
+<h2>TEST BENCH</h2>
+<p class="sub">Try your rules on sample accounts before you trust them. Change the numbers, then run a check.</p>
+<div class="row">
+  <button class="btn ghost" data-pre="calm">Calm market</button>
+  <button class="btn ghost" data-pre="risk">Account at risk</button>
+  <button class="btn ghost" data-pre="window">Swap window</button>
+</div>
+<div class="card"><table id="acctTbl"></table>
+<table id="mktTbl"></table></div>
+<div class="row"><button class="btn" id="run">Run check now</button><button class="btn ghost" id="clearCool">Reset cool-downs</button></div>
+<div class="log" id="log"></div>
+
+<div class="note"><strong>How this connects to the Lending Account Manager.</strong> The rules engine is plain JavaScript: <code>LendingAlerts.run(accounts, market)</code> takes your accounts (health factor, 24h low, collateral, debt) and the market state (daily, weekly and monthly close versus the 20 EMA), and returns the alerts you set. Your Desk passes in its real data. The page checks only while it is open. For checks that run while your laptop is closed, the same rules need to run on a server schedule.<br><br>Swap windows are <em>rule-based signals from a checklist you choose</em>, not predictions and not financial advice. Nobody can promise the best time to swap. Swaps cost fees, and moving debt into a volatile coin raises your risk.<br><br>Emails use your Web3Forms key, so they arrive in the Block Wall Street inbox.</div>
+</main>
+
+<script id="engine">
+/* ================== RULES ENGINE (no page code in here) ================== */
+const LA=(function(){
+  const STABLES=['USDC','USDT','DAI','USDS','GHO','FRAX','LUSD','PYUSD','USDE','FDUSD','CRVUSD'];
+  const isStable=s=>STABLES.includes(String(s).toUpperCase());
+  const TF={d:'daily',w:'weekly',m:'monthly'};
+  function defaultRules(){return [
+    {id:'at_risk',name:'At-risk account',desc:'Health factor falls to the level you choose.',enabled:false,email:false,cool:6,p:{hf:1.15}},
+    {id:'critical',name:'Critical account',desc:'A second, tighter health-factor level for real danger.',enabled:false,email:false,cool:2,p:{hf:1.05}},
+    {id:'rebound',name:'Health factor bounced off its low',desc:'Health factor is up a set percent from its 24-hour low, a sign you may have room again.',enabled:false,email:false,cool:12,p:{pct:10}},
+    {id:'collat_swap',name:'Collateral swap window',desc:'Fires only when every box you tick is true at the same moment for a volatile collateral asset.',enabled:false,email:false,cool:24,p:{minShare:15,d20:false,w20:true,m20:true,div:false,hfOn:true,hf:1.3}},
+    {id:'debt_swap',name:'Debt swap window',desc:'Fires only when every box you tick is true at the same moment. Pick which kind of debt swap you are watching for.',enabled:false,email:false,cool:24,p:{mode:'to_stable',minShare:15,d20:false,w20:true,m20:true,hfOn:true,hf:1.3,ref:'ETH'}},
+    {id:'reentry',name:'Re-risk window (stablecoin back into collateral)',desc:'Health factor has recovered a set percent from its low, and your reference asset is back above its 20 EMA.',enabled:false,email:false,cool:24,p:{pct:15,ref:'ETH',w20above:true}}
+  ];}
+  const pct=(a,b)=>b>0?a/b*100:0;
+  const sum=a=>a.reduce((s,x)=>s+(+x.usd||0),0);
+  const mk=(m,sym)=>m&&m[String(sym).toUpperCase()];
+  function tfTest(m,sym,tf,dir){const d=mk(m,sym);const t=d&&d[tf];if(!t||t.close==null||t.ema20==null)return null;return dir==='below'?t.close<t.ema20:t.close>t.ema20;}
+  function listTf(p){return ['d','w','m'].filter(k=>p[k+'20']);}
+  function evaluate(settings,accounts,market){
+    const out=[];
+    for(const r of settings.rules){
+      if(!r.enabled)continue;
+      for(const a of accounts){
+        const hf=+a.hf,low=+(a.hfLow24h!=null?a.hfLow24h:a.hf);
+        const base={ruleId:r.id,accountId:a.id,email:!!r.email,cool:r.cool,rule:r.name,account:a.label||a.id};
+        const push=(level,title,detail,extra)=>out.push(Object.assign({},base,{level:level,title:title,detail:detail,key:r.id+'|'+a.id+(extra?'|'+extra:'')}));
+        if(r.id==='at_risk'&&hf<=r.p.hf)push('warn',a.label+': health factor '+hf.toFixed(2),'At or below your at-risk level of '+(+r.p.hf).toFixed(2)+'.');
+        if(r.id==='critical'&&hf<=r.p.hf)push('critical',a.label+': CRITICAL health factor '+hf.toFixed(2),'At or below your critical level of '+(+r.p.hf).toFixed(2)+'. Liquidation is at 1.00.');
+        if(r.id==='rebound'&&low>0&&hf>=low*(1+r.p.pct/100))push('info',a.label+': health factor up '+pct(hf-low,low).toFixed(1)+'% from its 24h low','Now '+hf.toFixed(2)+' versus a low of '+low.toFixed(2)+'.');
+        if(r.id==='collat_swap'){
+          const tot=sum(a.collateral);const tfs=listTf(r.p);
+          if(!tfs.length&&!r.p.div&&!r.p.hfOn)continue;            /* nothing ticked = no rule */
+          for(const c of a.collateral){
+            if(isStable(c.sym)||pct(c.usd,tot)<r.p.minShare)continue;
+            const why=[];let ok=true;
+            for(const tf of tfs){const t=tfTest(market,c.sym,tf,'below');if(t===true)why.push(String(c.sym).toUpperCase()+' closed below its 20 EMA on the '+TF[tf]);else ok=false;}
+            if(r.p.div){if(mk(market,c.sym)&&mk(market,c.sym).div===true)why.push('bearish divergence confirmed');else ok=false;}
+            if(r.p.hfOn){if(hf<=r.p.hf)why.push('health factor '+hf.toFixed(2)+' is at or below '+(+r.p.hf).toFixed(2));else ok=false;}
+            if(ok)push('window',a.label+': collateral swap window on '+String(c.sym).toUpperCase(),'Every condition you ticked is true: '+why.join('; ')+'. Rule-based signal, not a prediction.',String(c.sym).toUpperCase());
+          }
+        }
+        if(r.id==='debt_swap'){
+          const tot=sum(a.debt);const tfs=listTf(r.p);
+          if(!tfs.length&&!r.p.hfOn)continue;
+          if(r.p.mode==='to_stable'){
+            for(const d of a.debt){
+              if(isStable(d.sym)||pct(d.usd,tot)<r.p.minShare)continue;
+              const why=[];let ok=true;
+              for(const tf of tfs){const t=tfTest(market,d.sym,tf,'above');if(t===true)why.push(String(d.sym).toUpperCase()+' closed above its 20 EMA on the '+TF[tf]+' (your debt is growing)');else ok=false;}
+              if(r.p.hfOn){if(hf<=r.p.hf)why.push('health factor '+hf.toFixed(2)+' is at or below '+(+r.p.hf).toFixed(2));else ok=false;}
+              if(ok)push('window',a.label+': debt swap window, '+String(d.sym).toUpperCase()+' debt into stablecoin','Every condition you ticked is true: '+why.join('; ')+'. Rule-based signal, not a prediction.',String(d.sym).toUpperCase());
+            }
+          }else{
+            const stableDebt=sum(a.debt.filter(d=>isStable(d.sym)));
+            if(pct(stableDebt,tot)<r.p.minShare)continue;
+            const why=[];let ok=true;
+            for(const tf of tfs){const t=tfTest(market,r.p.ref,tf,'below');if(t===true)why.push(String(r.p.ref).toUpperCase()+' closed below its 20 EMA on the '+TF[tf]);else ok=false;}
+            if(r.p.hfOn){if(hf>=r.p.hf)why.push('health factor '+hf.toFixed(2)+' is at or above '+(+r.p.hf).toFixed(2)+', room to take more risk');else ok=false;}
+            if(ok)push('window',a.label+': debt swap window, stablecoin debt into '+String(r.p.ref).toUpperCase(),'Every condition you ticked is true: '+why.join('; ')+'. This is effectively a short and raises risk. Rule-based signal, not a prediction.','short');
+          }
+        }
+        if(r.id==='reentry'&&low>0&&hf>=low*(1+r.p.pct/100)&&sum((a.collateral||[]).filter(c=>isStable(c.sym)))>0){
+          let ok=true,why='health factor up '+pct(hf-low,low).toFixed(1)+'% from its low';
+          if(r.p.w20above){const t=tfTest(market,r.p.ref,'w','above');if(t===true)why+='; '+String(r.p.ref).toUpperCase()+' closed above its 20 EMA on the weekly';else ok=false;}
+          if(ok)push('window',a.label+': re-risk window','Every condition you ticked is true: '+why+'. Rule-based signal, not a prediction.');
+        }
+      }
+    }
+    return out;
+  }
+  /* cool-downs: the same alert is not repeated until its cool-down passes */
+  function applyCooldown(alerts,store,now){
+    store.lastFired=store.lastFired||{};
+    return alerts.filter(al=>{
+      const last=store.lastFired[al.key];
+      if(last&&now-last<al.cool*3600e3)return false;
+      store.lastFired[al.key]=now;return true;
+    });
+  }
+  const RANK={critical:0,warn:1,window:2,info:3};
+  /* email: ONLY alerts from rules with Email switched on; one message per check; daily cap */
+  async function dispatch(settings,alerts,store,now,send){
+    const res={emailed:[],held:[]};
+    const want=alerts.filter(a=>a.email).sort((x,y)=>RANK[x.level]-RANK[y.level]);
+    if(!settings.emailMaster||!want.length)return res;
+    const day=new Date(now).toISOString().slice(0,10);
+    store.sent=store.sent&&store.sent.day===day?store.sent:{day:day,count:0};
+    const room=Math.max(0,settings.maxPerDay-store.sent.count);
+    if(room===0){res.held=want;return res;}
+    const batch=want.slice(0,room);res.held=want.slice(room);
+    const subject='Lending alert: '+batch.length+' alert'+(batch.length>1?'s':'')+' you set'+(batch[0].level==='critical'?' (CRITICAL)':'');
+    const body=batch.map((a,i)=>(i+1)+'. ['+a.level.toUpperCase()+'] '+a.title+'\n   '+a.detail+'\n   Rule: '+a.rule).join('\n\n')+'\n\nYou are getting this because you switched Email on for these rules. Education only, not financial advice.';
+    await send(subject,body);
+    store.sent.count+=batch.length;res.emailed=batch;return res;
+  }
+  return {defaultRules,evaluate,applyCooldown,dispatch,isStable};
+})();
+</script>
+
+<script id="ui">
+/* ================== PAGE ================== */
+const $=(s,r=document)=>r.querySelector(s);const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const WEB3_KEY='cbde23f6-f617-4b16-953f-7b0aab0e9f58';
+const LS='bwsLendingAlertRulesV1';
+let S={emailMaster:false,maxPerDay:10,practice:true,rules:LA.defaultRules(),accent:'red'};
+let STORE={lastFired:{},sent:null};
+try{const r=JSON.parse(localStorage.getItem(LS)||'null');if(r){S=Object.assign(S,r.S||{});STORE=r.STORE||STORE;
+  /* keep newly added rules and params if the saved copy is older */
+  const def=LA.defaultRules();S.rules=def.map(d=>{const o=(S.rules||[]).find(x=>x.id===d.id);return o?Object.assign({},d,o,{p:Object.assign({},d.p,o.p)}):d;});}}catch(e){}
+function save(){try{localStorage.setItem(LS,JSON.stringify({S:S,STORE:STORE}));}catch(e){}}
+
+const SCHEMA={
+ at_risk:[{k:'hf',t:'num',l:'Alert when health factor is at or below',step:.01}],
+ critical:[{k:'hf',t:'num',l:'Alert when health factor is at or below',step:.01}],
+ rebound:[{k:'pct',t:'num',l:'Health factor is up at least (%) from its 24h low'}],
+ collat_swap:[
+  {k:'minShare',t:'num',l:'Only collateral worth at least (% of account)'},
+  {k:'d20',t:'ck',l:'Daily close below the 20 EMA'},{k:'w20',t:'ck',l:'Weekly close below the 20 EMA'},{k:'m20',t:'ck',l:'Monthly close below the 20 EMA'},
+  {k:'div',t:'ck',l:'Bearish divergence confirmed'},
+  {k:'hfOn',t:'ck',l:'Health factor is at or below the level here'},{k:'hf',t:'num',l:'Health factor level',step:.01}],
+ debt_swap:[
+  {k:'mode',t:'sel',l:'Which debt swap?',o:[['to_stable','Volatile debt into stablecoin (debt is growing)'],['to_volatile','Stablecoin debt into a volatile coin (a short)']]},
+  {k:'ref',t:'txt',l:'Reference asset for a short (symbol)',only:'to_volatile'},
+  {k:'minShare',t:'num',l:'Only debt worth at least (% of debt)'},
+  {k:'d20',t:'ck',l:'Daily close vs the 20 EMA (above for debt growing, below for a short)'},
+  {k:'w20',t:'ck',l:'Weekly close vs the 20 EMA (same direction)'},
+  {k:'m20',t:'ck',l:'Monthly close vs the 20 EMA (same direction)'},
+  {k:'hfOn',t:'ck',l:'Health factor test (at or below for debt growing, at or above for a short)'},{k:'hf',t:'num',l:'Health factor level',step:.01}],
+ reentry:[{k:'pct',t:'num',l:'Health factor is up at least (%) from its 24h low'},{k:'ref',t:'txt',l:'Reference asset (symbol)'},{k:'w20above',t:'ck',l:'Reference closed above its 20 EMA on the weekly'}]
+};
+function renderRules(){
+  $('#rules').innerHTML=S.rules.map(r=>{
+    const fields=SCHEMA[r.id].filter(f=>!f.only||f.only===r.p.mode).map(f=>{
+      const v=r.p[f.k],id='r_'+r.id+'_'+f.k;
+      if(f.t==='ck')return `<div class="f ck"><label><input type="checkbox" data-r="${r.id}" data-k="${f.k}" ${v?'checked':''}> ${f.l}</label></div>`;
+      if(f.t==='sel')return `<div class="f"><label>${f.l}</label><select data-r="${r.id}" data-k="${f.k}">${f.o.map(o=>`<option value="${o[0]}" ${o[0]===v?'selected':''}>${o[1]}</option>`).join('')}</select></div>`;
+      if(f.t==='txt')return `<div class="f"><label>${f.l}</label><input type="text" data-r="${r.id}" data-k="${f.k}" value="${v}"></div>`;
+      return `<div class="f"><label>${f.l}</label><input type="number" step="${f.step||1}" data-r="${r.id}" data-k="${f.k}" value="${v}"></div>`;
+    }).join('')+`<div class="f"><label>Do not repeat the same alert for (hours)</label><input type="number" data-r="${r.id}" data-k="cool" value="${r.cool}"></div>`;
+    return `<div class="card ${r.enabled?'on':''}"><div class="top"><div class="grow"><h3>${r.name}</h3><p>${r.desc}</p></div>
+      <label class="tog"><input type="checkbox" data-r="${r.id}" data-k="enabled" ${r.enabled?'checked':''}> On</label>
+      <label class="tog"><input type="checkbox" data-r="${r.id}" data-k="email" ${r.email?'checked':''} ${r.enabled?'':'disabled'}> Email me</label></div>
+      <div class="fields">${fields}</div></div>`;
+  }).join('');
+}
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='emailMaster'){S.emailMaster=t.checked;save();return;}
+  if(t.id==='maxPerDay'){S.maxPerDay=Math.max(1,+t.value||1);save();return;}
+  if(t.id==='practice'){S.practice=t.checked;save();return;}
+  if(t.dataset.r){
+    const r=S.rules.find(x=>x.id===t.dataset.r),k=t.dataset.k;
+    let v=t.type==='checkbox'?t.checked:t.type==='number'?+t.value:t.value;
+    if(k==='enabled'){r.enabled=v;if(!v)r.email=false;}
+    else if(k==='email')r.email=v;
+    else if(k==='cool')r.cool=Math.max(0,v);
+    else{r.p[k]=k==='ref'?String(v).toUpperCase():v;
+      if(k==='mode'){r.p.hf=v==='to_stable'?1.3:1.8;}}
+    save();renderRules();
+  }
+  if(t.dataset.acct!==undefined){const a=BENCH.accounts[+t.dataset.acct];a[t.dataset.f]=+t.value;}
+  if(t.dataset.mk){const [sym,tf,what]=t.dataset.mk.split('.');setMkt(sym,tf,what,t.checked);}
+});
+
+/* ---- test bench ---- */
+function acct(id,label,hf,low,coll,debt){return {id:id,label:label,hf:hf,hfLow24h:low,collateral:coll,debt:debt};}
+const PRE={
+ calm(){return {accounts:[acct('a1','Main Aave (Avalanche)',2.1,2.0,[{sym:'ETH',usd:6000},{sym:'WBTC',usd:3000},{sym:'USDC',usd:1000}],[{sym:'USDC',usd:3000}]),
+                         acct('a2','Instadapp DSA',1.9,1.85,[{sym:'WBTC',usd:5000}],[{sym:'USDC',usd:2000}])],
+         mkt:{ETH:{d:{close:3100,ema20:3000},w:{close:3200,ema20:3000},m:{close:3300,ema20:3000},div:false},WBTC:{d:{close:70000,ema20:68000},w:{close:71000,ema20:68000},m:{close:72000,ema20:68000},div:false}}};},
+ risk(){const b=PRE.calm();b.accounts[0].hf=1.12;b.accounts[0].hfLow24h=1.10;b.accounts[1].hf=1.04;b.accounts[1].hfLow24h=1.03;return b;},
+ window(){const b=PRE.calm();b.accounts[0].hf=1.25;b.accounts[0].hfLow24h=1.10;
+          b.mkt.ETH={d:{close:2800,ema20:3000},w:{close:2700,ema20:3000},m:{close:2650,ema20:3000},div:true};return b;}
+};
+let BENCH=PRE.calm();
+function setMkt(sym,tf,what,checked){
+  const d=BENCH.mkt[sym];if(what==='div'){d.div=checked;return;}
+  d[tf]={ema20:3000,close:checked?2700:3300};  // checkbox = "closed below 20 EMA"
+}
+function renderBench(){
+  $('#acctTbl').innerHTML='<tr><th>Account</th><th>Health factor</th><th>24h low</th><th>Collateral</th><th>Debt</th></tr>'+
+   BENCH.accounts.map((a,i)=>`<tr><td>${a.label}</td><td><input type="number" step="0.01" data-acct="${i}" data-f="hf" value="${a.hf}"></td><td><input type="number" step="0.01" data-acct="${i}" data-f="hfLow24h" value="${a.hfLow24h}"></td><td>${a.collateral.map(c=>c.sym+' $'+c.usd).join(', ')}</td><td>${a.debt.map(c=>c.sym+' $'+c.usd).join(', ')}</td></tr>`).join('');
+  const below=(s,tf)=>{const t=BENCH.mkt[s][tf];return t.close<t.ema20;};
+  $('#mktTbl').innerHTML='<tr><th>Asset</th><th>Daily close below 20 EMA</th><th>Weekly close below 20 EMA</th><th>Monthly close below 20 EMA</th><th>Bearish divergence</th></tr>'+
+   Object.keys(BENCH.mkt).map(s=>`<tr><td>${s}</td>`+['d','w','m'].map(tf=>`<td><input type="checkbox" data-mk="${s}.${tf}.x" ${below(s,tf)?'checked':''}></td>`).join('')+`<td><input type="checkbox" data-mk="${s}.d.div" ${BENCH.mkt[s].div?'checked':''}></td></tr>`).join('');
+}
+document.addEventListener('click',e=>{
+  const p=e.target.closest('[data-pre]');if(p){BENCH=PRE[p.dataset.pre]();renderBench();$('#log').innerHTML='';return;}
+});
+async function sendEmail(subject,body){
+  if(S.practice){practiceMail={subject:subject,body:body};return;}
+  const res=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({access_key:WEB3_KEY,subject:subject,from_name:'Degen Desk Lending Alerts',message:body})});
+  const j=await res.json().catch(()=>({}));if(!(res.ok&&j.success))throw new Error('send failed');
+}
+let practiceMail=null;
+async function run(accounts,market){
+  const now=Date.now();
+  const raw=LA.evaluate(S,accounts,market);
+  const fresh=LA.applyCooldown(raw,STORE,now);
+  practiceMail=null;let res={emailed:[],held:[]},err=null;
+  try{res=await LA.dispatch(S,fresh,STORE,now,sendEmail);}catch(e){err=e;}
+  save();return {fresh:fresh,suppressed:raw.length-fresh.length,res:res,err:err,mail:practiceMail};
+}
+window.LendingAlerts={settings:()=>S,run:run,evaluate:LA.evaluate};
+$('#run').onclick=async()=>{
+  const out=await run(BENCH.accounts,BENCH.mkt);
+  const emailedKeys=new Set(out.res.emailed.map(a=>a.key));
+  let h='';
+  if(!S.rules.some(r=>r.enabled))h+='<div class="note">No rules are switched on, so nothing can alert. Turn on the rules you want above.</div>';
+  else if(!out.fresh.length)h+='<div class="note">Checked. Nothing you set is firing'+(out.suppressed?' ('+out.suppressed+' repeat alert'+(out.suppressed>1?'s':'')+' held back by your cool-down)':'')+'.</div>';
+  h+=out.fresh.map(a=>`<div class="al ${a.level}"><b>${a.title}</b>${a.detail}<div style="margin-top:.3rem"><span class="tag">ON SCREEN</span>${a.email?(emailedKeys.has(a.key)?`<span class="tag em">${S.practice?'EMAIL (practice, not sent)':'EMAILED'}</span>`:'<span class="tag">EMAIL HELD (switch off or daily cap)</span>'):'<span class="tag">NO EMAIL (you did not switch it on)</span>'}</div></div>`).join('');
+  if(out.res.held.length)h+='<div class="note">'+out.res.held.length+' email alert(s) held back by your daily cap.</div>';
+  if(out.err)h+='<div class="note">The email did not go through. Check your internet. The alerts above still show here.</div>';
+  if(out.mail)h+=`<div class="note"><strong>Practice email preview</strong><br>Subject: ${out.mail.subject}<pre style="white-space:pre-wrap;margin:.4rem 0 0">${out.mail.body.replace(/</g,'&lt;')}</pre></div>`;
+  if(out.fresh.some(a=>a.email)&&!S.emailMaster)h+='<div class="note">Email master switch is off, so nothing was emailed.</div>';
+  $('#log').innerHTML=h;
+};
+$('#clearCool').onclick=()=>{STORE.lastFired={};save();$('#log').innerHTML='<div class="note">Cool-downs reset.</div>';};
+$('#emailMaster').checked=S.emailMaster;$('#maxPerDay').value=S.maxPerDay;$('#practice').checked=S.practice;
+
+/* ---- accent: same three accents and same saved choice as the Desk (bwsDesk.theme) ---- */
+const THEMES=[['cyan','Cyan'],['gold','Gold'],['violet','Violet']];
+function getTheme(){try{const t=localStorage.getItem('bwsDesk.theme');if(THEMES.some(x=>x[0]===t))return t;}catch(e){}return 'cyan';}
+function setTheme(t,saveIt){document.documentElement.setAttribute('data-theme',t);const b=document.getElementById('themeBtn');if(b)b.textContent='Accent: '+THEMES.find(x=>x[0]===t)[1];if(saveIt){try{localStorage.setItem('bwsDesk.theme',t);}catch(e){}}}
+(function(){const b=document.getElementById('themeBtn');setTheme(getTheme(),false);if(b)b.onclick=()=>{const i=THEMES.findIndex(x=>x[0]===getTheme());setTheme(THEMES[(i+1)%3][0],true);};})();
+
+renderRules();renderBench();
+</script>
+</body>
+</html>
