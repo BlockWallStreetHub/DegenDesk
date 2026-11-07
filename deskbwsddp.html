@@ -2514,6 +2514,8 @@ var ITEMS=[
  {id:'port',n:'Portfolio Simulator',h:D+'#port',g:'Test',lv:'m',d:'Project your holdings forward under price moves you choose.',kw:'what if scenario projection'},
  {id:'hosted',n:'Savings Manager (full page)',h:D+'#hosted',g:'Protect',lv:'a',d:'The standalone Savings Liquidation Manager for advanced setups.',kw:'savings hosted standalone'}
 ];
+var PCOK=(function(){try{var a=JSON.parse(localStorage.getItem('dd_access')||'null');return !!(a&&(a.tier==='paid'||a.tier==='owner'))}catch(e){return false}})();
+if(PCOK)ITEMS.push({id:'peercash',n:'Peer Cash',h:'peercashbwsddp.html',g:'Track',lv:'b',d:'Paid members: cash out USDC on Base to Venmo, Revolut, Cash App and more at the live market rate, from your own wallet.',kw:'peer cash cashout cash out offramp usdc fiat venmo revolut cashapp zelle sell withdraw zkp2p base'});
 var GOALS=[
  {i:'🌱',q:'I am new. Where do I start?',w:'Take the course first. It is short and every lesson ends with something to try. Then look at the Overview.',to:['course','desk']},
  {i:'🎬',q:'Watch a movie, show or podcast',w:'Degen Cinema is a movie theater inside the Desk. Pick a movie or a show episode and it plays on the big screen.',to:['cinema']},

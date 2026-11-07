@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" href="degendesk-favicon.png">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peer Cash | BWS Desk</title>
+<script>
+/* PAID MEMBERS AND OWNER ONLY.
+   The front page (index.html) writes dd_access = {h, exp, tier} when a code is entered.
+   tier is "paid" for the 30-day paid code, "owner" for the owner code, "free" for every other code.
+   No valid access at all sends the visitor to the front page. A valid but non-paid code sees the lock screen below. */
+(function(){
+  var g={ok:false,why:'none'};
+  function parse(e){return (e.length>10&&e.indexOf('T')>-1)?Date.parse(e):Date.parse(e+'T23:59:59-06:00')}
+  try{
+    var a=JSON.parse(localStorage.getItem('dd_access')||'null');
+    if(a&&a.exp&&Date.now()<parse(a.exp)){
+      if(a.tier==='paid'||a.tier==='owner'){g.ok=true;g.why=a.tier}
+      else g.why=a.tier?'free':'old';
+    }
+  }catch(e){}
+  window.__pcGate=g;
+  if(g.why==='none'){document.documentElement.style.display='none';location.replace('index.html')}
+})();
+</script>
+<style>
+:root{
+  --bg:#070D1B; --panel:#0B1429; --panel2:#101B38; --line:#1F2D52; --text:#E6ECFA; --muted:#8E9BC0; --gold:#35F0FF; --steel:#C4CEEA; --input:#F2F5FF; --link:#8CF7FF;
+  --ok:#5FD39A; --warn:#F5B84B; --danger:#FF6B7D;
+  --mono:"DM Mono",Consolas,"Cascadia Mono","Courier New",monospace;
+  --sans:"Inter","Segoe UI Variable","Segoe UI",system-ui,sans-serif;
+}
+:root[data-theme="gold"]{--gold:#E8B84A;--link:#F3D58A}
+:root[data-theme="violet"]{--gold:#A07CFF;--link:#C9B6FF}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--sans)}
+a{color:var(--link)}
+.top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:#0a1226;position:sticky;top:0;z-index:5}
+.top a{display:inline-flex;align-items:center;min-height:42px;padding:0 16px;border-radius:12px;border:1px solid #3a4a80;background:#111a33;color:#e8ecf7;text-decoration:none;font-weight:700}
+.top a:hover{border-color:var(--gold)}
+.top a.home{background:var(--gold);color:#04121a;border-color:var(--gold)}
+.top .ttl{margin-left:auto;color:var(--muted);font-size:13px}
+header,main{max-width:980px;margin:auto;padding:0 18px}
+header{padding-top:24px}
+h1{margin:0;font-size:26px;letter-spacing:.04em;text-transform:uppercase}
+h1 b{color:var(--gold)}
+.sub{color:var(--muted);margin:6px 0 0;max-width:760px}
+.tag{display:inline-block;margin-left:8px;padding:2px 10px;border-radius:999px;border:1px solid var(--gold);color:var(--gold);font-size:11px;letter-spacing:.1em;vertical-align:middle}
+main{padding-bottom:90px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px}
+.card h2{margin:0 0 12px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--link)}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+input,select,button{font:inherit;color:var(--text)}
+input[type=text],input[type=number],select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:11px;width:100%;outline:none;font-size:15px;min-height:44px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px;align-items:end}
+.btn{background:var(--gold);color:#04121a;border:0;border-radius:10px;min-height:46px;padding:0 20px;font-weight:800;cursor:pointer}
+.btn.sec{background:transparent;color:var(--link);border:1px solid var(--gold)}
+.btn.sm{min-height:38px;padding:0 14px;font-size:13px}
+.btn.dg{background:transparent;color:var(--danger);border:1px solid #7a2d36}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.acts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.mut{color:var(--muted)}
+.mono{font-family:var(--mono)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+.kv div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kv small{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.kv b{font-size:18px}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+.warn{border:1px solid #6d5a1c;background:#1d1a0d;color:#f1d98a;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:12px}
+.err{color:var(--danger)}.ok{color:var(--ok)}
+.status{min-height:20px;margin-top:10px;font-size:13px}
+.chk{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:13.5px;color:var(--steel)}
+.chk input{width:22px;height:22px;margin-top:1px;flex:none}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;border:1px solid var(--line);color:var(--muted)}
+.badge.g{color:var(--ok);border-color:#1f6a43}.badge.y{color:var(--warn);border-color:#6d5a1c}.badge.b{color:var(--gold);border-color:var(--gold)}.badge.r{color:var(--danger);border-color:#7a2d36}
+.ord{border-top:1px solid var(--line);padding:12px 0;display:grid;gap:6px}
+.ord:first-child{border-top:0}
+.ord .h{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.empty{padding:18px;text-align:center;color:var(--muted)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.lock{max-width:640px;margin:60px auto;text-align:center}
+.lock h2{font-size:22px;letter-spacing:.04em;text-transform:none;color:var(--text)}
+.lock .acts{justify-content:center}
+.modal{position:fixed;inset:0;background:rgba(3,7,16,.82);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal.on{display:flex}
+.modal .box{background:var(--panel);border:1px solid var(--gold);border-radius:14px;padding:20px;max-width:520px;width:100%}
+.modal h3{margin:0 0 10px}
+.modal dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:12px 0}
+.modal dt{color:var(--muted)}.modal dd{margin:0;font-weight:700;word-break:break-all}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<nav class="top" aria-label="Desk navigation">
+  <a class="home" href="deskbwsddp.html">Home</a>
+  <a href="coursebwsddp.html">Course lesson</a>
+  <a href="index.html">Front page</a>
+  <span class="ttl">Peer Cash</span>
+</nav>
+
+<!-- LOCK SCREEN (shown only to valid but non-paid access) -->
+<div id="lock" class="lock hidden" style="padding:0 18px">
+  <h2>Peer Cash is for paying Degen Desk members</h2>
+  <p class="mut" id="lockMsg"></p>
+  <div class="acts">
+    <a class="btn" id="lockBuy" href="https://buy.stripe.com/5kQ28t4vu3mvfPEabe2sM0y">Get paid access</a>
+    <a class="btn sec" href="index.html">Enter my paid code</a>
+    <a class="btn sec" href="deskbwsddp.html">Back to the desk</a>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+<header>
+  <h1>Peer <b>Cash</b> <span class="tag">PAID MEMBERS</span></h1>
+  <p class="sub">Turn USDC on Base into dollars, euros and more, paid to your Venmo, Revolut, Cash App and other handles. A buyer sends you the money and the protocol releases your USDC to them. The rate is the live market rate with no spread.</p>
+</header>
+
+<main>
+  <section class="card" aria-labelledby="h-wallet">
+    <h2 id="h-wallet">1. Connect your wallet</h2>
+    <p class="mut" style="margin:0">You sign every transaction yourself, in your own wallet. Block Wall Street never holds your funds, your keys or your seed phrase, and never asks for them.</p>
+    <div class="acts">
+      <button class="btn" id="connect" type="button" disabled>Connect wallet</button>
+      <span id="acct" class="mono mut"></span>
+    </div>
+    <div class="kv" id="walletKv" hidden>
+      <div><small>Network</small><b id="netv">-</b></div>
+      <div><small>USDC on Base</small><b id="balv">-</b></div>
+    </div>
+    <div class="status" id="walletStatus" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-cash">
+    <h2 id="h-cash">2. Cash out</h2>
+    <div class="grid">
+      <label class="f">Where you get paid
+        <select id="plat"></select>
+      </label>
+      <label class="f">Currency
+        <select id="cur"></select>
+      </label>
+      <label class="f"><span id="payeeLbl">Your handle</span>
+        <input type="text" id="payee" autocomplete="off" autocapitalize="off" spellcheck="false">
+      </label>
+      <label class="f">Amount of USDC
+        <input type="number" id="amt" inputmode="decimal" min="1" step="0.01" placeholder="25">
+      </label>
+    </div>
+    <div class="acts" style="margin-top:8px"><button class="btn sec sm" id="maxBtn" type="button" disabled>Use my full balance</button><span class="note" style="margin:0" id="payeeHint"></span></div>
+
+    <div class="kv" id="estKv" hidden>
+      <div><small>You should receive about</small><b id="estRecv">-</b></div>
+      <div><small>Rate</small><b id="estRate">-</b></div>
+      <div><small>Usual wait for a buyer</small><b id="estEta">-</b></div>
+    </div>
+    <div class="note" id="estNote">This is an estimate, not a locked quote. The final rate is set when a buyer picks up your order.</div>
+    <div class="status" id="estStatus" role="status" aria-live="polite"></div>
+
+    <div class="warn">Check the handle letter by letter. Your USDC goes into the Peer protocol and a buyer pays whatever handle you typed here. A wrong handle can send your money to someone else, and it cannot be reversed. Start with a small test amount.</div>
+
+    <label class="chk"><input type="checkbox" id="agree"><span>I understand that my USDC is deposited into the Peer protocol (not held by Block Wall Street), that only I can withdraw an order nobody has picked up, that fees and availability are set by Peer and my payment app, and that this is education and a tool, not financial or tax advice.</span></label>
+    <div class="acts"><button class="btn" id="go" type="button" disabled>Cash out</button></div>
+    <div class="status" id="goStatus" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-ord">
+    <h2 id="h-ord">3. Your orders</h2>
+    <div id="orders"><div class="empty">Connect your wallet to see your cash-out orders.</div></div>
+    <div class="acts"><button class="btn sec sm" id="refresh" type="button" disabled>Refresh</button></div>
+    <div class="status" id="ordStatus" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Good to know</h2>
+    <ul class="note" style="margin:0;padding-left:18px">
+      <li>This page uses the open-source Peer Cash SDK (ZKP2P protocol, MIT license). Orders run on the Peer protocol on Base, not on Block Wall Street.</li>
+      <li>It only cashes out <b>Base USDC</b>. Bridge or swap to USDC on Base first, then come back.</li>
+      <li>Wise, PayPal and Alipay need an identity step that only Peer&rsquo;s own site can do, so they are not listed here. Use <a href="https://peer.xyz" target="_blank" rel="noopener">peer.xyz</a> for those.</li>
+      <li>Your wallet pays a small network fee (gas) in ETH on Base for each step. Peer sets any protocol fees. Block Wall Street adds no fee.</li>
+      <li>Where it works, and any identity checks, depend on Peer and on the payment app you choose. Rules differ by country. You are responsible for your own taxes and local laws.</li>
+      <li>If a transaction looks stuck, do not send it again. Press Refresh first and check your orders.</li>
+      <li>Never share your seed phrase or private key with anyone, including anyone claiming to be Block Wall Street.</li>
+    </ul>
+  </section>
+</main>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="box">
+    <h3 id="mTitle">Confirm</h3>
+    <dl id="mBody"></dl>
+    <p class="note" id="mNote"></p>
+    <div class="acts"><button class="btn" id="mOk" type="button">Confirm in my wallet</button><button class="btn sec" id="mNo" type="button">Cancel</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(i){return document.getElementById(i)};
+try{var th=localStorage.getItem('bwsDesk.theme');if(th)document.documentElement.setAttribute('data-theme',th)}catch(e){}
+var G=window.__pcGate||{ok:false,why:'none'};
+
+/* ---------- gate ---------- */
+if(!G.ok){
+  if(G.why==='none')return;
+  $('lock').classList.remove('hidden');
+  $('lockMsg').textContent=G.why==='old'
+    ?'The desk needs to confirm your plan. Go to the front page and enter your paid member code once more, then open Peer Cash again.'
+    :'Your current access code does not include Peer Cash. It is part of the paid 30-day membership. If you are a paying member, enter your paid code on the front page.';
+  return;
+}
+$('app').classList.remove('hidden');
+
+/* ---------- helpers ---------- */
+var L=null,cash=null,caps=null,provider=null,account=null,wallet=null,pub=null,balance=null,busy=false,pollT=null,estT=null;
+var BASE_HEX='0x2105';
+var NAMES={venmo:'Venmo',revolut:'Revolut',cashapp:'Cash App',chime:'Chime',monzo:'Monzo',zelle:'Zelle',upi:'UPI (India)',xmoney:'X Money',paypal:'PayPal',wise:'Wise',alipay:'Alipay',mercadopago:'Mercado Pago'};
+function nm(p){return NAMES[p]||(p.charAt(0).toUpperCase()+p.slice(1))}
+function say(id,msg,cls){var e=$(id);e.className='status'+(cls?' '+cls:'');e.textContent=msg||''}
+function short(a){return a?a.slice(0,6)+'...'+a.slice(-4):''}
+function money(n,c){try{return n.toLocaleString(undefined,{style:'currency',currency:c,maximumFractionDigits:2})}catch(e){return n.toFixed(2)+' '+c}}
+function errText(e){
+  if(!e)return 'Something went wrong.';
+  if(L&&L.isUserRejectedError&&L.isUserRejectedError(e))return 'You cancelled it in your wallet. Nothing was sent.';
+  var m=e.shortMessage||e.message||String(e);
+  return m.length>300?m.slice(0,300)+'...':m;
+}
+function parseAmt(){
+  var s=($('amt').value||'').trim();
+  if(!/^\d+(\.\d{1,6})?$/.test(s))return null;
+  return s;
+}
+
+/* ---------- load the library only for allowed members ---------- */
+var s=document.createElement('script');
+s.src='peercash-libbwsddp.js';
+s.onload=init;
+s.onerror=function(){say('walletStatus','Could not load the Peer Cash library. Make sure peercash-libbwsddp.js is uploaded next to this page.','err')};
+document.head.appendChild(s);
+
+function init(){
+  L=window.PeerCashLib;
+  try{
+    cash=L.createCashClient({environment:'production'});
+    caps=cash.capabilities();
+  }catch(e){say('walletStatus','Peer Cash could not start: '+errText(e),'err');return}
+  var list=(caps.platforms||[]).filter(function(p){return !p.requiresIdentityAttestation}).sort(function(a,b){return nm(a.platform).localeCompare(nm(b.platform))});
+  $('plat').innerHTML=list.map(function(p){return '<option value="'+p.platform+'">'+nm(p.platform)+'</option>'}).join('');
+  $('plat').onchange=fillPlat;
+  $('cur').onchange=queueEst;
+  $('amt').oninput=function(){queueEst();sync()};
+  $('payee').oninput=sync;
+  $('agree').onchange=sync;
+  $('maxBtn').onclick=function(){if(balance!=null){$('amt').value=L.formatUsdc(balance).replace(/,/g,'');queueEst();sync()}};
+  $('connect').disabled=false;
+  $('connect').onclick=connect;
+  $('go').onclick=askCash;
+  $('refresh').onclick=function(){loadOrders(true)};
+  fillPlat();
+  if(!window.ethereum)say('walletStatus','No wallet found in this browser. Install a wallet such as MetaMask or Rabby, or open this page inside your wallet app’s browser.','err');
+  else if(window.ethereum.selectedAddress||false)connect(true);
+}
+
+function fillPlat(){
+  var p=(caps.platforms||[]).filter(function(x){return x.platform===$('plat').value})[0];
+  if(!p)return;
+  $('cur').innerHTML=p.currencies.map(function(c){return '<option>'+c+'</option>'}).join('');
+  $('payeeLbl').textContent=nm(p.platform)+' handle';
+  $('payee').placeholder=p.payeeHint||'';
+  $('payeeHint').textContent=p.payeeHint||'';
+  queueEst();sync();
+}
+
+/* ---------- wallet ---------- */
+async function connect(silent){
+  provider=window.ethereum;
+  if(!provider){say('walletStatus','No wallet found in this browser.','err');return}
+  try{
+    say('walletStatus','Waiting for your wallet...');
+    var accs=await provider.request({method:silent===true?'eth_accounts':'eth_requestAccounts'});
+    if(!accs||!accs.length){say('walletStatus','');return}
+    account=accs[0];
+    await ensureBase();
+    wallet=L.createWalletClient({account:account,chain:L.base,transport:L.custom(provider)});
+    pub=L.createPublicClient({chain:L.base,transport:L.http()});
+    $('acct').textContent=short(account);
+    $('connect').textContent='Switch wallet';
+    $('walletKv').hidden=false;
+    $('netv').textContent='Base';
+    provider.removeListener&&provider.removeListener('accountsChanged',onAcc);
+    provider.removeListener&&provider.removeListener('chainChanged',onChain);
+    provider.on&&provider.on('accountsChanged',onAcc);
+    provider.on&&provider.on('chainChanged',onChain);
+    say('walletStatus','Connected.','ok');
+    await loadBalance();
+    loadOrders(false);
+    clearInterval(pollT);pollT=setInterval(function(){if(!document.hidden)loadOrders(false)},25000);
+    sync();
+  }catch(e){say('walletStatus',errText(e),'err')}
+}
+async function ensureBase(){
+  var cid=await provider.request({method:'eth_chainId'});
+  if(cid===BASE_HEX)return;
+  try{await provider.request({method:'wallet_switchEthereumChain',params:[{chainId:BASE_HEX}]})}
+  catch(e){
+    if(e&&e.code===4902){
+      await provider.request({method:'wallet_addEthereumChain',params:[{chainId:BASE_HEX,chainName:'Base',nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},rpcUrls:['https://mainnet.base.org'],blockExplorerUrls:['https://basescan.org']}]});
+    }else throw e;
+  }
+}
+function onAcc(a){account=a&&a[0]||null;if(!account){resetWallet();return}connect(true)}
+function onChain(){connect(true)}
+function resetWallet(){wallet=null;balance=null;clearInterval(pollT);$('acct').textContent='';$('walletKv').hidden=true;$('connect').textContent='Connect wallet';$('orders').innerHTML='<div class="empty">Connect your wallet to see your cash-out orders.</div>';sync()}
+async function loadBalance(){
+  try{
+    var abi=L.parseAbi(['function balanceOf(address) view returns (uint256)']);
+    balance=await pub.readContract({address:caps.token.address,abi:abi,functionName:'balanceOf',args:[account]});
+    $('balv').textContent=L.formatUsdc(balance)+' USDC';
+  }catch(e){balance=null;$('balv').textContent='unknown'}
+  sync();
+}
+
+/* ---------- estimate ---------- */
+function queueEst(){clearTimeout(estT);estT=setTimeout(doEst,500)}
+async function doEst(){
+  var a=parseAmt();
+  if(!cash||!a||+a<1){$('estKv').hidden=true;say('estStatus',a&&+a<1?'The minimum is 1 USDC.':'','');return}
+  var token=++doEst.n||(doEst.n=1);
+  say('estStatus','Reading the live rate...');
+  try{
+    var est=await cash.estimate({amount:L.usdc(a),currency:$('cur').value,platform:$('plat').value});
+    if(token!==doEst.n)return;
+    $('estKv').hidden=false;
+    $('estRecv').textContent='≈ '+money(est.receiveAmount,$('cur').value);
+    $('estRate').textContent=(+est.rate).toFixed(4)+' '+$('cur').value+' per USDC';
+    $('estEta').textContent=est.eta&&est.eta.label?est.eta.label:'not enough history';
+    say('estStatus',est.stale?'The price feed for this currency is more than a day old. Treat the rate with caution.':'', est.stale?'err':'');
+  }catch(e){if(token===doEst.n){$('estKv').hidden=true;say('estStatus','Could not get a rate right now: '+errText(e),'err')}}
+}
+doEst.n=0;
+
+/* ---------- form state ---------- */
+function sync(){
+  var a=parseAmt(),ok=!!(wallet&&a&&+a>=1&&$('payee').value.trim()&&$('agree').checked&&!busy);
+  if(ok&&balance!=null&&L.usdc(a)>balance)ok=false;
+  $('go').disabled=!ok;
+  $('maxBtn').disabled=!(wallet&&balance!=null&&balance>0n);
+  $('refresh').disabled=!wallet;
+}
+
+/* ---------- modal ---------- */
+function confirmBox(title,rows,note,okLabel){
+  return new Promise(function(res){
+    $('mTitle').textContent=title;
+    var dl=$('mBody');dl.innerHTML='';
+    rows.forEach(function(r){var dt=document.createElement('dt');dt.textContent=r[0];var dd=document.createElement('dd');dd.textContent=r[1];dl.appendChild(dt);dl.appendChild(dd)});
+    $('mNote').textContent=note||'';
+    $('mOk').textContent=okLabel||'Confirm in my wallet';
+    var m=$('modal');m.classList.add('on');$('mNo').focus();
+    function done(v){m.classList.remove('on');$('mOk').onclick=$('mNo').onclick=null;document.removeEventListener('keydown',kd);res(v)}
+    function kd(e){if(e.key==='Escape')done(false)}
+    document.addEventListener('keydown',kd);
+    $('mOk').onclick=function(){done(true)};$('mNo').onclick=function(){done(false)};
+  });
+}
+
+/* ---------- cash out ---------- */
+async function askCash(){
+  if(busy||!wallet)return;
+  var a=parseAmt(),payee=$('payee').value.trim(),plat=$('plat').value,cur=$('cur').value;
+  if(!a||+a<1||!payee)return;
+  var ok=await confirmBox('Confirm cash-out',[
+    ['Amount',a+' USDC'],['Paid to',nm(plat)+' ('+cur+')'],['Handle',payee],['Wallet',short(account)]
+  ],'Your wallet will ask you to approve USDC and then create the order. Some payment apps need one more approval after that. Do not close this page until it says the order is created.');
+  if(!ok)return;
+  busy=true;sync();
+  say('goStatus','Waiting for your wallet... approve each step.');
+  $('go').innerHTML='<span class="spin"></span>Working';
+  try{
+    await ensureBase();
+    var res=await cash.cashout({amount:L.usdc(a),receive:{platform:plat,currency:cur,payee:payee}},{signer:wallet});
+    try{var k='pc_orders_'+account.toLowerCase();var arr=JSON.parse(localStorage.getItem(k)||'[]');arr.unshift({id:res.depositId,t:Date.now()});localStorage.setItem(k,JSON.stringify(arr.slice(0,50)))}catch(e){}
+    say('goStatus','Order created. A buyer will pay your '+nm(plat)+' handle. Watch it below.','ok');
+    $('amt').value='';$('estKv').hidden=true;$('agree').checked=false;
+    await loadBalance();await loadOrders(false);
+  }catch(e){
+    var msg=errText(e);
+    var rejected=L.isUserRejectedError&&L.isUserRejectedError(e);
+    say('goStatus',rejected?msg:msg+' If you are not sure whether anything was sent, do not try again yet. Press Refresh under Your orders and check your wallet first.','err');
+    if(!rejected){loadBalance();loadOrders(false)}
+  }finally{busy=false;$('go').textContent='Cash out';sync()}
+}
+
+/* ---------- orders ---------- */
+var STATE={'awaiting-buyer':['Waiting for a buyer','y'],matched:['Buyer matched, paying you','b'],delivering:['Payment being verified','b'],delivered:['Paid out','g'],returned:['Returned to your wallet','r']};
+async function loadOrders(manual){
+  if(!cash||!account)return;
+  if(manual)say('ordStatus','Checking...');
+  try{
+    var list=await cash.orders(account);
+    var box=$('orders');box.innerHTML='';
+    if(!list||!list.length){box.innerHTML='<div class="empty">No cash-out orders for this wallet yet.</div>'}
+    list.forEach(function(o){
+      var st=STATE[o.state]||[o.state,''];
+      var d=document.createElement('div');d.className='ord';
+      var h=document.createElement('div');h.className='h';
+      var l=document.createElement('b');l.textContent=L.formatUsdc(o.totalAmount)+' USDC';
+      var bd=document.createElement('span');bd.className='badge '+st[1];bd.textContent=st[0];
+      h.appendChild(l);h.appendChild(bd);d.appendChild(h);
+      var ex=document.createElement('div');ex.className='mut';try{ex.textContent=o.explain()}catch(e){}
+      d.appendChild(ex);
+      if(o.filledAmount>0n){var f=document.createElement('div');f.className='note';f.textContent='Paid out so far: '+L.formatUsdc(o.filledAmount)+' USDC';d.appendChild(f)}
+      var meta=document.createElement('div');meta.className='note mono';meta.textContent='Order '+o.depositId+(o.updatedAt?' · updated '+new Date(o.updatedAt*1000).toLocaleString():'');d.appendChild(meta);
+      if(o.nextActions&&o.nextActions.indexOf('withdraw')>-1){
+        var b=document.createElement('button');b.type='button';b.className='btn dg sm';b.textContent='Cancel and withdraw my USDC';
+        b.onclick=function(){withdraw(o)};
+        var w=document.createElement('div');w.className='acts';w.style.marginTop='4px';w.appendChild(b);d.appendChild(w);
+      }
+      box.appendChild(d);
+    });
+    say('ordStatus',manual?'Up to date.':'', manual?'ok':'');
+  }catch(e){say('ordStatus','Could not load orders: '+errText(e),'err')}
+}
+async function withdraw(o){
+  if(busy||!wallet)return;
+  var ok=await confirmBox('Withdraw this order',[['Order',o.depositId],['USDC returning',L.formatUsdc(o.totalAmount-o.filledAmount)+' USDC'],['To wallet',short(account)]],'This cancels the part of the order that nobody has paid for and returns that USDC to your wallet. Any part a buyer is already paying for cannot be pulled back.','Withdraw in my wallet');
+  if(!ok)return;
+  busy=true;sync();say('ordStatus','Waiting for your wallet...');
+  try{
+    await ensureBase();
+    await cash.withdraw(o.depositId,{signer:wallet});
+    say('ordStatus','Withdrawn. Your USDC is back in your wallet.','ok');
+    await loadBalance();
+  }catch(e){say('ordStatus',errText(e)+' If you are not sure it went through, press Refresh before trying again.','err')}
+  finally{busy=false;sync();loadOrders(false)}
+}
+})();
+</script>
+</body>
+</html>
