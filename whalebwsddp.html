@@ -135,7 +135,7 @@ tr.fresh td{background:rgba(217,180,74,.08)}
 <div class="acts"><button class="btn sec sm" id="refAll" type="button">Refresh all</button></div>
 <div class="status" id="tStat" role="status" aria-live="polite"></div>
 <details class="how"><summary>What it can read</summary>
-<p><b>Ethereum-style wallets (0x…)</b> are read on Ethereum, Base, Optimism, Arbitrum and Polygon through Blockscout. <b>Solana wallets</b> are read from a public Solana node and priced with DexScreener. Coins with no market price are counted but not valued. Wallets on BNB Chain and Avalanche are not covered yet.</p>
+<p><b>Ethereum-style wallets (0x…)</b> are read on Ethereum, Base, Optimism, Arbitrum, Polygon and Robinhood Chain through Blockscout. <b>Solana wallets</b> are read from a public Solana node and priced with DexScreener. Coins with no market price are counted but not valued. Wallets on BNB Chain and Avalanche are not covered yet.</p>
 <p>Every refresh is compared with the one before it, so you see new positions, sold-out positions and big changes in size. Your list is saved in this browser and, if you are signed in on the Account page, backed up to your account.</p></details>
 </div>
 <div class="w" id="wl"></div>
@@ -191,7 +191,7 @@ var NETS={
  arbitrum:{n:'Arbitrum',tx:'https://arbiscan.io/tx/',ac:'https://arbiscan.io/address/'},
  polygon_pos:{n:'Polygon',tx:'https://polygonscan.com/tx/',ac:'https://polygonscan.com/address/'},
  avax:{n:'Avalanche',tx:'https://snowtrace.io/tx/',ac:'https://snowtrace.io/address/'},
- robinhood:{n:'Robinhood Chain',tx:'',ac:''},
+ robinhood:{n:'Robinhood Chain',tx:'https://robinhoodchain.blockscout.com/tx/',ac:'https://robinhoodchain.blockscout.com/address/'},
  optimism:{n:'Optimism',tx:'https://optimistic.etherscan.io/tx/',ac:'https://optimistic.etherscan.io/address/'}
 };
 var DS2GT={solana:'solana',ethereum:'eth',base:'base',bsc:'bsc',arbitrum:'arbitrum',polygon:'polygon_pos',avalanche:'avax',optimism:'optimism'};
@@ -531,7 +531,7 @@ $('qOut').addEventListener('click',function(e){
 });
 
 /* ---------- WALLET TRACKER ---------- */
-var EVM_CH=[['eth','https://eth.blockscout.com','ETH'],['base','https://base.blockscout.com','ETH'],['optimism','https://optimism.blockscout.com','ETH'],['arbitrum','https://arbitrum.blockscout.com','ETH'],['polygon_pos','https://polygon.blockscout.com','POL']];
+var EVM_CH=[['eth','https://eth.blockscout.com','ETH'],['base','https://base.blockscout.com','ETH'],['optimism','https://optimism.blockscout.com','ETH'],['arbitrum','https://arbitrum.blockscout.com','ETH'],['polygon_pos','https://polygon.blockscout.com','POL'],['robinhood','https://robinhoodchain.blockscout.com','ETH']];
 var SOL_RPC=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com'];
 var WSOL='So11111111111111111111111111111111111111112';
 
