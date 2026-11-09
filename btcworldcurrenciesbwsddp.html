@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>/* members only: same access check as the Desk */
+(function(){try{var a=JSON.parse(localStorage.getItem('dd_access')||'null');if(a&&a.exp&&Date.now()<((a.exp.length>10&&a.exp.indexOf('T')>-1)?Date.parse(a.exp):Date.parse(a.exp+'T23:59:59-06:00')))return}catch(e){}document.documentElement.style.display='none';location.replace('index.html')})();</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BTC vs The World | Degen Desk</title>
+<link rel="icon" type="image/png" href="degendesk-favicon.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{--tbg:#070D1B;--tp:#0B1429;--tp2:#101B38;--tl:#1F2D52;--tx:#E6ECFA;--tm:#8E9BC0;--ta:#35F0FF;--ta2:#8CF7FF;--ok:#5FD39A;--dn:#FF6B7D;--steel:#C4CEEA;
+  --mono:"DM Mono",Consolas,"Cascadia Mono","Courier New",monospace;--sans:"Inter","Segoe UI Variable","Segoe UI",system-ui,sans-serif}
+:root[data-theme="gold"]{--ta:#E8B84A;--ta2:#F3D58A}
+:root[data-theme="violet"]{--ta:#A07CFF;--ta2:#C9B6FF}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--tbg);color:var(--tx);font:14.5px/1.5 var(--sans)}
+body{min-height:100vh;padding-bottom:50px}
+a{color:var(--ta)}
+:focus-visible{outline:2px solid var(--ta);outline-offset:2px}
+::selection{background:var(--ta);color:#06101a}
+.mono{font-family:var(--mono)}
+.sa{display:flex;align-items:center;gap:14px;height:46px;padding:0 14px;background:#000;border-bottom:1px solid var(--tl)}
+body.ddin .sa{display:none}
+.sa .brand{font-size:19px;letter-spacing:.14em;font-weight:700}.sa .brand i{font-style:normal;color:var(--ta)}
+.btn{background:var(--tp2);border:1px solid var(--tl);color:var(--tx);padding:7px 12px;border-radius:3px;cursor:pointer;font:inherit;font-size:13px;text-decoration:none;display:inline-block}
+.btn:hover{border-color:var(--ta)}
+.btn:disabled{opacity:.5;cursor:default}
+.pill{font-family:var(--mono);font-size:11.5px;border:1px solid var(--tl);padding:4px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:7px;color:var(--tm)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--tm);display:inline-block}
+.dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok);animation:pulse 1.6s infinite}
+.dot.poll{background:#F5B84B}
+@keyframes pulse{50%{opacity:.4}}
+.wrap{max-width:1240px;margin:0 auto;padding:18px 22px}
+.vh{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 12px}
+.vh h2{font-size:22px;font-weight:600;letter-spacing:.02em}
+.vh p{color:var(--tm)}
+.vh .pill{margin-left:auto}
+.hero{display:grid;grid-template-columns:1.1fr 2fr;gap:14px}
+.card{background:var(--tp);border:1px solid var(--tl);border-radius:3px;padding:14px 16px}
+.sec{margin-top:14px}
+h3{margin:0 0 8px;font-size:14px;color:var(--ta);font-weight:600}
+.lbl{font-size:12px;color:var(--tm)}
+.big{font-family:var(--mono);font-size:40px;font-weight:600;line-height:1.1;margin:6px 0;transition:color .3s}
+.big.up{color:var(--ok)}.big.dn{color:var(--dn)}
+.chg.up,.up{color:var(--ok)}.chg.dn,.dn{color:var(--dn)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:var(--tp2);border:1px solid var(--tl);border-radius:3px;padding:10px 12px}
+.stat .v{font-family:var(--mono);font-size:19px;font-weight:600;margin-top:2px}
+.ctrl{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:14px 0 10px}
+.seg{display:flex;border:1px solid var(--tl);border-radius:3px;overflow:hidden}
+.seg button{background:var(--tp2);color:var(--tx);border:0;border-right:1px solid var(--tl);padding:7px 13px;font:inherit;font-size:13px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--tl)}
+.seg button.on{background:var(--ta);color:#06101a;font-weight:600}
+.chartbox{position:relative}
+#chart{width:100%;height:440px;display:block;cursor:crosshair}
+#tip{position:absolute;pointer-events:none;background:var(--tbg);border:1px solid var(--ta);border-radius:3px;padding:8px 10px;font-family:var(--mono);font-size:12px;display:none;z-index:5;min-width:150px}
+#tip .row{display:flex;justify-content:space-between;gap:14px}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:28px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--tp2);border:1px solid var(--tl);border-radius:99px;padding:2px 10px;font-size:13px;cursor:pointer}
+.chip i{width:10px;height:10px;border-radius:50%;display:block}
+.chip b{font-weight:400;color:var(--tm);margin-left:2px}
+.chip:hover{border-color:var(--dn)}
+.note{color:var(--tm);font-size:12.5px;margin-top:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:8px}
+.cur{background:var(--tp2);border:1px solid var(--tl);border-left-width:4px;border-radius:3px;padding:9px 10px;cursor:pointer}
+.cur:hover{border-color:var(--ta)}
+.cur .c{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px}
+.cur .n{font-size:12px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cur .p{font-family:var(--mono);font-size:16px;font-weight:600;margin-top:4px;transition:color .3s}
+.cur .p.up{color:var(--ok)}.cur .p.dn{color:var(--dn)}
+input[type=text],input[type=search]{font:inherit;color:var(--tx);background:var(--tp2);border:1px solid var(--tl);border-radius:3px;padding:7px 9px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-weight:600;text-align:right;color:var(--tm);padding:7px 8px;border-bottom:1px solid var(--tl);font-size:12px}
+td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--tl);font-family:var(--mono)}
+th:first-child,td:first-child{text-align:left}
+.tw{overflow-x:auto}
+details summary{cursor:pointer;color:var(--ta)}
+@media(max-width:860px){.hero{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.big{font-size:34px}#chart{height:340px}}
+</style>
+<script>
+/* Desk accent system: same as the other Desk tool pages (Cyan / Gold / Violet) */
+(function(){
+ var TH=[['cyan','Cyan'],['gold','Gold'],['violet','Violet']],cur='cyan';
+ window.ddTheme=function(t,quiet){if(!/^(cyan|gold|violet)$/.test(t))t='cyan';cur=t;document.documentElement.setAttribute('data-theme',t);
+  var b=document.getElementById('ddtb');if(b)b.textContent='Accent: '+TH.filter(function(x){return x[0]===t})[0][1];
+  if(!quiet){try{localStorage.setItem('bwsDesk.theme',t)}catch(e){}}
+  try{document.dispatchEvent(new Event('ddtheme'))}catch(e){}};
+ var sv='cyan';try{sv=localStorage.getItem('bwsDesk.theme')||'cyan'}catch(e){}
+ cur=/^(cyan|gold|violet)$/.test(sv)?sv:'cyan';document.documentElement.setAttribute('data-theme',cur);
+ document.addEventListener('DOMContentLoaded',function(){
+  var inF=false;try{inF=window.parent!==window}catch(e){inF=true}
+  if(inF)document.body.classList.add('ddin');
+  var b=document.createElement('button');b.id='ddtb';b.type='button';b.title='Change accent color';
+  b.style.cssText="position:fixed;left:10px;bottom:10px;z-index:99999;font:600 12px/1 Inter,'Segoe UI',sans-serif;color:var(--tx);background:var(--tp);border:1px solid var(--tl);border-radius:999px;padding:8px 14px;cursor:pointer;opacity:.9";
+  if(inF)b.style.display='none';
+  document.body.appendChild(b);
+  b.onclick=function(){var i=TH.findIndex(function(x){return x[0]===cur});window.ddTheme(TH[(i+1)%3][0])};window.ddTheme(cur,true);
+ });
+})();
+</script>
+</head>
+<body>
+
+<div class="sa"><div class="brand">BWS<i> Desk</i></div><a class="btn" href="deskbwsddp.html">Home</a></div>
+<div class="wrap">
+  <div class="vh"><h2>BTC vs The World</h2><p>What one Bitcoin is worth in 45 world currencies, live, with daily history back to 2014.</p><span class="pill"><span class="dot" id="dot"></span><span id="status">Connecting</span></span></div>
+
+  <div class="hero">
+    <div class="card">
+      <div class="lbl">1 Bitcoin in US Dollars, live</div>
+      <div class="big" id="heroPrice">&mdash;</div>
+      <div class="mono"><span class="chg" id="heroChg">&mdash;</span> <span style="color:var(--tm)">24h</span></div>
+      <div class="note mono" id="heroTime">Waiting for first price...</div>
+    </div>
+    <div class="card">
+      <h3>The scoreboard since Jan 2014</h3>
+      <div class="stats">
+        <div class="stat"><div class="lbl">BTC / USD multiple</div><div class="v" id="stMult">&mdash;</div></div>
+        <div class="stat"><div class="lbl">Best vs BTC (loaded)</div><div class="v" id="stBest">&mdash;</div></div>
+        <div class="stat"><div class="lbl">Worst vs BTC (loaded)</div><div class="v" id="stWorst">&mdash;</div></div>
+        <div class="stat"><div class="lbl">Currencies loaded</div><div class="v" id="stLoaded">0</div></div>
+      </div>
+      <div class="note">"Vs BTC" = how much of a Bitcoin one unit of that currency buys now compared with the start of the chosen range. Load more currencies with the grid below or the Load All button.</div>
+    </div>
+  </div>
+
+  <div class="ctrl">
+    <div class="seg" id="modeSeg">
+      <button data-mode="index" class="on" title="Every line starts at 100 so you compare growth">Index = 100</button>
+      <button data-mode="price" title="Price of 1 BTC in each currency">BTC price</button>
+      <button data-mode="sats" title="Sats you get for 1 unit of the currency">Sats per 1 unit</button>
+    </div>
+    <div class="seg" id="rangeSeg">
+      <button data-range="1Y">1Y</button><button data-range="3Y">3Y</button><button data-range="5Y">5Y</button><button data-range="10Y">10Y</button><button data-range="ALL" class="on">2014&ndash;NOW</button>
+    </div>
+    <div class="seg" id="scaleSeg"><button data-log="1" class="on">Log</button><button data-log="0">Linear</button></div>
+    <button class="btn" id="csvBtn">Download CSV</button>
+  </div>
+
+  <div class="card">
+    <div class="legend" id="legend"></div>
+    <div class="chartbox"><canvas id="chart"></canvas><div id="tip"></div></div>
+    <div class="note" id="chartNote"></div>
+  </div>
+
+  <div class="card sec">
+    <h3>Performance table</h3>
+    <div class="tw"><table id="perf"><thead><tr><th>Currency</th><th>Start price</th><th>Now</th><th>BTC multiple</th><th>BTC yearly</th><th>Currency vs BTC</th><th>Data</th></tr></thead><tbody></tbody></table></div>
+    <div class="note">Start = first daily close inside the chosen range. CAGR is the yearly compound growth of BTC measured in that currency. Currency vs BTC is the change in what one unit of the currency can buy in Bitcoin.</div>
+  </div>
+
+  <div class="card sec">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0">World board, live</h3>
+      <input type="search" id="find" placeholder="Search currency...">
+      <button class="btn" id="loadAll">Load all history</button>
+      <span class="mono note" id="loadMsg" style="margin:0"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="note">Click a currency to add or remove it from the chart (up to 10 at once).</div>
+  </div>
+
+  <div class="card sec">
+    <details>
+      <summary>Data sources and settings</summary>
+      <div class="note" style="margin-top:10px">
+        Live: Coinbase WebSocket (BTC-USD ticks) plus CoinGecko and CryptoCompare polling every 30 seconds for the other currencies.<br>
+        History: CryptoCompare daily closes of BTC in each currency, back to Jan 2014 where available. If a currency is not available there, the tool builds it from BTC/USD (CryptoCompare or Blockchain.com) multiplied by daily ECB exchange rates from Frankfurter, and labels it "USD x FX".<br>
+        Free sources are rate limited. If loading stalls, wait a minute or paste a free CryptoCompare API key here:
+        <input type="text" id="ccKey" placeholder="CryptoCompare API key (optional)" style="width:300px;margin-left:6px">
+        <button class="btn" id="keySave">Save</button><br>
+        Not financial advice. For education and research.
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var CUR=[['USD','US Dollar'],['EUR','Euro'],['GBP','British Pound'],['JPY','Japanese Yen'],['CNY','Chinese Yuan'],['CAD','Canadian Dollar'],['AUD','Australian Dollar'],['CHF','Swiss Franc'],['INR','Indian Rupee'],['RUB','Russian Ruble'],['BRL','Brazilian Real'],['MXN','Mexican Peso'],['KRW','South Korean Won'],['TRY','Turkish Lira'],['ZAR','South African Rand'],['NGN','Nigerian Naira'],['GHS','Ghanaian Cedi'],['KES','Kenyan Shilling'],['EGP','Egyptian Pound'],['ARS','Argentine Peso'],['IDR','Indonesian Rupiah'],['THB','Thai Baht'],['SGD','Singapore Dollar'],['HKD','Hong Kong Dollar'],['NZD','New Zealand Dollar'],['SEK','Swedish Krona'],['NOK','Norwegian Krone'],['DKK','Danish Krone'],['PLN','Polish Zloty'],['CZK','Czech Koruna'],['HUF','Hungarian Forint'],['ILS','Israeli Shekel'],['AED','UAE Dirham'],['SAR','Saudi Riyal'],['PHP','Philippine Peso'],['MYR','Malaysian Ringgit'],['VND','Vietnamese Dong'],['PKR','Pakistani Rupee'],['BDT','Bangladeshi Taka'],['UAH','Ukrainian Hryvnia'],['COP','Colombian Peso'],['CLP','Chilean Peso'],['PEN','Peruvian Sol'],['TWD','Taiwan Dollar'],['RON','Romanian Leu']];
+var NAME={};CUR.forEach(function(c){NAME[c[0]]=c[1];});
+var PAL=['#35F0FF','#E8B84A','#A07CFF','#5FD39A','#FF6B7D','#F5B84B','#8CF7FF','#C4CEEA','#FF8FD0','#A3E635'];
+var START=Date.UTC(2014,0,1),DAY=86400000;
+var S={sel:['USD','EUR','GBP','JPY'],mode:'index',range:'ALL',log:true,hist:{},src:{},err:{},busy:{},live:{},chg:{},implied:{},prev:{},lastPoll:0,colors:{}};
+var view=null;
+function $(s){return document.querySelector(s);}
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+function keyQ(){var k=ls('bws_ccKey');return k?'&api_key='+encodeURIComponent(k):'';}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+function getJSON(url,ms){
+  var ctl=new AbortController(),t=setTimeout(function(){ctl.abort();},ms||15000);
+  return fetch(url,{signal:ctl.signal}).then(function(r){clearTimeout(t);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();});
+}
+function colorFor(c){if(!S.colors[c]){var used=Object.keys(S.colors).map(function(k){return S.colors[k];});var p=PAL.filter(function(x){return used.indexOf(x)<0;});S.colors[c]=p.length?p[0]:PAL[Object.keys(S.colors).length%PAL.length];}return S.colors[c];}
+
+/* ---------- number formatting ---------- */
+function fmt(v){
+  if(v==null||!isFinite(v))return '—';
+  var a=Math.abs(v);
+  if(a>=1e9)return (v/1e9).toFixed(2)+'B';
+  if(a>=1e6)return (v/1e6).toFixed(2)+'M';
+  if(a>=1000)return v.toLocaleString('en-US',{maximumFractionDigits:0});
+  if(a>=1)return v.toLocaleString('en-US',{maximumFractionDigits:2});
+  if(a>=0.01)return v.toFixed(4);
+  return v.toPrecision(3);
+}
+function fmtDate(t){return new Date(t).toISOString().slice(0,10);}
+function pct(v){return (v>=0?'+':'')+v.toFixed(2)+'%';}
+
+/* ---------- history loading ---------- */
+function ccHist(sym){
+  var out=[],to=Math.floor(Date.now()/1000);
+  function page(n){
+    return getJSON('https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym='+sym+'&limit=2000&toTs='+to+keyQ()).then(function(j){
+      if(j.Response==='Error')throw new Error(j.Message||'CryptoCompare error');
+      var arr=(j.Data&&j.Data.Data)||[];if(!arr.length)return;
+      var good=arr.filter(function(d){return d.close>0;});
+      out=good.map(function(d){return [d.time*1000,d.close];}).concat(out);
+      if(good.length<arr.length||arr[0].time*1000<=START||n>=6)return;
+      to=arr[0].time-86400;
+      return sleep(250).then(function(){return page(n+1);});
+    });
+  }
+  return page(0).then(function(){
+    var m={};out.forEach(function(p){m[p[0]]=p[1];});
+    var r=Object.keys(m).map(function(k){return [+k,m[k]];}).sort(function(a,b){return a[0]-b[0];});
+    return r.filter(function(p){return p[0]>=START;});
+  });
+}
+function usdFallback(){
+  if(S.hist.USD&&S.hist.USD.length>30)return Promise.resolve(S.hist.USD);
+  return ccHist('USD').catch(function(){
+    return getJSON('https://api.blockchain.info/charts/market-price?timespan=all&format=json&cors=true',25000).then(function(j){
+      return j.values.map(function(v){return [v.x*1000,v.y];}).filter(function(p){return p[0]>=START&&p[1]>0;});
+    });
+  });
+}
+function fxSeries(sym){
+  var y0=2014,y1=new Date().getUTCFullYear(),jobs=[];
+  for(var y=y0;y<=y1;y++){(function(y){jobs.push(getJSON('https://api.frankfurter.dev/v1/'+y+'-01-01..'+y+'-12-31?base=USD&symbols='+sym,20000).then(function(j){
+    return Object.keys(j.rates||{}).map(function(d){return [Date.parse(d),j.rates[d][sym]];});
+  }));})(y);}
+  return Promise.all(jobs).then(function(a){return [].concat.apply([],a).filter(function(p){return p[1]>0;}).sort(function(a,b){return a[0]-b[0];});});
+}
+function asof(arr,t){
+  var lo=0,hi=arr.length-1,r=-1;
+  while(lo<=hi){var m=(lo+hi)>>1;if(arr[m][0]<=t){r=m;lo=m+1;}else hi=m-1;}
+  return r;
+}
+function cacheGet(c){
+  var raw=ls('bws_h_'+c);if(!raw)return null;
+  try{var o=JSON.parse(raw);if(Date.now()-o.ts>6*3600e3)return null;return {d:o.d.map(function(p){return [p[0]*DAY,p[1]];}),src:o.src};}catch(e){return null;}
+}
+function cachePut(c,d,src){ls('bws_h_'+c,JSON.stringify({ts:Date.now(),src:src,d:d.map(function(p){return [Math.round(p[0]/DAY),p[1]];})}));}
+
+function loadHist(c){
+  if(S.hist[c])return Promise.resolve();
+  if(S.busy[c])return S.busy[c];
+  var cached=cacheGet(c);
+  if(cached){S.hist[c]=cached.d;S.src[c]=cached.src;return Promise.resolve();}
+  S.err[c]=null;
+  var p=ccHist(c).then(function(h){
+    if(h.length<30)throw new Error('too short');
+    S.hist[c]=h;S.src[c]='direct';
+  }).catch(function(){
+    if(c==='USD')throw new Error('USD history unavailable');
+    return Promise.all([usdFallback(),fxSeries(c)]).then(function(r){
+      var usd=r[0],fx=r[1];if(!fx.length)throw new Error('no FX data');
+      var out=[];usd.forEach(function(p){var i=asof(fx,p[0]);if(i>=0)out.push([p[0],p[1]*fx[i][1]]);});
+      if(out.length<30)throw new Error('no data');
+      S.hist[c]=out;S.src[c]='USD x FX';
+    });
+  }).then(function(){cachePut(c,S.hist[c],S.src[c]);}).catch(function(e){S.err[c]=e.message||'failed';}).then(function(){delete S.busy[c];render();});
+  S.busy[c]=p;render();
+  return p;
+}
+
+/* ---------- live prices ---------- */
+function applyLive(got,chg){
+  var codes=Object.keys(got);
+  codes.forEach(function(c){S.prev[c]=S.live[c];S.live[c]=got[c];if(chg[c]!=null)S.chg[c]=chg[c];});
+  if(S.live.USD){CUR.forEach(function(c){if(S.live[c[0]])S.implied[c[0]]=S.live[c[0]]/S.live.USD;});}
+  S.lastPoll=Date.now();
+}
+function poll(){
+  var codes=CUR.map(function(c){return c[0];}),got={},chg={};
+  return getJSON('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies='+codes.map(function(c){return c.toLowerCase();}).join(',')+'&include_24hr_change=true').then(function(j){
+    var b=j.bitcoin||{};codes.forEach(function(c){var k=c.toLowerCase();if(b[k]!=null){got[c]=b[k];if(b[k+'_24h_change']!=null)chg[c]=b[k+'_24h_change'];}});
+  }).catch(function(){}).then(function(){
+    var miss=codes.filter(function(c){return got[c]==null;});
+    if(!miss.length)return;
+    return getJSON('https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC&tsyms='+miss.join(',')+keyQ()).then(function(j){
+      var raw=j.RAW&&j.RAW.BTC;if(!raw)return;
+      miss.forEach(function(c){if(raw[c]){got[c]=raw[c].PRICE;chg[c]=raw[c].CHANGEPCT24HOUR;}});
+    }).catch(function(){});
+  }).then(function(){
+    if(got.USD!=null)return;
+    return getJSON('https://api.coinbase.com/v2/prices/BTC-USD/spot').then(function(j){got.USD=parseFloat(j.data.amount);}).catch(function(){});
+  }).then(function(){
+    if(Object.keys(got).length){applyLive(got,chg);setStatus(ws&&ws.readyState===1?'live':'poll');}
+    else if(!S.live.USD)setStatus('off');
+    render();
+  });
+}
+var ws=null,wsTimer=null,lastTick=0,rTimer=null;
+function setStatus(m){
+  var d=$('#dot'),s=$('#status');
+  d.className='dot'+(m==='live'?' on':m==='poll'?' poll':'');
+  s.textContent=m==='live'?'LIVE · STREAMING':m==='poll'?'LIVE · 30s REFRESH':m==='off'?'OFFLINE · CHECK CONNECTION':'Connecting';
+}
+function connectWS(){
+  try{
+    ws=new WebSocket('wss://ws-feed.exchange.coinbase.com');
+    ws.onopen=function(){ws.send(JSON.stringify({type:'subscribe',product_ids:['BTC-USD'],channels:['ticker']}));};
+    ws.onmessage=function(e){
+      var m;try{m=JSON.parse(e.data);}catch(x){return;}
+      if(m.type!=='ticker'||!m.price)return;
+      var p=parseFloat(m.price);if(!(p>0))return;
+      S.prev.USD=S.live.USD;S.live.USD=p;
+      Object.keys(S.implied).forEach(function(c){if(c!=='USD'){S.prev[c]=S.live[c];S.live[c]=p*S.implied[c];}});
+      lastTick=Date.now();setStatus('live');
+      if(!rTimer)rTimer=setTimeout(function(){rTimer=null;render(true);},400);
+    };
+    ws.onclose=function(){setStatus(S.live.USD?'poll':'off');clearTimeout(wsTimer);wsTimer=setTimeout(connectWS,5000);};
+    ws.onerror=function(){try{ws.close();}catch(e){}};
+  }catch(e){setStatus('poll');}
+}
+
+/* ---------- series + chart ---------- */
+function rangeStart(){
+  if(S.range==='ALL')return START;
+  var y={'1Y':1,'3Y':3,'5Y':5,'10Y':10}[S.range];
+  return Math.max(START,Date.now()-y*365.25*DAY);
+}
+function rawSeries(c){
+  var h=S.hist[c];if(!h)return [];
+  var rs=rangeStart(),out=h.filter(function(p){return p[0]>=rs;});
+  if(S.live[c]>0)out=out.concat([[Date.now(),S.live[c]]]);
+  return out;
+}
+function transform(pts){
+  if(!pts.length)return pts;
+  var f=pts[0][1];
+  if(S.mode==='index')return pts.map(function(p){return [p[0],p[1]/f*100];});
+  if(S.mode==='sats')return pts.map(function(p){return [p[0],1e8/p[1]];});
+  return pts;
+}
+function niceStep(r){var e=Math.pow(10,Math.floor(Math.log10(r))),f=r/e;return (f<1.5?1:f<3?2:f<7?5:10)*e;}
+function draw(){
+  var cv=$('#chart'),ctx=cv.getContext('2d'),dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
+  if(!W||!H)return;
+  cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+    var cs=getComputedStyle(document.documentElement),TM=cs.getPropertyValue('--tm').trim()||'#8E9BC0',TL=cs.getPropertyValue('--tl').trim()||'#1F2D52';
+  var ser=S.sel.map(function(c){return {c:c,pts:transform(rawSeries(c))};}).filter(function(s){return s.pts.length>1;});
+  view={ser:ser};
+  var L=64,R=14,T=10,B=28,pw=W-L-R,ph=H-T-B;
+  if(!ser.length){ctx.fillStyle=TM;ctx.font='14px "DM Mono",Consolas,monospace';ctx.textAlign='center';ctx.fillText(S.sel.some(function(c){return S.busy[c];})?'Loading history...':'Pick a currency below to chart it',W/2,H/2);return;}
+  var t0=Infinity,t1=Date.now(),mn=Infinity,mx=-Infinity;
+  ser.forEach(function(s){s.pts.forEach(function(p){if(p[0]<t0)t0=p[0];if(p[1]<mn)mn=p[1];if(p[1]>mx)mx=p[1];});});
+  t0=Math.max(t0,rangeStart());
+  var log=S.log&&mn>0;
+  var f=log?Math.log10:function(x){return x;};
+  var lo=f(mn),hi=f(mx);if(hi===lo){hi+=1;lo-=1;}
+  var padv=(hi-lo)*0.06;lo-=padv;hi+=padv;
+  var X=function(t){return L+(t-t0)/(t1-t0)*pw;},Y=function(v){return T+ph-(f(v)-lo)/(hi-lo)*ph;};
+  view.X=X;view.Y=Y;view.L=L;view.R=R;view.T=T;view.B=B;view.W=W;view.H=H;view.t0=t0;view.t1=t1;view.pw=pw;
+  ctx.font='11px "DM Mono",Consolas,monospace';ctx.textBaseline='middle';
+  var ticks=[];
+  if(log){var vlo=Math.pow(10,lo),vhi=Math.pow(10,hi);
+    [[1,2,5],[1]].some(function(ms){ticks=[];for(var e=Math.floor(lo)-1;e<=Math.ceil(hi);e++){ms.forEach(function(m){var v=m*Math.pow(10,e);if(v>=vlo&&v<=vhi)ticks.push(v);});}return ticks.length<=9;});}
+  else{var vlo2=lo,vhi2=hi,st=niceStep((vhi2-vlo2)/5);for(var v2=Math.ceil(vlo2/st)*st;v2<=vhi2;v2+=st)ticks.push(v2);}
+  ticks.forEach(function(v){var y=Y(v);if(y<T||y>T+ph)return;ctx.strokeStyle=TL;ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(L+pw,y);ctx.stroke();ctx.fillStyle=TM;ctx.textAlign='right';ctx.fillText(fmt(v),L-8,y);});
+  var yrSpan=(t1-t0)/(365.25*DAY),stepY=yrSpan>8?2:1;
+  if(yrSpan<2){ // monthly-ish labels
+    var d=new Date(t0);d=Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,1);var every=yrSpan<0.5?1:3;var cnt=0;
+    for(var tt=d;tt<t1;){var dd=new Date(tt),x=X(tt);if(cnt%every===0){ctx.strokeStyle=TL;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();ctx.fillStyle=TM;ctx.textAlign='center';ctx.fillText(dd.toISOString().slice(0,7),x,H-12);}cnt++;tt=Date.UTC(dd.getUTCFullYear(),dd.getUTCMonth()+1,1);}
+  }else{
+    for(var y=new Date(t0).getUTCFullYear()+1;y<=new Date(t1).getUTCFullYear();y+=stepY){var tx=Date.UTC(y,0,1),x2=X(tx);if(x2<L||x2>L+pw)continue;ctx.strokeStyle=TL;ctx.beginPath();ctx.moveTo(x2,T);ctx.lineTo(x2,T+ph);ctx.stroke();ctx.fillStyle=TM;ctx.textAlign='center';ctx.fillText(String(y),x2,H-12);}
+  }
+  ctx.save();ctx.beginPath();ctx.rect(L,T,pw,ph);ctx.clip();
+  if(S.mode==='index'){var y100=Y(100);if(y100>T&&y100<T+ph){ctx.setLineDash([4,4]);ctx.strokeStyle=TM;ctx.beginPath();ctx.moveTo(L,y100);ctx.lineTo(L+pw,y100);ctx.stroke();ctx.setLineDash([]);}}
+  ser.forEach(function(s){
+    ctx.strokeStyle=colorFor(s.c);ctx.lineWidth=1.6;ctx.beginPath();
+    s.pts.forEach(function(p,i){var x=X(p[0]),y=Y(p[1]);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});ctx.stroke();
+    var l=s.pts[s.pts.length-1];ctx.fillStyle=colorFor(s.c);ctx.beginPath();ctx.arc(X(l[0]),Y(l[1]),3.5,0,7);ctx.fill();
+  });
+  ctx.restore();
+}
+
+/* ---------- tooltip ---------- */
+function bindTip(){
+  var cv=$('#chart'),tip=$('#tip');
+  cv.addEventListener('mousemove',function(e){
+    if(!view||!view.ser||!view.ser.length||!view.X)return;
+    var r=cv.getBoundingClientRect(),mx=e.clientX-r.left;
+    if(mx<view.L||mx>view.L+view.pw){tip.style.display='none';draw();return;}
+    var t=view.t0+(mx-view.L)/view.pw*(view.t1-view.t0);
+    draw();
+    var ctx=cv.getContext('2d');
+    var x=view.X(t);ctx.strokeStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.moveTo(x,view.T);ctx.lineTo(x,view.H-view.B);ctx.stroke();
+    var html='<div style="color:#fff;margin-bottom:4px">'+fmtDate(t)+'</div>';
+    view.ser.forEach(function(s){var i=asof(s.pts,t);if(i<0)return;var p=s.pts[i];
+      ctx.fillStyle=colorFor(s.c);ctx.beginPath();ctx.arc(view.X(p[0]),view.Y(p[1]),4,0,7);ctx.fill();
+      html+='<div class="row"><span style="color:'+colorFor(s.c)+'">'+s.c+'</span><span style="color:#fff">'+fmt(p[1])+'</span></div>';});
+    tip.innerHTML=html;tip.style.display='block';
+    var w=tip.offsetWidth;tip.style.left=(mx+14+w>r.width?mx-w-14:mx+14)+'px';tip.style.top='14px';
+  });
+  cv.addEventListener('mouseleave',function(){tip.style.display='none';draw();});
+}
+
+/* ---------- panels ---------- */
+function buildGrid(){
+  var g=$('#grid');g.innerHTML='';
+  CUR.forEach(function(c){
+    var d=document.createElement('div');d.className='cur';d.id='cur_'+c[0];d.dataset.c=c[0];d.dataset.s=(c[0]+' '+c[1]).toLowerCase();
+    d.innerHTML='<div class="c"><b style="font-weight:500">'+c[0]+'</b><span class="ch">&mdash;</span></div><div class="n">'+c[1]+'</div><div class="p">&mdash;</div>';
+    d.addEventListener('click',function(){toggle(c[0]);});
+    g.appendChild(d);
+  });
+}
+function toggle(c){
+  var i=S.sel.indexOf(c);
+  if(i>=0)S.sel.splice(i,1);
+  else{if(S.sel.length>=10){alert('Up to 10 currencies on the chart at once.');return;}S.sel.push(c);loadHist(c);}
+  render();
+}
+function updateGrid(){
+  CUR.forEach(function(c){
+    var el=$('#cur_'+c[0]);if(!el)return;
+    var p=S.live[c[0]],pv=S.prev[c[0]],pe=el.querySelector('.p'),ce=el.querySelector('.ch');
+    pe.textContent=p?fmt(p):'—';
+    pe.className='p'+(p&&pv&&p>pv?' up':p&&pv&&p<pv?' dn':'');
+    var ch=S.chg[c[0]];ce.textContent=ch!=null?pct(ch):'';ce.style.color=ch!=null?(ch>=0?'var(--ok)':'var(--dn)'):'';
+    var on=S.sel.indexOf(c[0])>=0;el.style.borderLeftColor=on?colorFor(c[0]):'var(--tl)';
+  });
+}
+function updateHero(){
+  var p=S.live.USD,pv=S.prev.USD,hp=$('#heroPrice');
+  if(p){hp.textContent='$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});hp.className='big'+(pv&&p>pv?' up':pv&&p<pv?' dn':'');}
+  var ch=S.chg.USD,ce=$('#heroChg');if(ch!=null){ce.textContent=pct(ch);ce.className='chg '+(ch>=0?'up':'dn');}
+  $('#heroTime').textContent=S.lastPoll?'Updated '+new Date(S.lastPoll).toLocaleTimeString()+(lastTick&&Date.now()-lastTick<15000?' · streaming':''):'Waiting for first price...';
+}
+function perfRows(){
+  var rs=rangeStart(),rows=[];
+  var list=S.sel.slice();Object.keys(S.hist).forEach(function(c){if(list.indexOf(c)<0)list.push(c);});
+  list.forEach(function(c){
+    var h=S.hist[c];if(!h||!S.live[c])return;
+    var first=null;for(var i=0;i<h.length;i++){if(h[i][0]>=rs){first=h[i];break;}}
+    if(!first)return;
+    var now=S.live[c],mult=now/first[1],yrs=(Date.now()-first[0])/(365.25*DAY);
+    rows.push({c:c,t0:first[0],p0:first[1],p1:now,mult:mult,cagr:yrs>=0.25?(Math.pow(mult,1/yrs)-1)*100:null,cvb:(1/mult-1)*100,src:S.src[c]});
+  });
+  return rows;
+}
+function updatePerf(){
+  var rows=perfRows(),tb=$('#perf tbody');
+  tb.innerHTML=rows.map(function(r){
+    var inSel=S.sel.indexOf(r.c)>=0;
+    return '<tr style="'+(inSel?'':'opacity:.6')+'"><td><span style="color:'+(inSel?colorFor(r.c):'inherit')+'">'+r.c+'</span> <span style="color:var(--tm);font-family:var(--sans)">'+NAME[r.c]+'</span></td><td>'+fmt(r.p0)+' <span style="color:var(--tm)">'+fmtDate(r.t0)+'</span></td><td>'+fmt(r.p1)+'</td><td>'+(r.mult>=10?r.mult.toFixed(1):r.mult.toFixed(2))+'x</td><td>'+(r.cagr==null?'—':pct(r.cagr))+'</td><td style="color:'+(r.cvb>=0?'var(--ok)':'var(--dn)')+'">'+pct(r.cvb)+'</td><td style="color:var(--tm)">'+(r.src||'')+'</td></tr>';
+  }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--tm)">Waiting for history and live prices...</td></tr>';
+  var best=null,worst=null;rows.forEach(function(r){if(r.c==='USD')return;if(!best||r.cvb>best.cvb)best=r;if(!worst||r.cvb<worst.cvb)worst=r;});
+  $('#stBest').textContent=best?best.c+' '+pct(best.cvb):'—';
+  $('#stWorst').textContent=worst?worst.c+' '+pct(worst.cvb):'—';
+  $('#stLoaded').textContent=Object.keys(S.hist).length+' / '+CUR.length;
+  var u=perfRows().filter(function(r){return r.c==='USD';})[0];
+  if(S.hist.USD&&S.live.USD){$('#stMult').textContent=Math.round(S.live.USD/S.hist.USD[0][1]).toLocaleString('en-US')+'x';}
+}
+function updateLegend(){
+  $('#legend').innerHTML=S.sel.map(function(c){
+    return '<span class="chip" data-c="'+c+'"><i style="background:'+colorFor(c)+'"></i>'+c+(S.busy[c]?'<b>loading</b>':S.err[c]?'<b style="color:var(--dn)">failed</b>':'')+'<b>✕</b></span>';
+  }).join('')||'<span class="note">Nothing selected.</span>';
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'),function(el){el.addEventListener('click',function(){toggle(el.dataset.c);});});
+  var errs=S.sel.filter(function(c){return S.err[c];}).map(function(c){return c+': '+S.err[c];});
+  var fx=S.sel.filter(function(c){return S.src[c]==='USD x FX';});
+  var n=[];
+  if(errs.length)n.push('Could not load '+errs.join('; ')+'. Free data sources are rate limited: wait a minute and click the currency again, or add an API key under Data Sources.');
+  if(fx.length)n.push(fx.join(', ')+' built from BTC/USD x daily ECB exchange rates.');
+  n.push({index:'Index mode: every line starts at 100, so a line at 5,000 means BTC is up 50x in that currency.',price:'Price mode: price of 1 BTC in each currency. Currencies with huge numbers (JPY, KRW, IDR) will dwarf the rest, so switch to Index to compare.',sats:'Sats mode: how many satoshis one unit of each currency buys. Falling lines are currencies losing ground to Bitcoin.'}[S.mode]);
+  $('#chartNote').innerHTML=n.join('<br>');
+}
+var lastFull=0;
+function render(light){
+  updateHero();
+  if(light){updateGrid();draw();return;}
+  updateGrid();updateLegend();updatePerf();draw();
+}
+
+/* ---------- csv ---------- */
+function csv(){
+  var ser=S.sel.map(function(c){return {c:c,pts:transform(rawSeries(c))};}).filter(function(s){return s.pts.length>1;});
+  if(!ser.length)return;
+  var t0=Math.min.apply(null,ser.map(function(s){return s.pts[0][0];})),rows=['date,'+ser.map(function(s){return s.c+'_'+S.mode;}).join(',')];
+  for(var t=Math.floor(t0/DAY)*DAY;t<=Date.now();t+=DAY){
+    var cells=ser.map(function(s){var i=asof(s.pts,t);return i<0||s.pts[0][0]>t?'':s.pts[i][1];});
+    rows.push(fmtDate(t)+','+cells.join(','));
+  }
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download='btc-vs-world-currencies-'+S.mode+'.csv';document.body.appendChild(a);a.click();a.remove();
+}
+
+/* ---------- wiring ---------- */
+function seg(id,attr,fn){
+  var el=$(id);el.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+    Array.prototype.forEach.call(el.children,function(x){x.classList.remove('on');});b.classList.add('on');fn(b.getAttribute(attr));render();});
+}
+function init(){
+  buildGrid();
+  seg('#modeSeg','data-mode',function(v){S.mode=v;if(v!=='price')S.log=S.log;});
+  seg('#rangeSeg','data-range',function(v){S.range=v;});
+  seg('#scaleSeg','data-log',function(v){S.log=v==='1';});
+  $('#csvBtn').addEventListener('click',csv);
+  $('#find').addEventListener('input',function(){var q=this.value.toLowerCase();Array.prototype.forEach.call(document.querySelectorAll('.cur'),function(el){el.style.display=el.dataset.s.indexOf(q)>=0?'':'none';});});
+  $('#loadAll').addEventListener('click',function(){
+    var btn=this;btn.disabled=true;var todo=CUR.map(function(c){return c[0];}).filter(function(c){return !S.hist[c];}),i=0;
+    (function next(){if(i>=todo.length){$('#loadMsg').textContent='Done.';btn.disabled=false;return;}
+      $('#loadMsg').textContent='Loading '+todo[i]+' ('+(i+1)+'/'+todo.length+')';
+      loadHist(todo[i]).then(function(){i++;return sleep(600);}).then(next);})();
+  });
+  var k=ls('bws_ccKey');if(k)$('#ccKey').value=k;
+  $('#keySave').addEventListener('click',function(){ls('bws_ccKey',$('#ccKey').value.trim());this.textContent='SAVED';var b=this;setTimeout(function(){b.textContent='SAVE';},1500);});
+  bindTip();
+  document.addEventListener('ddtheme',function(){render();});
+  window.addEventListener('resize',function(){draw();});
+  S.sel.forEach(function(c){colorFor(c);});
+  render();
+  var chain=Promise.resolve();
+  S.sel.forEach(function(c){chain=chain.then(function(){return loadHist(c);}).then(function(){return sleep(250);});});
+  poll();setInterval(poll,30000);
+  connectWS();
+  setInterval(function(){updateHero();},5000);
+}
+init();
+})();
+</script>
+</body>
+</html>

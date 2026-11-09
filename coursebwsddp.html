@@ -146,7 +146,7 @@ footer{border-top:1px solid var(--line);padding:22px 5vw 40px;font-size:12.5px;c
     Degen Desk Course
   </a>
   <span class="sp"></span>
-  <div class="prog"><span id="progTxt">0 of 22</span><div class="bar"><i id="progBar"></i></div></div>
+  <div class="prog"><span id="progTxt">0 of 23</span><div class="bar"><i id="progBar"></i></div></div>
 </header>
 
 <div class="wrap">
@@ -520,6 +520,22 @@ var L=[
  },
  quiz:{q:'You bought 100 coins at $40 and 100 coins at $80. What is your average buy price?',o:['$40','$60','$80','$120'],a:1,why:'Average cost is total money spent divided by total coins: (100 x $40 + 100 x $80) / 200 = $60. The portfolio page does this for you on every buy and sell.'}},
 
+{id:'btcfx',code:'BTC-FX',title:'BTC vs The World: Bitcoin against every currency',tool:null,link:['deskbwsddp.html#btcfx','Open BTC vs The World'],
+ body:'<p>Every price you see is a price in some currency, and currencies do not hold still. <b>BTC vs The World</b> shows what one Bitcoin is worth in 45 currencies, live, with a daily history back to 2014, so you can see how Bitcoin did in dollars, euros, yen, cedis, naira and more at the same time.</p><p>It has three views. <b>Index = 100</b> starts every line at 100 on the first day of the range, so a line at 5,000 means Bitcoin is up 50 times in that currency. That is the fair way to compare. <b>BTC price</b> shows the raw price, which makes big-number currencies like the yen dwarf the rest. <b>Sats per 1 unit</b> flips the question: how many satoshis does one dollar, one euro or one cedi buy? A falling line is a currency losing ground to Bitcoin. Use the <b>log scale</b> for long ranges so early gains stay visible.</p><p>The performance table shows each currency\'s start price, price now, Bitcoin multiple, yearly growth and <b>Currency vs BTC</b>, the change in what one unit of that currency buys in Bitcoin. History comes from daily closes, and where a currency has no direct Bitcoin history the tool builds it from the dollar price and daily exchange rates and labels it. It is for learning, not advice, and past results do not promise future results.</p>',
+ widget:function(el){
+  el.innerHTML='<div class="lab"><h4>Why the same Bitcoin gains look different in every currency (made-up numbers)</h4><p class="hint">Set how much Bitcoin gains per year in dollars and how fast a local currency loses value against the dollar. The weaker the currency, the bigger the Bitcoin multiple in that currency.</p>'+rangeRow('bf1','Bitcoin gain per year in dollars',0,100,5,40,function(v){return v+'%'})+rangeRow('bf2','Currency loses vs the dollar per year',0,30,1,8,function(v){return v+'%'})+rangeRow('bf3','Years',1,12,1,8,function(v){return v+' yrs'})+'<div class="stat" id="bfs"></div><div class="verdict" id="bfv"></div></div>';
+  function calc(){
+   var g=+$('bf1').value/100,d=+$('bf2').value/100,n=+$('bf3').value;
+   $('bf1o').textContent=(g*100)+'%';$('bf2o').textContent=(d*100)+'%';$('bf3o').textContent=n+' yrs';
+   var usd=Math.pow(1+g,n),loc=Math.pow((1+g)/(1-d),n),cur=Math.pow(1-d,n),sats0=1e8/1000,sats1=sats0/loc;
+   $('bfs').innerHTML='<div><small>Bitcoin multiple in dollars</small><b class="up">'+usd.toFixed(1)+'x</b></div><div><small>Bitcoin multiple in the local currency</small><b class="up">'+loc.toFixed(1)+'x</b></div><div><small>Sats one local unit buys: start</small><b>'+sats0.toFixed(0)+'</b></div><div><small>Sats one local unit buys: end</small><b>'+sats1.toFixed(sats1<10?2:0)+'</b></div><div><small>Currency vs BTC</small><b class="dn">'+pct((1/loc-1)*100,0)+'</b></div>';
+   var v=$('bfv');v.className='verdict'+(d>0?'':' good');
+   v.textContent=d>0?'The local currency also lost value against the dollar, so Bitcoin\'s multiple there is bigger than in dollars. Same Bitcoin, bigger number, because the money measuring it got weaker.':'With a steady currency the multiple matches the dollar one. Slide the second control up to see what a weakening currency does.';
+  }
+  el.querySelectorAll('input').forEach(function(i){i.oninput=calc});calc();
+ },
+ quiz:{q:'On the Index = 100 view, a line that reads 5,000 means what?',o:['Bitcoin fell by half in that currency','Bitcoin is up 50 times in that currency since the start of the range','One unit of the currency buys 5,000 sats','The currency ranks 5,000th'],a:1,why:'Every line starts at 100, so 5,000 is 50 times the starting value. Index mode lets you compare growth across currencies fairly.'}},
+
 {id:'final',code:'DONE',title:'Set up safely, then earn your certificate',tool:null,
  body:'<p>Before you rely on the desk, run through this checklist once. Then finish any lessons you skipped and your certificate will unlock here.</p>',
  widget:function(el){
@@ -792,7 +808,7 @@ show();
 'use strict';
 var D='deskbwsddp.html',C='coursebwsddp.html',P='portfoliobwsddp.html',L='lpscoutbwsddp.html',LM='lpmanagerbwsddp.html',WH='whalebwsddp.html',CT='cointrackbwsddp.html',LS='lpsimbwsddp.html',M='moonbwsddp.html',A='accountbwsddp.html';
 var ITEMS=[
- {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'22 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
+ {id:'course',n:'Course',h:C,g:'Learn',lv:'b',d:'23 short lessons that teach every tool in plain English. The best first stop.',kw:'learn lessons teach tutorial start beginner class'},
  {id:'desk',n:'Overview',h:D+'#desk',g:'Watch',lv:'b',d:'Prices, your alerts, positions, pegs and news on one screen.',kw:'home dashboard summary today prices market'},
  {id:'cinema',n:'Degen Cinema',h:'cinemabwsddp.html',g:'Watch',lv:'b',d:'Movies, shows and podcasts to watch right inside the Desk, in a movie-theater setting.',kw:'cinema movies movie shows podcasts videos youtube watch theater film documentary'},
  {id:'news',n:'News',h:D+'#news',g:'Watch',lv:'b',d:'Headlines that could move prices, scored by how big they might be.',kw:'headlines fed cpi hack listing sec'},
