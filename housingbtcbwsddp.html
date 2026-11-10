@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Degen Desk — Housing vs BTC</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{--tbg:#070D1B;--tp:#0B1429;--tp2:#101B38;--tl:#1F2D52;--tx:#E6ECFA;--tm:#8E9BC0;--ta:#35F0FF;--ta2:#8CF7FF;--up:#2ecc71;--down:#ff5c5c;--btc:#f7931a}
+:root[data-theme="gold"]{--ta:#E8B84A;--ta2:#F3D58A}
+:root[data-theme="violet"]{--ta:#A07CFF;--ta2:#C9B6FF}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--tbg);color:var(--tx);font-family:'Inter','Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.45}
+::selection{background:var(--ta);color:#06101a}
+a{color:var(--ta);text-decoration:none}
+.mut{color:var(--tm)}
+.mono,table,.px,#tip,.kpi b{font-family:'DM Mono',ui-monospace,Consolas,monospace}
+header{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 16px;background:var(--tp);border-bottom:1px solid var(--tl);position:sticky;top:0;z-index:20}
+.brand{font-weight:800;letter-spacing:.04em;font-size:17px;color:var(--ta2)}
+.brand small{display:block;font-weight:500;letter-spacing:.1em;font-size:10.5px;color:var(--tm);text-transform:uppercase}
+.btn{background:var(--tp);color:var(--tx);border:1px solid var(--tl);padding:8px 13px;font:inherit;font-weight:600;cursor:pointer;border-radius:10px;text-decoration:none;display:inline-block}
+.btn:hover{border-color:var(--ta)}
+.btn.on{background:var(--ta);color:#06101a;border-color:var(--ta)}
+.sp{flex:1}
+.tick{text-align:right}
+.tick .px{font-size:24px;font-weight:500;color:var(--btc)}
+.tick .px.up{animation:fu .9s}.tick .px.dn{animation:fd .9s}
+@keyframes fu{from{background:#2ecc7155}to{background:transparent}}
+@keyframes fd{from{background:#ff5c5c55}to{background:transparent}}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--up);margin-right:6px;animation:pl 1.6s infinite}
+@keyframes pl{50%{opacity:.25}}
+main{max-width:1300px;margin:0 auto;padding:16px 16px 70px}
+h1{font-size:24px;font-weight:800;margin:6px 0 4px}
+h1 span{color:var(--ta)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.lab{font:500 11px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--tm);margin-right:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border:1px solid var(--tl);border-radius:999px;cursor:pointer;user-select:none;background:var(--tp);color:var(--tm);font:600 13px Inter,sans-serif}
+.chip:hover{border-color:var(--c)}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--c);opacity:.4}
+.chip.on{color:var(--tx);border-color:var(--c);background:var(--tp2)}
+.chip.on i{opacity:1}
+.chip.fill i{display:none}
+.chip.fill.on{background:var(--ta);color:#06101a;border-color:var(--ta)}
+.chip.err{text-decoration:line-through}
+.chip .st{font-size:10px}
+.panel{background:var(--tp);border:1px solid var(--tl);border-radius:14px;margin:14px 0;padding:14px 16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:12px 0}
+.kpi{background:var(--tp);border:1px solid var(--tl);border-radius:12px;padding:10px 13px}
+.kpi b{display:block;font-size:21px;font-weight:500;margin-top:2px;color:var(--tx)}
+#wrap{position:relative;height:470px}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+#tip{position:absolute;pointer-events:none;background:rgba(11,20,41,.97);border:1px solid var(--ta);border-radius:10px;padding:8px 10px;font-size:12px;display:none;min-width:200px;z-index:5}
+#tip .r{display:flex;justify-content:space-between;gap:14px}
+#tip .r i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--tl);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font:600 11px Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--tm)}
+tr:last-child td{border-bottom:none}
+.sc{overflow-x:auto}
+input,select{background:var(--tp2);color:var(--tx);border:1px solid var(--tl);padding:8px 10px;font:inherit;border-radius:10px}
+.note{font-size:12.5px;line-height:1.55;color:var(--tm)}
+.good{color:var(--up)}.bad{color:var(--down)}
+.msg{padding:9px 12px;border:1px solid var(--down);border-radius:10px;margin:10px 0;font-size:13px;display:none;color:var(--tx);background:rgba(255,92,92,.08)}
+#ddtb{position:fixed;left:10px;bottom:10px;z-index:99999;font:600 12px/1 'Inter','Segoe UI',sans-serif;color:var(--tx);background:var(--tp);border:1px solid var(--tl);border-radius:999px;padding:8px 14px;cursor:pointer;opacity:.9}
+#ddtb:hover{border-color:var(--ta);opacity:1}
+body.ddin #ddtb{display:none}
+@media(max-width:700px){#wrap{height:360px}.tick .px{font-size:19px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="btn" href="deskbwsddp.html" title="Back to the Degen Desk">⌂ HOME</a>
+  <div class="brand">DEGEN DESK<small>HOUSING vs BTC</small></div>
+  <div class="sp"></div>
+  <div class="tick"><div class="lab" style="margin:0"><span class="dot"></span>BTC / USD live</div><div class="px" id="live">—</div></div>
+</header>
+
+<main>
+  <h1>Bitcoin vs <span>U.S. Housing</span></h1>
+  <div class="note">BTC is priced daily. Housing is the S&amp;P Cotality Case-Shiller index for each metro — published <b>monthly</b> with a ~2 month lag, so the housing lines are drawn daily by straight-line blending between monthly prints and stop at the latest print. Nothing publishes true daily home prices.</div>
+
+  <div class="row">
+    <span class="lab">RANGE</span>
+    <div class="chips" id="rng"></div>
+    <span class="lab" style="margin-left:14px">VIEW</span>
+    <div class="chips" id="mode"></div>
+    <span class="lab" style="margin-left:14px">SCALE</span>
+    <div class="chips" id="scale"></div>
+  </div>
+
+  <div class="row"><span class="lab">MARKETS</span>
+    <button class="btn" id="allBtn">Top 6</button><button class="btn" id="noneBtn">Clear</button><button class="btn" id="allCities">All</button></div>
+  <div class="chips" id="cities"></div>
+  <div class="msg" id="msg"></div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="panel" style="padding:8px">
+    <div class="note" id="chartTitle" style="padding:2px 4px 6px"></div>
+    <div id="wrap"><canvas id="cv"></canvas><div id="tip"></div></div>
+    <div class="note" id="chartNote" style="padding:6px 4px 0"></div>
+  </div>
+
+  <div class="panel">
+    <div class="lab" style="margin-bottom:6px">SCORECARD — SELECTED RANGE</div>
+    <div class="sc"><table id="stats"></table></div>
+  </div>
+
+  <div class="panel">
+    <div class="lab" style="margin-bottom:8px">WHAT DID A HOME COST IN BTC?</div>
+    <div class="row" style="margin-top:0">
+      <select id="cCity"></select>
+      <span>home value today $</span><input id="cVal" type="number" value="400000" min="1000" step="5000" style="width:130px">
+    </div>
+    <div class="note">Works backward from today's value using the metro's index, then prices that house in BTC on each date. An estimate of the market, not of any one property.</div>
+    <div class="sc" style="margin-top:8px"><table id="calc"></table></div>
+  </div>
+
+  <div class="panel note">
+    <div id="status"></div>
+    <div style="margin-top:8px">Housing feed blocked on your network? Download a series from FRED (e.g. fred.stlouisfed.org/series/CHXRNSA → Download → CSV) and load it here:
+      <input type="file" id="csv" accept=".csv" style="margin-left:6px"></div>
+    <div style="margin-top:8px">Educational use only — not financial advice. Data: S&amp;P Cotality Case-Shiller via FRED (St. Louis Fed); BTC via Bitstamp / CryptoCompare / Coinbase; live price via Coinbase / Kraken / CoinGecko.</div>
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+const DAY=864e5;
+const CITIES=[
+ {id:'CHI',f:'CHXRNSA',n:'Chicago'},{id:'NYC',f:'NYXRNSA',n:'New York'},{id:'LAX',f:'LXXRNSA',n:'Los Angeles'},
+ {id:'MIA',f:'MIXRNSA',n:'Miami'},{id:'DAL',f:'DAXRNSA',n:'Dallas'},{id:'PHX',f:'PHXRNSA',n:'Phoenix'},
+ {id:'SFO',f:'SFXRNSA',n:'San Francisco'},{id:'SEA',f:'SEXRNSA',n:'Seattle'},{id:'DEN',f:'DNXRNSA',n:'Denver'},
+ {id:'ATL',f:'ATXRNSA',n:'Atlanta'},{id:'BOS',f:'BOXRNSA',n:'Boston'},{id:'DCA',f:'WDXRNSA',n:'Washington DC'},
+ {id:'LVS',f:'LVXRNSA',n:'Las Vegas'},{id:'SDG',f:'SDXRNSA',n:'San Diego'},{id:'TPA',f:'TPXRNSA',n:'Tampa'},
+ {id:'CLT',f:'CRXRNSA',n:'Charlotte'},{id:'MSP',f:'MNXRNSA',n:'Minneapolis'},{id:'POR',f:'POXRNSA',n:'Portland'},
+ {id:'DET',f:'DEXRNSA',n:'Detroit'},{id:'CLE',f:'CEXRNSA',n:'Cleveland'},
+ {id:'C20',f:'SPCS20RNSA',n:'20-City Composite'},{id:'USA',f:'CSUSHPINSA',n:'U.S. National'}
+];
+const COLORS=['#4dd0e1','#9ccc65','#ba68c8','#ffd54f','#4db6ac','#f06292','#7986cb','#ff8a65','#a1887f','#90caf9','#dce775','#80cbc4','#ce93d8','#ffcc80','#81c784','#e57373','#64b5f6','#fff59d','#b0bec5','#f48fb1','#aed581','#ffffff'];
+CITIES.forEach((c,i)=>c.col=COLORS[i%COLORS.length]);
+const DEFAULT=['CHI','NYC','LAX','MIA','DAL','PHX'];
+const RANGES=[['1Y',1],['3Y',3],['5Y',5],['10Y',10],['15Y',15]];
+const MODES=[['idx','Growth (start = 100)'],['btc','Home priced in BTC']];
+
+const S={range:15,mode:'idx',log:true,sel:new Set(DEFAULT),btcOn:true,
+  btc:null,live:null,h:{},hover:-1,cityCalc:'CHI'};
+const $=id=>document.getElementById(id);
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const iso=t=>new Date(t).toISOString().slice(0,10);
+
+/* ---------- networking ---------- */
+function timeout(p,ms){return new Promise((res,rej)=>{const t=setTimeout(()=>rej(new Error('timeout')),ms);p.then(v=>{clearTimeout(t);res(v)},e=>{clearTimeout(t);rej(e)})})}
+async function getJSON(u,ms){const r=await timeout(fetch(u),ms||20000);if(!r.ok)throw new Error(r.status);return r.json()}
+function fredText(url,validate){
+  const mk=[u=>u,u=>'https://corsproxy.io/?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
+  let done=false;
+  const tries=mk.map((m,i)=>new Promise(r=>setTimeout(r,i*700)).then(()=>{
+    if(done)throw new Error('skip');
+    return timeout(fetch(m(url)).then(async r=>{if(!r.ok)throw new Error(r.status);const t=await r.text();if(!validate(t))throw new Error('bad');return t}),15000);
+  }));
+  return Promise.any(tries).then(v=>{done=true;return v});
+}
+
+/* ---------- BTC history ---------- */
+async function bitstamp(){
+  const n=new Date();let start=Math.floor(Date.UTC(n.getUTCFullYear()-15,n.getUTCMonth(),n.getUTCDate())/1000)-86400*5;
+  const out=new Map();
+  for(let g=0;g<12;g++){
+    const r=await getJSON('https://www.bitstamp.net/api/v2/ohlc/btcusd/?step=86400&limit=1000&start='+start);
+    const a=r.data.ohlc;if(!a||!a.length)break;
+    a.forEach(c=>out.set(Math.floor(c.timestamp/86400)*DAY,+c.close));
+    const last=+a[a.length-1].timestamp;if(last*1000>=Date.now()-DAY)break;start=last+86400;
+  }
+  return out;
+}
+async function cryptocompare(){
+  const out=new Map();let to=Math.floor(Date.now()/1000);const stop=Date.now()-15.1*365.25*DAY;
+  for(let g=0;g<6;g++){
+    const r=await getJSON('https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=2000&toTs='+to);
+    const a=r.Data&&r.Data.Data;if(!a||!a.length)throw new Error('cc');
+    a.forEach(c=>{if(c.close>0)out.set(Math.floor(c.time/86400)*DAY,c.close)});
+    to=a[0].time-86400;if(a[0].time*1000<stop)break;
+  }
+  return out;
+}
+async function coinbaseHist(){
+  const out=new Map();let end=Date.now();
+  for(let g=0;g<25;g++){
+    const start=end-299*DAY;
+    const a=await getJSON('https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=86400&start='+new Date(start).toISOString()+'&end='+new Date(end).toISOString());
+    if(!a.length)break;
+    a.forEach(c=>out.set(Math.floor(c[0]/86400)*DAY,c[4]));
+    end=start-DAY;
+  }
+  return out;
+}
+function buildGrid(map){
+  const keys=[...map.keys()].sort((a,b)=>a-b);const t0=keys[0],last=keys[keys.length-1];
+  const n=Math.floor((last-t0)/DAY)+1;const p=new Array(n);let prev=map.get(t0);
+  for(let i=0;i<n;i++){const v=map.get(t0+i*DAY);if(v!=null)prev=v;p[i]=prev}
+  return {t0,p};
+}
+async function loadBTC(){
+  const c=store.get('ddhb_btc_v2');
+  if(c&&Date.now()-c.f<6*3600e3){S.btc={t0:c.t0,p:c.p,src:c.src};return}
+  let m=null,src='';
+  for(const [nm,fn] of [['Bitstamp',bitstamp],['CryptoCompare',cryptocompare],['Coinbase',coinbaseHist]]){
+    try{const r=await fn();if(r.size>200){m=r;src=nm;break}}catch(e){}
+  }
+  if(!m){if(c){S.btc={t0:c.t0,p:c.p,src:c.src+' (cached)'};return}throw new Error('BTC history unavailable')}
+  const g=buildGrid(m);S.btc={t0:g.t0,p:g.p,src};store.set('ddhb_btc_v2',{f:Date.now(),t0:g.t0,p:g.p,src});
+}
+function pushLive(p){
+  const b=S.btc;if(!b)return;
+  const i=Math.floor((Date.now()-b.t0)/DAY);
+  while(b.p.length<=i)b.p.push(b.p[b.p.length-1]);
+  b.p[i]=p;
+}
+async function livePrice(){
+  const srcs=[
+    async()=>+(await getJSON('https://api.coinbase.com/v2/prices/BTC-USD/spot',8000)).data.amount,
+    async()=>+(await getJSON('https://api.kraken.com/0/public/Ticker?pair=XBTUSD',8000)).result.XXBTZUSD.c[0],
+    async()=>+(await getJSON('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',8000)).bitcoin.usd];
+  for(const f of srcs){try{const p=await f();if(p>0)return p}catch(e){}}
+  return null;
+}
+async function liveTick(){
+  const p=await livePrice();if(!p)return;
+  const el=$('live');const prev=S.live;S.live=p;
+  el.textContent='$'+p.toLocaleString('en-US',{maximumFractionDigits:2});
+  el.className='px '+(prev==null?'':p>prev?'up':p<prev?'dn':'');
+  void el.offsetWidth;
+  if(S.btc){pushLive(p);render()}
+}
+
+/* ---------- housing ---------- */
+function parseFred(t){
+  const L=t.trim().split(/\r?\n/);const id=(L[0].split(',')[1]||'').trim();const pts=[];
+  for(let i=1;i<L.length;i++){const a=L[i].split(',');const v=parseFloat(a[1]);const d=Date.parse(a[0]+'T00:00:00Z');if(isFinite(v)&&isFinite(d))pts.push([d,v])}
+  return {id,pts};
+}
+const needQ=[];let active=0;
+function loadCity(c,force){
+  const st=S.h[c.id]||(S.h[c.id]={s:'idle'});
+  if(st.s==='loading'||st.s==='ok'&&!force)return;
+  const cached=store.get('ddhb_h_'+c.f);
+  if(cached&&!force&&Date.now()-cached.f<12*3600e3){st.s='ok';st.pts=cached.pts;st.daily=null;return}
+  st.s='loading';needQ.push(c);pump();
+}
+function pump(){
+  while(active<3&&needQ.length){
+    const c=needQ.shift();active++;
+    const url='https://fred.stlouisfed.org/graph/fredgraph.csv?id='+c.f+'&cosd=2010-06-01';
+    fredText(url,t=>/^(observation_date|DATE)/i.test(t.trim())&&t.indexOf(c.f)>-1)
+      .then(t=>{const r=parseFred(t);if(r.pts.length<20)throw 0;S.h[c.id]={s:'ok',pts:r.pts};store.set('ddhb_h_'+c.f,{f:Date.now(),pts:r.pts})})
+      .catch(()=>{const cached=store.get('ddhb_h_'+c.f);S.h[c.id]=cached?{s:'ok',pts:cached.pts,stale:true}:{s:'err'}})
+      .finally(()=>{active--;uiChips();render();pump()});
+  }
+  uiChips();
+}
+function dailyOf(c){
+  const st=S.h[c.id];if(!st||st.s!=='ok')return null;
+  const n=S.btc.p.length;if(st.daily&&st.daily.length===n&&st.t0===S.btc.t0)return st.daily;
+  const d=new Array(n).fill(null),P=st.pts;let j=0;
+  for(let i=0;i<n;i++){
+    const t=S.btc.t0+i*DAY;if(t<P[0][0]||t>P[P.length-1][0])continue;
+    while(j<P.length-2&&P[j+1][0]<=t)j++;
+    const a=P[j],b=P[j+1];if(!b){d[i]=a[1];continue}
+    d[i]=a[1]+(b[1]-a[1])*Math.min(1,Math.max(0,(t-a[0])/(b[0]-a[0])));
+  }
+  st.daily=d;st.t0=S.btc.t0;return d;
+}
+
+/* ---------- series for current view ---------- */
+function startIdx(){const n=S.btc.p.length;return Math.max(0,n-1-Math.round(S.range*365.25))}
+function build(){
+  const b=S.btc,n=b.p.length,s=startIdx();const out=[];
+  const rebase=(arr,mult)=>{let base=null,k=-1;for(let i=s;i<n;i++){if(arr[i]!=null){base=arr[i];k=i;break}}if(base==null)return null;return {base,k}};
+  if(S.mode==='idx'&&S.btcOn){
+    const rb=rebase(b.p),y=new Array(n).fill(null);for(let i=rb.k;i<n;i++)y[i]=b.p[i]/rb.base*100;
+    out.push({id:'BTC',n:'Bitcoin',col:'#f7931a',w:2.6,y,raw:b.p,rawLab:'$',base:rb.base});
+  }
+  CITIES.forEach(c=>{
+    if(!S.sel.has(c.id))return;const d=dailyOf(c);if(!d)return;
+    let y=new Array(n).fill(null);
+    if(S.mode==='idx'){const rb=rebase(d);if(!rb)return;for(let i=rb.k;i<n;i++)if(d[i]!=null)y[i]=d[i]/rb.base*100}
+    else{
+      const q=d.map((v,i)=>v==null?null:v/b.p[i]);const rb=rebase(q);if(!rb)return;
+      for(let i=rb.k;i<n;i++)if(q[i]!=null)y[i]=q[i]/rb.base*100;
+    }
+    out.push({id:c.id,n:c.n,col:c.col,w:1.7,y,raw:d,rawLab:'idx'});
+  });
+  return {series:out,s,n};
+}
+
+/* ---------- chart ---------- */
+const cv=$('cv'),ctx=cv.getContext('2d');let W=0,H=0,dpr=1,geom=null,cur=null;
+function resize(){const r=$('wrap').getBoundingClientRect();dpr=window.devicePixelRatio||1;W=r.width;H=r.height;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw()}
+const fmt=v=>{const a=Math.abs(v);if(a>=1e9)return (v/1e9).toFixed(a<1e10?1:0)+'B';if(a>=1e6)return (v/1e6).toFixed(a<1e7?1:0)+'M';if(a>=1e4)return (v/1e3).toFixed(0)+'k';if(a>=1e3)return (v/1e3).toFixed(1).replace(/\.0$/,'')+'k';return a>=100?v.toFixed(0):v.toFixed(1)};
+function logTicks(lo,hi){const t=[];for(let k=Math.floor(Math.log10(lo));k<=Math.ceil(Math.log10(hi));k++)for(const m of [1,2,5]){const v=m*Math.pow(10,k);if(v>=lo&&v<=hi)t.push(v)}return t.length>9?t.filter(v=>/^1/.test(String(v))):t}
+function linTicks(lo,hi){const r=hi-lo,raw=r/6,p=Math.pow(10,Math.floor(Math.log10(raw)));const st=[1,2,5,10].map(m=>m*p).find(x=>x>=raw);const t=[];for(let v=Math.ceil(lo/st)*st;v<=hi;v+=st)t.push(v);return t}
+function draw(){
+  if(!S.btc){return}
+  const B=build();cur=B;const cs=getComputedStyle(document.documentElement),css=cs.getPropertyValue('--tm').trim(),acc=cs.getPropertyValue('--ta').trim();
+  ctx.clearRect(0,0,W,H);
+  const L=60,R=14,T=12,Bm=26,pw=W-L-R,ph=H-T-Bm;const {series,s,n}=B;
+  if(!series.length){ctx.fillStyle=css;ctx.font='13px Inter,sans-serif';ctx.fillText('Pick at least one market (housing data loading…)',L,T+30);geom=null;return}
+  let lo=Infinity,hi=-Infinity;series.forEach(se=>{for(let i=s;i<n;i++){const v=se.y[i];if(v!=null){if(v<lo)lo=v;if(v>hi)hi=v}}});
+  let log=S.log&&lo>0;
+  if(log){lo=Math.pow(10,Math.floor(Math.log10(lo)*4)/4);hi=Math.pow(10,Math.ceil(Math.log10(hi)*4)/4)}else{const pad=(hi-lo)*.06;lo=Math.max(0,lo-pad);hi+=pad}
+  if(hi<=lo)hi=lo+1;
+  const X=i=>L+(i-s)/Math.max(1,n-1-s)*pw;
+  const Y=v=>T+ph-(log?(Math.log(v)-Math.log(lo))/(Math.log(hi)-Math.log(lo)):(v-lo)/(hi-lo))*ph;
+  geom={L,R,T,Bm,pw,ph,s,n,X,Y};
+  ctx.font='11px "DM Mono",monospace';ctx.textBaseline='middle';
+  const gridC=cs.getPropertyValue('--tl').trim();
+  (log?logTicks(lo,hi):linTicks(lo,hi)).forEach(v=>{
+    const y=Y(v);ctx.strokeStyle=gridC;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(L+pw,y);ctx.stroke();
+    ctx.fillStyle=css;ctx.globalAlpha=1;ctx.textAlign='right';ctx.fillText(fmt(v),L-6,y);ctx.globalAlpha=1;
+  });
+  // x ticks
+  ctx.textAlign='center';ctx.textBaseline='top';
+  const t0=S.btc.t0,span=n-1-s;const months=S.range<=1;
+  const d0=new Date(t0+s*DAY),d1=new Date(t0+(n-1)*DAY);
+  const yrs=d1.getUTCFullYear()-d0.getUTCFullYear()+1;const stride=months?1:Math.max(1,Math.ceil(yrs/9));
+  const ticks=[];
+  if(months){for(let y=d0.getUTCFullYear();y<=d1.getUTCFullYear();y++)for(let m=0;m<12;m+=2)ticks.push(Date.UTC(y,m,1))}
+  else for(let y=d0.getUTCFullYear()+1;y<=d1.getUTCFullYear();y+=stride)ticks.push(Date.UTC(y,0,1));
+  ticks.forEach(t=>{const i=(t-t0)/DAY;if(i<s||i>n-1)return;const x=X(i);ctx.strokeStyle=gridC;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();
+    ctx.fillStyle=css;ctx.globalAlpha=1;const dt=new Date(t);ctx.fillText(months?dt.toISOString().slice(0,7):String(dt.getUTCFullYear()),x,T+ph+7);ctx.globalAlpha=1});
+  // baseline (100)
+  if(100>lo&&100<hi){ctx.setLineDash([4,4]);ctx.strokeStyle=acc;ctx.globalAlpha=.5;ctx.beginPath();ctx.moveTo(L,Y(100));ctx.lineTo(L+pw,Y(100));ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1}
+  // lines (BTC drawn last = on top)
+  const order=series.slice().sort((a,b)=>(a.id==='BTC')-(b.id==='BTC'));
+  order.forEach(se=>{
+    ctx.beginPath();ctx.strokeStyle=se.col;ctx.lineWidth=se.w;ctx.lineJoin='round';let pen=false;
+    const step=Math.max(1,Math.floor(span/(pw*1.5)));
+    for(let i=s;i<n;i+=step){const v=se.y[i];if(v==null){pen=false;continue}const x=X(i),y=Y(v);pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true}
+    ctx.stroke();
+    for(let i=n-1;i>=s;i--){if(se.y[i]!=null){ctx.fillStyle=se.col;ctx.beginPath();ctx.arc(X(i),Y(se.y[i]),3,0,7);ctx.fill();break}}
+  });
+  // crosshair
+  if(S.hover>=s&&S.hover<n){const x=X(S.hover);ctx.strokeStyle=acc;ctx.globalAlpha=.6;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();ctx.globalAlpha=1;
+    series.forEach(se=>{const v=se.y[S.hover];if(v==null)return;ctx.fillStyle=se.col;ctx.strokeStyle='#070D1B';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,Y(v),4,0,7);ctx.fill();ctx.stroke()})}
+}
+function showTip(ev){
+  const tip=$('tip');if(!geom||!cur){tip.style.display='none';return}
+  const r=cv.getBoundingClientRect();const x=(ev.clientX-r.left);
+  let i=Math.round(geom.s+(x-geom.L)/geom.pw*(geom.n-1-geom.s));
+  if(i<geom.s||i>geom.n-1||x<geom.L-4){S.hover=-1;tip.style.display='none';draw();return}
+  S.hover=i;draw();
+  const rows=cur.series.filter(se=>se.y[i]!=null).sort((a,b)=>b.y[i]-a.y[i]).map(se=>{
+    const pc=se.y[i]-100;const raw=se.id==='BTC'?' $'+Math.round(se.raw[i]).toLocaleString():'';
+    const val=S.mode==='idx'?(pc>=0?'+':'')+(Math.abs(pc)>=1000?Math.round(pc).toLocaleString():pc.toFixed(1))+'%':se.y[i].toFixed(1);
+    return '<div class="r"><span><i style="background:'+se.col+'"></i>'+se.n+'</span><span>'+val+raw+'</span></div>';
+  }).join('');
+  tip.innerHTML='<div class="mut" style="margin-bottom:4px">'+iso(S.btc.t0+i*DAY)+(S.mode==='btc'?' · home cost in BTC, start=100':'')+'</div>'+rows;
+  tip.style.display='block';const tw=tip.offsetWidth;let lx=geom.X(i)+14;if(lx+tw>W)lx=geom.X(i)-tw-14;tip.style.left=lx+'px';tip.style.top='10px';
+}
+cv.addEventListener('pointermove',showTip);
+cv.addEventListener('pointerleave',()=>{S.hover=-1;$('tip').style.display='none';draw()});
+window.addEventListener('resize',resize);
+
+/* ---------- stats / kpis / calculator ---------- */
+const pct=(v,d)=>(v>=0?'+':'')+(Math.abs(v)>=1000?Math.round(v).toLocaleString():v.toFixed(d==null?1:d))+'%';
+function maxDD(arr,s){let pk=-1,dd=0;for(let i=s;i<arr.length;i++){const v=arr[i];if(v==null)continue;if(v>pk)pk=v;const d=v/pk-1;if(d<dd)dd=d}return dd*100}
+function renderStats(){
+  const b=S.btc,n=b.p.length,s=startIdx();
+  const mk=(id,name,col,arr)=>{
+    let k=-1,e=-1;for(let i=s;i<n;i++)if(arr[i]!=null){if(k<0)k=i;e=i}
+    if(k<0)return null;const mult=arr[e]/arr[k];const yrs=(e-k)/365.25;
+    return {id,name,col,mult,tot:(mult-1)*100,cagr:yrs>.5?(Math.pow(mult,1/yrs)-1)*100:null,dd:maxDD(arr,s),end:iso(b.t0+e*DAY),from:iso(b.t0+k*DAY)};
+  };
+  const rows=[mk('BTC','Bitcoin','#f7931a',b.p)];
+  CITIES.forEach(c=>{if(!S.sel.has(c.id))return;const d=dailyOf(c);if(d)rows.push(mk(c.id,c.n,c.col,d))});
+  const bt=rows[0];
+  let h='<tr><th>MARKET</th><th>FROM</th><th>THROUGH</th><th>TOTAL CHANGE</th><th>PER YEAR</th><th>WORST DRAWDOWN</th><th>BTC GREW ÷ THIS</th></tr>';
+  rows.filter(Boolean).forEach(r=>{
+    h+='<tr><td><span style="color:'+r.col+'">■</span> '+r.name+'</td><td>'+r.from+'</td><td>'+r.end+'</td><td>'+pct(r.tot)+'</td><td>'+(r.cagr==null?'—':pct(r.cagr))+'</td><td>'+(r.dd>-0.05?'0.0%':pct(r.dd))+'</td><td>'+(r.id==='BTC'?'—':(bt&&bt.mult/r.mult>=10?Math.round(bt.mult/r.mult).toLocaleString():(bt.mult/r.mult).toFixed(1))+'×')+'</td></tr>';
+  });
+  $('stats').innerHTML=h;
+  return rows;
+}
+function renderKpis(rows){
+  const el=$('kpis');const b=S.btc;const live=S.live||b.p[b.p.length-1];
+  const hs=(rows||[]).filter(r=>r&&r.id!=='BTC');const best=hs.slice().sort((a,b)=>b.tot-a.tot)[0],worst=hs.slice().sort((a,b)=>a.tot-b.tot)[0];
+  const bt=rows&&rows[0];
+  const k=(l,v,s)=>'<div class="kpi"><span class="mut" style="font-size:10px;letter-spacing:.12em">'+l+'</span><b>'+v+'</b><span class="mut">'+(s||'')+'</span></div>';
+  el.innerHTML=k('BTC NOW','$'+Math.round(live).toLocaleString(),S.live?'live':'last daily close')
+   +(bt?k('BTC · '+S.range+'Y',pct(bt.tot,0),'from '+bt.from):'')
+   +(best?k('BEST MARKET',best.name,pct(best.tot)):'')
+   +(worst?k('SLOWEST MARKET',worst.name,pct(worst.tot)):'');
+}
+function renderCalc(){
+  const c=CITIES.find(x=>x.id===S.cityCalc),tb=$('calc');
+  const st=S.h[c.id];if(!st||st.s!=='ok'){loadCity(c);tb.innerHTML='<tr><td class="mut">'+(st&&st.s==='err'?'Housing data unavailable for '+c.n+' — use the manual CSV loader below.':'Loading '+c.n+' data…')+'</td></tr>';return}
+  const d=dailyOf(c),b=S.btc,n=b.p.length;let e=n-1;while(e>0&&d[e]==null)e--;
+  const val=Math.max(1,+$('cVal').value||0),nowBtc=b.p[n-1];
+  let h='<tr><th>DATE</th><th>EST. HOME VALUE</th><th>BTC PRICE</th><th>HOME COST IN BTC</th><th>VS TODAY</th></tr>';
+  const todayBTC=val/nowBtc;
+  [15,12,10,7,5,3,2,1,0].forEach(y=>{
+    let i=n-1-Math.round(y*365.25);if(i<0)return;
+    if(y===0)i=e;if(d[i]==null)return;
+    const hv=val*d[i]/d[e];const bc=hv/b.p[i];
+    const ratio=bc/todayBTC;
+    h+='<tr><td>'+(y===0?'latest print ('+iso(b.t0+e*DAY)+')':iso(b.t0+i*DAY))+'</td><td>$'+Math.round(hv).toLocaleString()+'</td><td>$'+Math.round(b.p[i]).toLocaleString()+'</td><td>'+(bc>=100?bc.toFixed(0):bc>=1?bc.toFixed(2):bc.toFixed(3))+' BTC</td><td>'+(y===0?'—':'<span class="'+(ratio>1?'good':'bad')+'">'+(ratio>=10?Math.round(ratio).toLocaleString()+'×':ratio.toFixed(2)+'×')+'</span> as many BTC then')+'</td></tr>';
+  });
+  h+='<tr><td>today (live BTC)</td><td>$'+val.toLocaleString()+'</td><td>$'+Math.round(nowBtc).toLocaleString()+'</td><td>'+todayBTC.toFixed(3)+' BTC</td><td>—</td></tr>';
+  tb.innerHTML=h;
+}
+
+/* ---------- UI ---------- */
+function mkChips(id,items,isOn,onClick){
+  $(id).innerHTML=items.map(it=>'<button class="chip fill'+(isOn(it[0])?' on':'')+'" style="--c:var(--ta)" data-k="'+it[0]+'"><i></i>'+it[1]+'</button>').join('');
+  $(id).querySelectorAll('.chip').forEach(b=>b.onclick=()=>onClick(b.dataset.k));
+}
+function uiChips(){
+  const box=$('cities');
+  box.innerHTML=CITIES.map(c=>{const st=S.h[c.id]||{};const on=S.sel.has(c.id);
+    return '<button class="chip'+(on?' on':'')+(st.s==='err'?' err':'')+'" style="--c:'+c.col+'" data-k="'+c.id+'"><i></i>'+c.n+(st.s==='loading'?' <span class="st">…</span>':st.s==='err'?' <span class="st">✕</span>':'')+'</button>'}).join('')
+    +'<button class="chip'+(S.btcOn?' on':'')+'" style="--c:#f7931a" data-k="BTC"><i></i>Bitcoin</button>';
+  box.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k;if(k==='BTC'){S.btcOn=!S.btcOn}else{const c=CITIES.find(x=>x.id===k);if(S.sel.has(k))S.sel.delete(k);else{S.sel.add(k);const st=S.h[k];if(st&&st.s==='err')st.s='idle';loadCity(c)}}
+    saveState();uiChips();render();
+  });
+}
+function uiControls(){
+  mkChips('rng',RANGES.map(r=>[r[1],r[0]]),k=>S.range==k,k=>{S.range=+k;saveState();uiControls();render()});
+  mkChips('mode',MODES,k=>S.mode===k,k=>{S.mode=k;saveState();uiControls();render()});
+  mkChips('scale',[['log','Log'],['lin','Linear']],k=>(k==='log')===S.log,k=>{S.log=k==='log';saveState();uiControls();render()});
+}
+function saveState(){store.set('ddhb_state',{range:S.range,mode:S.mode,log:S.log,sel:[...S.sel],btcOn:S.btcOn})}
+function loadState(){const s=store.get('ddhb_state');if(!s)return;S.range=s.range||15;S.mode=s.mode||'idx';S.log=s.log!==false;S.btcOn=s.btcOn!==false;if(s.sel&&s.sel.length)S.sel=new Set(s.sel)}
+function setStatus(){
+  const b=S.btc;if(!b)return;
+  const ok=CITIES.filter(c=>S.h[c.id]&&S.h[c.id].s==='ok');let latest=0;ok.forEach(c=>{const p=S.h[c.id].pts;latest=Math.max(latest,p[p.length-1][0])});
+  $('status').innerHTML='BTC history: '+iso(b.t0)+' → '+iso(b.t0+(b.p.length-1)*DAY)+' · '+b.p.length.toLocaleString()+' daily closes ('+b.src+') · Housing latest monthly print: '+(latest?iso(latest):'loading…')+' · Live price '+(S.live?'on':'unavailable')+', refreshed every 10s.';
+}
+function render(){
+  if(!S.btc)return;
+  const t=S.mode==='idx'?'Growth of $100 invested at the start of the range — '+(S.log?'log scale: equal vertical distance = equal % change':'linear scale'):'What a home costs in BTC — home index ÷ BTC price, start of range = 100 (down = homes got cheaper in BTC)';
+  $('chartTitle').textContent=t;
+  $('chartNote').textContent='Hover or drag across the chart for exact values. Housing lines end at the latest monthly Case-Shiller print; BTC runs to the live price.';
+  draw();const rows=renderStats();renderKpis(rows);renderCalc();setStatus();
+}
+function showMsg(t){const m=$('msg');m.style.display=t?'block':'none';m.textContent=t||''}
+
+$('allBtn').onclick=()=>{S.sel=new Set(DEFAULT);DEFAULT.forEach(id=>loadCity(CITIES.find(c=>c.id===id)));saveState();uiChips();render()};
+$('noneBtn').onclick=()=>{S.sel=new Set();saveState();uiChips();render()};
+$('allCities').onclick=()=>{CITIES.forEach(c=>{S.sel.add(c.id);loadCity(c)});saveState();uiChips();render()};
+$('cCity').innerHTML=CITIES.map(c=>'<option value="'+c.id+'">'+c.n+'</option>').join('');
+$('cCity').onchange=e=>{S.cityCalc=e.target.value;renderCalc()};
+$('cVal').oninput=renderCalc;
+$('csv').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{const r=parseFred(String(rd.result));const c=CITIES.find(x=>x.f===r.id);
+    if(!c||r.pts.length<20){showMsg('That file is not a recognized FRED Case-Shiller CSV.');return}
+    S.h[c.id]={s:'ok',pts:r.pts};store.set('ddhb_h_'+c.f,{f:Date.now(),pts:r.pts});S.sel.add(c.id);showMsg('');uiChips();render()};
+  rd.readAsText(f);
+};
+
+/* ---------- Desk accent (same switch + storage key as the Desk) ---------- */
+(function(){
+  const TH=[['cyan','Cyan'],['gold','Gold'],['violet','Violet']];let cur='cyan';
+  try{const v=localStorage.getItem('bwsDesk.theme');if(TH.some(t=>t[0]===v))cur=v}catch(e){}
+  function apply(t,quiet){cur=t;document.documentElement.setAttribute('data-theme',t);const b=document.getElementById('ddtb');if(b)b.textContent='Accent: '+TH.find(x=>x[0]===t)[1];
+    if(!quiet){try{localStorage.setItem('bwsDesk.theme',t)}catch(e){}}try{draw()}catch(e){}}
+  document.documentElement.setAttribute('data-theme',cur);
+  let inF=false;try{inF=window.parent!==window}catch(e){inF=true}
+  if(inF)document.body.classList.add('ddin');
+  const b=document.createElement('button');b.id='ddtb';b.type='button';b.title='Change accent color';document.body.appendChild(b);
+  b.onclick=()=>{const i=TH.findIndex(x=>x[0]===cur);apply(TH[(i+1)%3][0])};apply(cur,true);
+})();
+/* ---------- boot ---------- */
+loadState();uiControls();uiChips();
+$('cCity').value=S.cityCalc;
+(async function(){
+  $('chartTitle').textContent='Loading 15 years of daily BTC prices…';
+  liveTick();
+  try{await loadBTC()}catch(e){showMsg('Could not load BTC history right now (network or API blocked). Refresh to retry.');return}
+  resize();
+  CITIES.forEach(c=>{if(S.sel.has(c.id)||c.id===S.cityCalc)loadCity(c)});
+  uiChips();render();
+  setInterval(liveTick,10000);
+  setInterval(()=>{const hs=CITIES.filter(c=>S.h[c.id]&&S.h[c.id].s==='err'&&S.sel.has(c.id));hs.forEach(c=>{S.h[c.id].s='idle';loadCity(c)})},60000);
+  setTimeout(()=>{if(CITIES.some(c=>S.sel.has(c.id)&&S.h[c.id]&&S.h[c.id].s==='err'))showMsg('Some housing series could not be reached (the free data relay may be busy). It retries every minute, or load a FRED CSV manually at the bottom.')},25000);
+})();
+})();
+</script>
+</body>
+</html>
