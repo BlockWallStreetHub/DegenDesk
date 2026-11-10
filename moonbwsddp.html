@@ -1018,7 +1018,7 @@ function histo(id,vals,mine){
 }
 var rzT;window.addEventListener('resize',function(){clearTimeout(rzT);rzT=setTimeout(function(){showSky(Date.now());if(D.t.length){drawMain();analyze();runBT()}},200)});
 /* ---------- Ask the Moon Desk (AI what-if box) ---------- */
-var ASK_URL='PASTE_YOUR_WORKER_URL_HERE';
+var ASK_URL='https://moon-ask.blockwallstreet638.workers.dev';
 function askUrl(){var u='';try{u=localStorage.getItem('moonAskUrl')||''}catch(e){}return u||ASK_URL}
 var ASK_COLS=['#d9b44a','#26a69a','#b58cff','#ff9f43','#5aa9ff'];
 var ASK_BH='#9aa0b8';
