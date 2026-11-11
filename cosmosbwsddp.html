@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/png" href="degendesk-favicon.png">
+<script>
+/* Any valid Degen Desk code opens this page (free, trial, paid, owner). No valid code goes to the front page. */
+(function(){
+  function parse(e){return (e.length>10&&e.indexOf('T')>-1)?Date.parse(e):Date.parse(e+'T23:59:59-06:00')}
+  var ok=false;
+  try{var a=JSON.parse(localStorage.getItem('dd_access')||'null');if(a&&a.exp&&Date.now()<parse(a.exp))ok=true}catch(e){}
+  if(!ok){document.documentElement.style.display='none';location.replace('index.html')}
+})();
+</script>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crypto Cosmos | BWS Desk</title>
+<meta name="description" content="A live solar system of crypto: planets, dwarf planets, asteroids and comets sized by market cap and colored by 1H, 4H, 24H and weekly change.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Mono:wght@400;500&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--cyan:#35F0FF;--bg:#04070F;--panel:#0B1429;--line:#1F2D52;--muted:#9AA4BF;--up:#2EE58A;--dn:#FF4D6A}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:#E6ECFA;font-family:Inter,Arial,sans-serif;overflow:hidden}
+header{position:fixed;top:0;left:0;right:0;z-index:5;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;background:linear-gradient(180deg,rgba(4,7,15,.96),rgba(4,7,15,.7) 80%,rgba(4,7,15,0))}
+.brand{font-family:'Archivo Black',sans-serif;font-size:1.05rem;letter-spacing:.04em;color:#fff;text-decoration:none;line-height:1}
+.brand small{display:block;font:500 .55rem 'DM Mono',monospace;letter-spacing:.2em;color:var(--cyan);margin-top:4px;text-transform:uppercase}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:rgba(11,20,41,.8)}
+.seg button{background:none;border:0;color:var(--muted);font:600 .82rem 'DM Mono',monospace;padding:9px 16px;cursor:pointer;letter-spacing:.06em}
+.seg button.on{background:var(--cyan);color:#021018}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:rgba(11,20,41,.8);color:#C9D3EE;border-radius:999px;padding:6px 11px;font:500 .72rem 'DM Mono',monospace;cursor:pointer;display:flex;gap:6px;align-items:center}
+.chip.off{opacity:.38}.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+input[type=search]{background:rgba(11,20,41,.85);border:1px solid var(--line);border-radius:10px;color:#fff;padding:8px 12px;font:500 .8rem 'DM Mono',monospace;width:150px}
+.tool{background:rgba(11,20,41,.85);border:1px solid var(--line);color:#C9D3EE;border-radius:10px;padding:8px 12px;font:500 .75rem 'DM Mono',monospace;cursor:pointer}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#tip{position:fixed;z-index:8;pointer-events:none;background:rgba(8,14,30,.96);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.78rem;display:none;min-width:190px}
+#tip b{font-size:.95rem}.row{display:flex;justify-content:space-between;gap:14px;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:3px}.row span:last-child{color:#fff}
+.up{color:var(--up)!important}.dn{color:var(--dn)!important}
+#card{position:fixed;z-index:9;left:14px;bottom:62px;background:rgba(8,14,30,.97);border:1px solid var(--cyan);border-radius:14px;padding:14px 16px;width:250px;display:none}
+#card a{display:block;margin-top:10px;text-align:center;background:var(--cyan);color:#021018;font:700 .78rem 'DM Mono',monospace;text-decoration:none;border-radius:9px;padding:8px}
+#card .x{position:absolute;right:10px;top:6px;cursor:pointer;color:var(--muted);font-size:1.2rem}
+footer{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:8px 14px;font:500 .66rem 'DM Mono',monospace;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:space-between;background:linear-gradient(0deg,rgba(4,7,15,.95),rgba(4,7,15,0))}
+#msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:4;pointer-events:none;text-align:center;font:500 .9rem 'DM Mono',monospace;color:var(--cyan);padding:20px}
+@media(max-width:700px){input[type=search]{width:110px}.seg button{padding:8px 11px}#card{bottom:84px}}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<header>
+  <a class="brand" href="deskbwsddp.html">CRYPTO COSMOS<small>&larr; Back to the Desk</small></a>
+  <div class="seg" id="tf"><button data-t="1h">1H</button><button data-t="4h">4H</button><button data-t="24h" class="on">24H</button><button data-t="7d">1W</button></div>
+  <div class="chips" id="chips"></div>
+  <input type="search" id="q" placeholder="Search coin" autocomplete="off">
+  <button class="tool" id="pause">Pause</button>
+</header>
+<div id="msg">Loading the universe&hellip;</div>
+<div id="tip"></div>
+<div id="card"></div>
+<footer>
+  <span>Size = market cap &middot; Green = up, red = down over the selected time &middot; Planets &gt; $1B &middot; Dwarf planets $100M&ndash;$1B &middot; Asteroids $50M&ndash;$100M &middot; Comets &lt; $50M</span>
+  <span id="status"></span>
+  <span>Education only, not financial advice. Data: CoinGecko, Binance.</span>
+</footer>
+<script>
+(function(){
+'use strict';
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+var W=0,H=0,DPR=1;
+var TF='24h',bodies=[],byId={},paused=false,hover=null,sel=null,query='';
+var CLS={
+  planet:{label:'Planets',col:'#4DA3FF',min:1e9,rmin:24,rmax:90},
+  dwarf:{label:'Dwarf planets',col:'#C9A46B',min:1e8,rmin:13,rmax:26},
+  asteroid:{label:'Asteroids',col:'#9AA4BF',min:5e7,rmin:9,rmax:15},
+  comet:{label:'Comets',col:'#8CF7FF',min:0,rmin:5,rmax:10}
+};
+var show={planet:true,dwarf:true,asteroid:true,comet:true};
+var CAP={'1h':3,'4h':6,'24h':10,'7d':25};
+var COUNTS={planet:0,dwarf:0,asteroid:0,comet:0};
+function cls(m){return m>=1e9?'planet':m>=1e8?'dwarf':m>=5e7?'asteroid':'comet'}
+function rnd(seed){var s=seed*9301+49297;return function(){s=(s*9301+49297)%233280;return s/233280}}
+function hash(str){var h=7;for(var i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;return h}
+function fmtUSD(n){if(n==null)return '-';if(n>=1e12)return '$'+(n/1e12).toFixed(2)+'T';if(n>=1e9)return '$'+(n/1e9).toFixed(2)+'B';if(n>=1e6)return '$'+(n/1e6).toFixed(1)+'M';return '$'+Math.round(n).toLocaleString()}
+function fmtP(p){if(p==null)return '-';if(p>=1000)return '$'+p.toLocaleString(undefined,{maximumFractionDigits:0});if(p>=1)return '$'+p.toFixed(2);if(p>=0.01)return '$'+p.toFixed(4);return '$'+p.toPrecision(3)}
+function fmtC(c){return c==null?'n/a':(c>=0?'+':'')+c.toFixed(c<10&&c>-10?2:1)+'%'}
+function cc(c){return c==null?'':c>=0?'up':'dn'}
+
+/* ---------- layout ---------- */
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;
+  cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+  makeStars();rescale();
+}
+var stars=[];
+function makeStars(){stars=[];var r=rnd(5);for(var i=0;i<220;i++)stars.push([r()*W,r()*H,r()*1.3+.2,r()*.6+.2])}
+function rescale(){
+  var vis=bodies.filter(function(b){return show[b.cls]});
+  if(!vis.length)return;
+  var area=0;vis.forEach(function(b){area+=Math.PI*b.r0*b.r0});
+  var usable=Math.max(W*(H-120),1);
+  var k=Math.sqrt(usable*0.32/area);k=Math.min(k,1.35);
+  bodies.forEach(function(b){b.r=Math.max(3.5,b.r0*k);b.m=b.r*b.r})
+}
+function radiusFor(c,m){
+  var k=CLS[c],lo,hi;
+  if(c==='planet'){lo=Math.log(1e9);hi=Math.log(2.6e12)}
+  else if(c==='dwarf'){lo=Math.log(1e8);hi=Math.log(1e9)}
+  else if(c==='asteroid'){lo=Math.log(5e7);hi=Math.log(1e8)}
+  else{lo=Math.log(1e5);hi=Math.log(5e7)}
+  var t=(Math.log(Math.max(m,1e5))-lo)/(hi-lo);t=Math.max(0,Math.min(1,t));
+  if(c==='planet')t=Math.pow(t,1.15);
+  return k.rmin+(k.rmax-k.rmin)*t;
+}
+
+/* ---------- data ---------- */
+function setMsg(t){var m=document.getElementById('msg');m.textContent=t||'';m.style.display=t?'flex':'none'}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+async function getJSON(url,tries){
+  tries=tries||3;
+  for(var i=0;i<tries;i++){
+    try{var r=await fetch(url);if(r.status===429){await sleep(9000);continue}if(!r.ok)throw new Error(r.status);return await r.json()}
+    catch(e){if(i===tries-1)throw e;await sleep(1500)}
+  }
+}
+function upsert(c){
+  if(!c.market_cap||c.market_cap<=0)return;
+  var b=byId[c.id];
+  var m=c.market_cap,k=cls(m);
+  if(!b){
+    var h=hash(c.id),r=rnd(h%9999+1);
+    b={id:c.id,seed:h,rr:r,x:r()*W,y:60+r()*(H-120),a:r()*6.28,spin:(r()-.5)*.6,ring:false,craters:[],poly:[]};
+    var sp=(k==='comet'?40:k==='asteroid'?26:k==='dwarf'?18:10)*(.5+r());var an=r()*6.28;
+    b.vx=Math.cos(an)*sp;b.vy=Math.sin(an)*sp;
+    var i;for(i=0;i<4;i++)b.craters.push([r()*1.2-.6,r()*1.2-.6,r()*.18+.07]);
+    var n=7+Math.floor(r()*3);for(i=0;i<n;i++)b.poly.push([(i/n)*6.283,.72+r()*.45]);
+    bodies.push(b);byId[c.id]=b;
+  }
+  b.name=c.name;b.sym=(c.symbol||'').toUpperCase();b.mc=m;b.price=c.current_price;b.rank=c.market_cap_rank;
+  b.cls=k;b.r0=radiusFor(k,m);if(!(b.r>0)){b.r=Math.max(3.5,b.r0*.6);b.m=b.r*b.r}b.ring=(k==='planet'&&(b.seed%3===0));
+  b.ch={'1h':c.price_change_percentage_1h_in_currency,'24h':c.price_change_percentage_24h_in_currency!=null?c.price_change_percentage_24h_in_currency:c.price_change_percentage_24h,'7d':c.price_change_percentage_7d_in_currency,'4h':b.ch&&b.ch['4h']!=null?b.ch['4h']:null};
+}
+async function loadMarkets(first){
+  var PAGES=6,got=0;
+  for(var p=1;p<=PAGES;p++){
+    try{
+      var d=await getJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page='+p+'&sparkline=false&price_change_percentage=1h,24h,7d');
+      d.forEach(upsert);got+=d.length;
+      if(first&&p===1){setMsg('');rescale();countAndChips()}
+    }catch(e){
+      if(p===1&&!bodies.length){setMsg('Could not reach CoinGecko right now. Wait a minute and refresh the page.');return false}
+      break;
+    }
+    if(p<PAGES)await sleep(1600);
+  }
+  rescale();countAndChips();
+  return got>0;
+}
+var bnBase=['https://data-api.binance.vision','https://api.binance.com'];
+async function bnGet(path){
+  for(var i=0;i<bnBase.length;i++){try{var r=await fetch(bnBase[i]+path);if(r.ok)return await r.json()}catch(e){}}
+  return null;
+}
+var bnSyms=null;
+async function load4h(){
+  if(!bnSyms){
+    var all=await bnGet('/api/v3/ticker/price');
+    if(!all){document.getElementById('status').dataset.no4h='1';return}
+    bnSyms={};all.forEach(function(x){if(/USDT$/.test(x.symbol))bnSyms[x.symbol]=1});
+  }
+  var map={},list=[],seen={};
+  bodies.slice().sort(function(a,b){return b.mc-a.mc}).forEach(function(b){
+    var s=b.sym.replace(/[^A-Z0-9]/g,'')+'USDT';
+    if(bnSyms[s]&&!seen[s]){seen[s]=1;map[s]=b;list.push(s)}
+  });
+  for(var i=0;i<list.length;i+=100){
+    var chunk=list.slice(i,i+100);
+    var d=await bnGet('/api/v3/ticker?windowSize=4h&type=MINI&symbols='+encodeURIComponent(JSON.stringify(chunk)));
+    if(d)d.forEach(function(x){var b=map[x.symbol];if(b)b.ch['4h']=parseFloat(x.priceChangePercent)});
+    await sleep(300);
+  }
+  document.getElementById('status').dataset.no4h='';
+  updateStatus();
+}
+function updateStatus(){
+  var s=document.getElementById('status'),t=new Date();
+  s.textContent=bodies.length.toLocaleString()+' coins · updated '+t.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(TF==='4h'&&!bodies.some(function(b){return b.ch['4h']!=null})?' · 4H data unavailable right now':'');
+}
+function countAndChips(){
+  COUNTS={planet:0,dwarf:0,asteroid:0,comet:0};bodies.forEach(function(b){COUNTS[b.cls]++});
+  var el=document.getElementById('chips');el.innerHTML='';
+  Object.keys(CLS).forEach(function(k){
+    var c=document.createElement('div');c.className='chip'+(show[k]?'':' off');
+    c.innerHTML='<i style="background:'+CLS[k].col+'"></i>'+CLS[k].label+' '+COUNTS[k];
+    c.onclick=function(){show[k]=!show[k];rescale();countAndChips()};el.appendChild(c)
+  });
+  updateStatus();
+}
+async function refreshLoop(){
+  await sleep(120000);
+  while(true){await loadMarkets(false);load4h();await sleep(120000)}
+}
+
+/* ---------- physics ---------- */
+function step(dt){
+  var vis=bodies.filter(function(b){return show[b.cls]});
+  var top=64,bot=H-34,i,b;
+  for(i=0;i<vis.length;i++){
+    b=vis[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.a+=b.spin*dt;
+    if(b.x<b.r){b.x=b.r;b.vx=Math.abs(b.vx)}else if(b.x>W-b.r){b.x=W-b.r;b.vx=-Math.abs(b.vx)}
+    if(b.y<top+b.r){b.y=top+b.r;b.vy=Math.abs(b.vy)}else if(b.y>bot-b.r){b.y=bot-b.r;b.vy=-Math.abs(b.vy)}
+    var sp=Math.hypot(b.vx,b.vy),tgt=(b.cls==='comet'?38:b.cls==='asteroid'?24:b.cls==='dwarf'?16:9),mn=tgt*.5,mx=tgt*2.2;
+    if(sp<mn){var an=sp?Math.atan2(b.vy,b.vx):b.seed;b.vx=Math.cos(an)*mn*1.2;b.vy=Math.sin(an)*mn*1.2}
+    else if(sp>mx){b.vx*=mx/sp;b.vy*=mx/sp}
+  }
+  vis.sort(function(a,c){return (a.x-a.r)-(c.x-c.r)});
+  for(i=0;i<vis.length;i++){
+    var A=vis[i],right=A.x+A.r;
+    for(var j=i+1;j<vis.length;j++){
+      var B=vis[j];if(B.x-B.r>right)break;
+      var dx=B.x-A.x,dy=B.y-A.y,min=A.r+B.r;
+      if(Math.abs(dy)>min)continue;
+      var d2=dx*dx+dy*dy;if(d2>=min*min||d2===0)continue;
+      var d=Math.sqrt(d2),nx=dx/d,ny=dy/d,ov=min-d,tm=A.m+B.m;
+      A.x-=nx*ov*(B.m/tm);A.y-=ny*ov*(B.m/tm);B.x+=nx*ov*(A.m/tm);B.y+=ny*ov*(A.m/tm);
+      var rv=(B.vx-A.vx)*nx+(B.vy-A.vy)*ny;
+      if(rv<0){var jimp=-1.7*rv/(1/A.m+1/B.m);A.vx-=jimp*nx/A.m;A.vy-=jimp*ny/A.m;B.vx+=jimp*nx/B.m;B.vy+=jimp*ny/B.m}
+    }
+  }
+}
+
+/* ---------- drawing ---------- */
+function colorFor(b,light){
+  var c=b.ch[TF];
+  if(c==null)return 'hsl(222,10%,'+(light?55:36)+'%)';
+  var t=Math.min(Math.abs(c)/CAP[TF],1),h=c>=0?148:352;
+  return 'hsl('+h+','+(45+45*t)+'%,'+((light?52:30)+(light?8:6)*t)+'%)';
+}
+function drawPlanet(b){
+  var r=b.r,x=b.x,y=b.y;
+  if(b.ring){
+    ctx.save();ctx.translate(x,y);ctx.rotate(-.35+b.seed%7*.05);
+    ctx.strokeStyle='rgba(220,200,150,.55)';ctx.lineWidth=Math.max(1.5,r*.1);
+    ctx.beginPath();ctx.ellipse(0,0,r*1.75,r*.45,0,Math.PI,2*Math.PI);ctx.stroke();ctx.restore();
+  }
+  var g=ctx.createRadialGradient(x-r*.4,y-r*.45,r*.1,x,y,r);
+  g.addColorStop(0,colorFor(b,true));g.addColorStop(1,colorFor(b,false));
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,6.2832);ctx.fill();
+  ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,6.2832);ctx.clip();
+  ctx.fillStyle='rgba(255,255,255,.07)';
+  for(var i=0;i<3;i++){var by=y-r*.5+i*r*.45;ctx.fillRect(x-r,by,r*2,r*.13)}
+  var sh=ctx.createRadialGradient(x-r*.5,y-r*.5,r*.4,x+r*.2,y+r*.2,r*1.15);
+  sh.addColorStop(0,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(0,0,10,.55)');ctx.fillStyle=sh;ctx.fillRect(x-r,y-r,r*2,r*2);ctx.restore();
+  ctx.strokeStyle='rgba(120,200,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,r+1,0,6.2832);ctx.stroke();
+  if(b.ring){
+    ctx.save();ctx.translate(x,y);ctx.rotate(-.35+b.seed%7*.05);
+    ctx.strokeStyle='rgba(235,215,165,.8)';ctx.lineWidth=Math.max(1.5,r*.1);
+    ctx.beginPath();ctx.ellipse(0,0,r*1.75,r*.45,0,0,Math.PI);ctx.stroke();ctx.restore();
+  }
+}
+function drawDwarf(b){
+  var r=b.r,x=b.x,y=b.y;
+  var g=ctx.createRadialGradient(x-r*.35,y-r*.4,r*.1,x,y,r);
+  g.addColorStop(0,colorFor(b,true));g.addColorStop(1,colorFor(b,false));
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,6.2832);ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.22)';
+  b.craters.forEach(function(c){ctx.beginPath();ctx.arc(x+c[0]*r,y+c[1]*r,c[2]*r,0,6.2832);ctx.fill()});
+  ctx.strokeStyle='rgba(201,164,107,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,r,0,6.2832);ctx.stroke();
+}
+function drawAsteroid(b){
+  ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.a);
+  ctx.beginPath();b.poly.forEach(function(p,i){var px=Math.cos(p[0])*b.r*p[1],py=Math.sin(p[0])*b.r*p[1];i?ctx.lineTo(px,py):ctx.moveTo(px,py)});
+  ctx.closePath();ctx.fillStyle=colorFor(b,false);ctx.fill();ctx.strokeStyle='rgba(200,210,235,.45)';ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.arc(-b.r*.2,-b.r*.25,b.r*.25,0,6.2832);ctx.fill();
+  ctx.restore();
+}
+function drawComet(b){
+  var sp=Math.hypot(b.vx,b.vy)||1,ux=-b.vx/sp,uy=-b.vy/sp,L=b.r*5;
+  var tx=b.x+ux*L,ty=b.y+uy*L,nx=-uy,ny=ux;
+  var g=ctx.createLinearGradient(b.x,b.y,tx,ty);
+  var col=colorFor(b,true);
+  g.addColorStop(0,col.replace('hsl(','hsla(').replace(')',',.7)'));g.addColorStop(1,col.replace('hsl(','hsla(').replace(')',',0)'));
+  ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(b.x+nx*b.r*.9,b.y+ny*b.r*.9);ctx.lineTo(tx,ty);ctx.lineTo(b.x-nx*b.r*.9,b.y-ny*b.r*.9);ctx.closePath();ctx.fill();
+  var h=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*1.4);
+  h.addColorStop(0,'#fff');h.addColorStop(.35,col);h.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=h;ctx.beginPath();ctx.arc(b.x,b.y,b.r*1.4,0,6.2832);ctx.fill();
+}
+function labels(b){
+  var c=b.ch[TF],r=b.r;
+  if(b.cls==='planet'&&r>=22){
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='800 '+Math.min(r*.42,22)+'px Inter,Arial';ctx.fillText(b.sym,b.x,b.y-(r>=30?r*.12:0));
+    if(r>=30){ctx.font='500 '+Math.min(r*.26,13)+'px "DM Mono",monospace';ctx.fillText(fmtC(c),b.x,b.y+r*.3)}
+  }else if(b.cls==='dwarf'&&r>=15){
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 '+Math.min(r*.5,11)+'px Inter,Arial';ctx.fillText(b.sym,b.x,b.y)
+  }
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  var bg=ctx.createRadialGradient(W*.5,H*.45,0,W*.5,H*.5,Math.max(W,H)*.75);bg.addColorStop(0,'#0B1736');bg.addColorStop(1,'#03050C');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff';stars.forEach(function(s){ctx.globalAlpha=s[3];ctx.fillRect(s[0],s[1],s[2],s[2])});ctx.globalAlpha=1;
+  var order=['comet','asteroid','dwarf','planet'];
+  order.forEach(function(k){
+    if(!show[k])return;
+    bodies.forEach(function(b){
+      if(b.cls!==k)return;
+      var dim=query&&!(b.sym.toLowerCase().indexOf(query)>-1||b.name.toLowerCase().indexOf(query)>-1);
+      ctx.globalAlpha=dim?.12:1;
+      if(k==='planet')drawPlanet(b);else if(k==='dwarf')drawDwarf(b);else if(k==='asteroid')drawAsteroid(b);else drawComet(b);
+      if(!dim)labels(b);
+    });
+  });
+  ctx.globalAlpha=1;
+  [hover,sel].forEach(function(b){if(b&&show[b.cls]){ctx.strokeStyle='#35F0FF';ctx.lineWidth=2;ctx.beginPath();ctx.arc(b.x,b.y,b.r+4,0,6.2832);ctx.stroke()}});
+}
+var last=0;
+function frame(t){
+  var dt=Math.min((t-last)/1000||0,.05);last=t;
+  if(!paused&&bodies.length)step(dt);
+  draw();requestAnimationFrame(frame);
+}
+
+/* ---------- interaction ---------- */
+function pick(mx,my){
+  var best=null;
+  for(var i=bodies.length-1;i>=0;i--){var b=bodies[i];if(!show[b.cls])continue;
+    var d=Math.hypot(b.x-mx,b.y-my);if(d<=Math.max(b.r,7)&&(!best||b.r<best.r))best=b}
+  return best;
+}
+function rows(b){
+  function R(l,v,c){return '<div class="row"><span>'+l+'</span><span class="'+(c||'')+'">'+v+'</span></div>'}
+  return R('Market cap',fmtUSD(b.mc))+R('Price',fmtP(b.price))+R('1H',fmtC(b.ch['1h']),cc(b.ch['1h']))+R('4H',fmtC(b.ch['4h']),cc(b.ch['4h']))+R('24H',fmtC(b.ch['24h']),cc(b.ch['24h']))+R('1W',fmtC(b.ch['7d']),cc(b.ch['7d']));
+}
+var tip=document.getElementById('tip'),card=document.getElementById('card');
+var CNAME={planet:'Planet',dwarf:'Dwarf planet',asteroid:'Asteroid',comet:'Comet'};
+cv.addEventListener('mousemove',function(e){
+  hover=pick(e.clientX,e.clientY);
+  if(hover){tip.style.display='block';tip.innerHTML='<b>'+esc(hover.name)+'</b> <span style="color:#9AA4BF">'+esc(hover.sym)+'</span><div class="row"><span>'+CNAME[hover.cls]+(hover.rank?' · rank #'+hover.rank:'')+'</span><span></span></div>'+rows(hover);
+    var x=e.clientX+16,y=e.clientY+16;if(x+220>W)x=e.clientX-230;if(y+190>H)y=e.clientY-190;tip.style.left=x+'px';tip.style.top=y+'px';cv.style.cursor='pointer'}
+  else{tip.style.display='none';cv.style.cursor='default'}
+});
+cv.addEventListener('mouseleave',function(){hover=null;tip.style.display='none'});
+cv.addEventListener('click',function(e){
+  var b=pick(e.clientX,e.clientY);if(!b){sel=null;card.style.display='none';return}
+  sel=b;tip.style.display='none';
+  card.innerHTML='<span class="x" id="cx">&times;</span><b style="font-size:1.05rem">'+esc(b.name)+'</b> <span style="color:#9AA4BF">'+esc(b.sym)+'</span><div class="row"><span>'+CNAME[b.cls]+(b.rank?' · rank #'+b.rank:'')+'</span><span></span></div>'+rows(b)+'<a target="_blank" rel="noopener" href="https://www.coingecko.com/en/coins/'+encodeURIComponent(b.id)+'">Open on CoinGecko &#8599;</a>';
+  card.style.display='block';document.getElementById('cx').onclick=function(){sel=null;card.style.display='none'};
+});
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+document.getElementById('tf').addEventListener('click',function(e){
+  var t=e.target.getAttribute&&e.target.getAttribute('data-t');if(!t)return;
+  TF=t;[].forEach.call(this.children,function(c){c.classList.toggle('on',c===e.target)});updateStatus();
+});
+document.getElementById('q').addEventListener('input',function(){query=this.value.trim().toLowerCase()});
+document.getElementById('pause').onclick=function(){paused=!paused;this.textContent=paused?'Play':'Pause'};
+window.addEventListener('resize',resize);
+
+/* ---------- start ---------- */
+resize();requestAnimationFrame(frame);
+window.__cosmos={upsert:upsert,rescale:rescale,countAndChips:countAndChips,setMsg:setMsg};
+if(!window.__noload){
+  loadMarkets(true).then(function(ok){if(ok){load4h();refreshLoop()}});
+}
+})();
+</script>
+</body>
+</html>
