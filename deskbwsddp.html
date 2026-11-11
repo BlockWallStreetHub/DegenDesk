@@ -28,6 +28,10 @@
   .acct .head b{font-size:17px}
   .addr{color:var(--muted);font-size:12px;word-break:break-all}
   .badge{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);margin-left:6px}
+  .hfc{display:inline-block;min-width:66px;text-align:center;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-weight:800;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .hfc.ok{color:var(--ok);border-color:var(--ok);background:rgba(95,211,154,.14)} .hfc.warn{color:var(--warn);border-color:var(--warn);background:rgba(245,184,75,.14)} .hfc.danger{color:var(--danger);border-color:var(--danger);background:rgba(255,107,125,.16)}
+  input[data-ref].ok{color:var(--ok);border-color:var(--ok);font-weight:700} input[data-ref].warn{color:var(--warn);border-color:var(--warn);font-weight:700} input[data-ref].danger{color:var(--danger);border-color:var(--danger);font-weight:700}
+  .hfkey{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 2px;font-size:12px;color:var(--muted)}
   .body{padding:16px}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
   .kpi{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
@@ -371,6 +375,7 @@ nav .hint{font-size:12.5px !important}
       <button class="gold" id="addBtn">Add</button>
     </div>
     <p class="note">Add one entry per network. The same address can be watched on several networks. For Instadapp, use the <b>DSA address</b> (the smart account that holds the Aave position), not your wallet address. You can find it in the Instadapp account selector.</p>
+    <div id="hfKey" class="hfkey"></div>
     <div id="acctList"></div>
   </section>
 
@@ -1988,15 +1993,33 @@ function renderAll(){
     };
   });
 }
+function paintHF(){
+  document.querySelectorAll('[data-hfnow]').forEach(el=>{
+    const r=results[el.dataset.hfnow]; let t='...',c='';
+    if(r&&r.error){t='n/a'}
+    else if(r&&r.a){const h=r.a.hf; if(h===Infinity||!isFinite(h)){t='No debt';c='ok'}else{t=h.toFixed(3);c=h<1?'danger':cls(levelOf(h))}}
+    el.textContent=t; el.className='hfc'+(c?' '+c:'');
+  });
+  document.querySelectorAll('[data-ref]').forEach(inp=>{
+    const v=parseFloat(inp.value); inp.classList.remove('ok','warn','danger');
+    if(v>=1) inp.classList.add(cls(levelOf(v)));
+  });
+  const k=document.getElementById('hfKey');
+  if(k){const d=Math.min(state.danger,state.warn).toFixed(2), w=Math.max(state.danger,state.warn).toFixed(2);
+    k.innerHTML='Health factor colors: <span class="hfc danger" style="min-width:0;padding:2px 10px">'+d+' or below = danger</span><span class="hfc warn" style="min-width:0;padding:2px 10px">'+d+' to '+w+' = caution</span><span class="hfc ok" style="min-width:0;padding:2px 10px">above '+w+' = healthy</span> (set by your Caution and Danger lines)';}
+}
 function renderList(){
   $('acctList').innerHTML=state.accounts.map((a,i)=>{
     const id=accId(a);
     return '<div class="row" style="margin-top:8px"><span><b>'+esc(a.label)+'</b><span class="badge">'+esc(a.type)+'</span><span class="badge">'+esc(netName(a))+'</span> <span class="addr">'+esc(a.addr)+'</span></span>'
+      +'<label style="flex-direction:row;align-items:center;gap:6px">Now<span class="hfc" data-hfnow="'+esc(id)+'" title="Current health factor">...</span></label>'
       +'<label style="flex-direction:row;align-items:center;gap:6px">Reference HF<input data-ref="'+esc(id)+'" type="number" step="0.01" min="1" style="width:84px;min-width:84px" value="'+(state.refs[id]||'')+'"></label>'
       +'<button class="ghost" data-useref="'+esc(id)+'">Use current</button><button class="ghost" data-rm="'+i+'">Remove</button></div>';
   }).join('');
   document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const gone=state.accounts.splice(Number(b.dataset.rm),1)[0]; if(gone){const id=accId(gone); delete lastLevel[id]; delete results[id]; delete lastSig[id]; delete state.refs[id];} persist();renderList();refresh();});
   document.querySelectorAll('[data-ref]').forEach(inp=>inp.onchange=()=>{const v=parseFloat(inp.value); if(v>=1) state.refs[inp.dataset.ref]=v; else delete state.refs[inp.dataset.ref]; persist(); refresh();});
+  document.querySelectorAll('[data-ref]').forEach(inp=>inp.addEventListener('input',paintHF));
+  paintHF();
   document.querySelectorAll('[data-useref]').forEach(b=>b.onclick=()=>{const r=results[b.dataset.useref]; if(r&&r.a&&isFinite(r.a.hf)){state.refs[b.dataset.useref]=+r.a.hf.toFixed(3); persist(); renderList(); refresh();}});
 }
 
@@ -2032,7 +2055,7 @@ async function refresh(){
   });
   if(needList) renderList();
   try{ state.accounts.forEach(a=>scanLiq(a)); }catch(e){}
-  renderAll();
+  renderAll(); paintHF();
   const worst=Math.max(0,...Object.values(lastLevel));
   try{document.dispatchEvent(new Event('dd:refresh'));}catch(e){}
   document.title=(worst===2?'\u26A0 DANGER - ':worst===1?'\u26A0 ':'')+'BWS Desk';
