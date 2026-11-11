@@ -58,7 +58,7 @@ input:focus,textarea:focus{border-color:var(--gold)}
 
 <section class="card"><h2>Your data on this device</h2>
   <dl id="data"></dl>
-  <div class="row" style="margin-top:12px"><button class="btn" id="dl">Download my data</button><button class="btn red" id="wipe">Delete portfolio &amp; alerts from this device</button></div>
+  <div class="row" style="margin-top:12px"><button class="btn" id="dl">Download my data</button><button class="btn red" id="wipe">Delete portfolio &amp; alerts from this device</button><button class="btn" id="out2">Sign out</button></div>
 </section>
 
 <section class="card"><h2>Message Block Wall Street</h2>
@@ -206,7 +206,7 @@ $('dl').onclick=function(){
     };r.readAsText(f);
   };
 })();
-$('out').onclick=function(){ls('dd_access',null);ls('dd_intro_seen',null);location.href='index.html'};
+$('out').onclick=$('out2').onclick=function(){ls('dd_access',null);ls('dd_intro_seen',null);location.href='index.html'};
 draw();
 })();
 </script>
