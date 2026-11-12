@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson: Put Spreads &amp; the Derive Simulator | Degen Desk Course</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060a13;--panel:#0c1322;--panel2:#101a2e;--line:#1b2a47;--txt:#e8eefb;--mut:#8a9bbd;--acc:#22d3ee;--gold:#f5b942;--grn:#34d399;--red:#f87171}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 500px at 70% -10%,#0f1d3a 0%,var(--bg) 60%);color:var(--txt);font-family:Barlow,sans-serif;line-height:1.6}
+.top{display:flex;gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--line);background:#080e1b}
+.brand{font-family:'Bebas Neue';font-size:26px;letter-spacing:2px;color:var(--gold)}.brand span{color:var(--acc)}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 14px;border-radius:6px;font:600 13px Barlow;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:hover{border-color:var(--acc);color:var(--acc)}.btn.pri{background:var(--acc);color:#04121a;border-color:var(--acc)}
+.wrap{max-width:820px;margin:0 auto;padding:26px 20px 70px}
+h1{font-family:'Bebas Neue';font-size:46px;letter-spacing:2px;line-height:1.05}h1 span{color:var(--acc)}
+h2{font-family:'Bebas Neue';font-size:26px;letter-spacing:1.5px;color:var(--gold);margin:26px 0 8px}
+p{margin:8px 0;color:#cfd9ee}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin:14px 0}
+.mono{font-family:'DM Mono';color:var(--acc)}
+ul{margin:8px 0 8px 20px;color:#cfd9ee}li{margin:4px 0}
+.q{margin:14px 0}.q b{display:block;margin-bottom:6px}
+.opt{display:block;width:100%;text-align:left;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:9px 12px;border-radius:6px;margin:5px 0;font:500 14px Barlow;cursor:pointer}
+.opt:hover{border-color:var(--acc)}.opt.ok{border-color:var(--grn);background:#0e2a22}.opt.bad{border-color:var(--red);background:#2a1416}
+.fb{font-size:13px;color:var(--mut);margin-top:4px}
+#res{font:500 20px 'DM Mono';margin-top:14px}
+</style>
+</head>
+<body>
+<div class="top"><div class="brand">DEGEN <span>DESK</span></div><a class="btn" href="deskbwsddp.html">&#8962; Home</a><a class="btn" href="put-spread-bwsddp.html">Put Spread Calculator</a><a class="btn" href="derive-simulator-bwsddp.html">Derive Simulator</a></div>
+<div class="wrap">
+<h1>Put Spreads &amp; the <span>Derive Simulator</span></h1>
+<p>Learn to bet on a drop with a fixed, known risk, then test any Derive trade before you place it.</p>
+
+<h2>1. The idea</h2>
+<p>Buying a put on its own is expensive when you only expect a measured drop. A <b>long put spread</b> cuts the cost: you buy a put at a higher strike and sell a put at a lower strike, same expiry. The put you sold pays for part of the one you bought.</p>
+<div class="box">
+<p><b>Example:</b> BTC is near <span class="mono">$73,200</span>. Buy the <span class="mono">$72,500</span> put, sell the <span class="mono">$65,000</span> put, 20 BTC, expiring end of December.</p>
+<ul>
+<li><b>Max loss</b> = what you paid (the debit). It happens if BTC finishes above $72,500.</li>
+<li><b>Max profit</b> = strike width ($7,500) minus the debit, times size. It happens at or below $65,000.</li>
+<li><b>Breakeven</b> = long strike minus the debit per BTC. With a debit of about $1,415, that is about $71,100.</li>
+</ul></div>
+
+<h2>2. Why choose a spread</h2>
+<ul><li>Cheaper than a single put, and you know the worst case before you click.</li>
+<li>Works best when volatility is low (options are cheap) and you expect a move to a level, not a crash to zero.</li>
+<li>The trade-off: profit stops at the lower strike. If BTC falls through it, you do not keep gaining.</li></ul>
+
+<h2>3. Use the Put Spread Calculator</h2>
+<p>Open the calculator, type spot, both strikes, the two option prices from Derive and your size. Read four numbers: <b>net debit, max loss, max profit, breakeven</b>. Then use the price ladder to see your profit at your take-profit target.</p>
+
+<h2>4. Use the Derive Trade Simulator</h2>
+<p>The simulator builds any trade: calls, puts, spreads, straddles, iron condors, collars and perps. Three sliders matter most:</p>
+<ul><li><b>Days passed:</b> shows how time decay changes the value before expiry.</li>
+<li><b>BTC price:</b> where you think the market goes.</li>
+<li><b>IV change:</b> options get pricier when fear rises, and cheaper when it fades.</li></ul>
+<p>Prices come from a model. Always replace them with the real quote on Derive, and give each leg its own IV, because lower strikes usually trade at a higher IV.</p>
+
+<h2>5. Rules for the Desk</h2>
+<ul><li>Never risk money you cannot afford to lose; size so the max loss is a small slice of your account.</li>
+<li>Check the fee schedule and the real bid and ask before trading.</li>
+<li>A simulator is practice, not a promise.</li></ul>
+
+<h2>Quick quiz</h2>
+<div id="quiz"></div>
+<div id="res"></div>
+<p style="margin-top:20px"><a class="btn pri" href="put-spread-bwsddp.html">Open the Calculator</a> <a class="btn pri" href="derive-simulator-bwsddp.html">Open the Simulator</a></p>
+<p style="color:var(--mut);font-size:12px;margin-top:24px">Educational only, not financial advice.</p>
+</div>
+<script>
+const Q=[
+ {q:'In a long put spread, what is your maximum loss?',o:['Unlimited','The debit you paid (plus fees)','The strike width','Zero'],a:1,f:'You pay a debit up front; that is the most you can lose.'},
+ {q:'You buy the $72,500 put and sell the $65,000 put. Where is max profit reached?',o:['At or above $72,500','At $73,200','At or below $65,000','Only on the expiry date at $70,000'],a:2,f:'Below the short strike both puts are in the money and the gain is capped at width minus debit.'},
+ {q:'Which slider in the simulator shows how an options price changes when fear rises?',o:['Days passed','IV change','Chart range','Preset size'],a:1,f:'IV is implied volatility; higher IV makes options more expensive.'}
+];
+let score=0,done=0;
+const box=document.getElementById('quiz');
+Q.forEach((x,i)=>{
+  const d=document.createElement('div');d.className='q';
+  d.innerHTML='<b>'+(i+1)+'. '+x.q+'</b>';
+  const fb=document.createElement('div');fb.className='fb';
+  x.o.forEach((t,j)=>{const b=document.createElement('button');b.className='opt';b.textContent=t;
+    b.onclick=()=>{if(d.dataset.done)return;d.dataset.done=1;done++;
+      if(j===x.a){b.classList.add('ok');score++}else{b.classList.add('bad');d.querySelectorAll('.opt')[x.a].classList.add('ok')}
+      fb.textContent=x.f;
+      if(done===Q.length)document.getElementById('res').textContent='Score: '+score+' / '+Q.length+(score===Q.length?'  — lesson complete':'  — review and retry')};
+    d.appendChild(b)});
+  d.appendChild(fb);box.appendChild(d);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Derive Trade Simulator | Block Wall Street Degen Desk</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060a13;--panel:#0c1322;--panel2:#101a2e;--line:#1b2a47;--txt:#e8eefb;--mut:#8a9bbd;--acc:#22d3ee;--gold:#f5b942;--grn:#34d399;--red:#f87171}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 500px at 70% -10%,#0f1d3a 0%,var(--bg) 60%);color:var(--txt);font-family:Barlow,system-ui,sans-serif;min-height:100vh}
+a{color:var(--acc);text-decoration:none}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--line);background:#080e1b;position:sticky;top:0;z-index:5}
+.top .brand{font-family:'Bebas Neue';font-size:26px;letter-spacing:2px;color:var(--gold)}
+.top .brand span{color:var(--acc)}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:7px 13px;border-radius:6px;font:600 13px Barlow;cursor:pointer;letter-spacing:.4px}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.sp{flex:1}
+.sw{display:flex;gap:6px;align-items:center;font:12px 'DM Mono';color:var(--mut)}
+.sw i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);cursor:pointer;display:inline-block}
+.wrap{max-width:1240px;margin:0 auto;padding:22px 20px 60px}
+h1{font-family:'Bebas Neue';font-size:44px;letter-spacing:2px;line-height:1}
+h1 span{color:var(--acc)}
+.sub{color:var(--mut);margin:6px 0 20px;max-width:800px;line-height:1.5}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.card h3{font-family:'Bebas Neue';letter-spacing:1.5px;font-size:20px;color:var(--gold);margin-bottom:10px}
+label{display:block;font:500 11px 'DM Mono';color:var(--mut);text-transform:uppercase;letter-spacing:.8px;margin:0 0 4px}
+input,select{width:100%;background:#080e1b;border:1px solid var(--line);color:var(--txt);padding:8px 9px;border-radius:6px;font:500 14px 'DM Mono'}
+input:focus,select:focus{outline:none;border-color:var(--acc)}
+input[type=range]{padding:0;accent-color:var(--acc)}
+.mk{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;align-items:end}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:11px 12px}
+.stat .k{font:11px 'DM Mono';color:var(--mut);text-transform:uppercase;letter-spacing:.8px}
+.stat .v{font:500 21px 'DM Mono';margin-top:4px}
+.stat .n{font-size:12px;color:var(--mut);margin-top:2px}
+.pos{color:var(--grn)}.neg{color:var(--red)}.acc{color:var(--acc)}.gold{color:var(--gold)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:6px 12px;border-radius:20px;font:600 12.5px Barlow;cursor:pointer}
+.chip:hover{border-color:var(--acc);color:var(--acc)}
+table{width:100%;border-collapse:collapse;font:13px 'DM Mono'}
+th{color:var(--mut);text-align:left;padding:6px 6px;border-bottom:1px solid var(--line);font-weight:500;text-transform:uppercase;font-size:10.5px;letter-spacing:.7px}
+td{padding:5px 5px;border-bottom:1px solid #121e36}
+.legs td input,.legs td select{padding:6px 7px;font-size:13px}
+.legs{overflow-x:auto}
+.legs table{min-width:760px}
+.mdl{color:var(--mut)}
+svg{width:100%;height:auto;display:block}
+.ax{font:11px 'DM Mono';fill:var(--mut)}
+.heat td,.heat th{text-align:center}
+.heat td:first-child,.heat th:first-child{text-align:left}
+.note{color:var(--mut);font-size:12.5px;line-height:1.55;margin-top:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.two{grid-template-columns:1fr}}
+.foot{color:var(--mut);font-size:12px;line-height:1.55;margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.leg-sw{display:inline-block;width:22px;height:3px;vertical-align:middle;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">DEGEN <span>DESK</span></div>
+  <a class="btn" href="deskbwsddp.html">&#8962; Home</a>
+  <a class="btn" href="put-spread-bwsddp.html">Put Spread Calculator</a>
+  <div class="sp"></div>
+  <div class="sw">accent <i data-c="#22d3ee" style="background:#22d3ee"></i><i data-c="#f5b942" style="background:#f5b942"></i><i data-c="#f87171" style="background:#f87171"></i><i data-c="#ffffff" style="background:#fff"></i></div>
+</div>
+
+<div class="wrap">
+  <h1>Derive <span>Trade Simulator</span></h1>
+  <p class="sub">Build any BTC options or perp trade the way you would on Derive, then see what happens at expiry and before it. Pick a starting strategy, edit the legs, and move the price, time and volatility sliders. Everything is a model estimate: replace the auto prices with the real quotes from Derive before you rely on a number.</p>
+
+  <div class="card">
+    <h3>Market</h3>
+    <div class="mk">
+      <div><label>BTC spot ($)</label><input id="spot" type="number" step="50" value="73200"></div>
+      <div><label>Days to expiry</label><input id="dte" type="number" min="0.1" step="1" value="50"></div>
+      <div><label>Implied vol (%)</label><input id="iv" type="number" step="1" value="35"></div>
+      <div><label>Preset size (BTC)</label><input id="size" type="number" step="0.1" value="1"></div>
+      <div><label>Taker fee (bps)</label><input id="fee" type="number" step="0.5" value="3"></div>
+      <div><label>Min fee / leg ($)</label><input id="feeMin" type="number" step="0.1" value="0.5"></div>
+      <div><label>Perp leverage (x)</label><input id="lev" type="number" step="1" value="5"></div>
+      <div><button class="btn" id="live" style="width:100%">Pull live BTC</button></div>
+    </div>
+    <div class="note" id="liveMsg">Spot, IV and fees are inputs. Use Derive's quoted IV and live price for accurate results.</div>
+  </div>
+
+  <div class="card">
+    <h3>Strategy</h3>
+    <div class="chips" id="chips"></div>
+    <div class="legs">
+      <table id="legs"></table>
+    </div>
+    <div style="margin-top:10px"><button class="btn sm" id="addLeg">+ Add leg</button> <button class="btn sm" id="clearLegs">Clear all</button></div>
+    <div class="note">Leave "Entry price" blank to use the model price at today's spot, IV and expiry. Puts further out of the money usually trade at a higher IV (skew), so give each leg its own IV to match Derive's chain. Type the real Derive fill price to override it. For a perp leg, the strike column is your entry price and Buy means long, Sell means short.</div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card">
+    <h3>What If? Scenario</h3>
+    <div class="mk">
+      <div><label>BTC price in scenario ($)</label><input id="tp" type="number" step="500"></div>
+      <div><label>Days passed: <span id="dpv" class="acc"></span></label><input id="dp" type="range" min="0" max="50" step="1" value="0"></div>
+      <div><label>IV change (pts): <span id="ivv" class="acc"></span></label><input id="ivs" type="range" min="-30" max="30" step="1" value="0"></div>
+      <div><label>Chart range ±<span id="rgv" class="acc"></span>%</label><input id="rg" type="range" min="10" max="60" step="5" value="35"></div>
+    </div>
+    <div class="stats" id="scen" style="margin:14px 0 0"></div>
+  </div>
+
+  <div class="card">
+    <h3>Profit / Loss Curve</h3>
+    <div class="note" style="margin:0 0 6px"><span class="leg-sw" style="background:var(--acc)"></span>At expiry &nbsp; <span class="leg-sw" style="background:var(--gold)"></span>In scenario (after the days passed and IV change you chose)</div>
+    <svg id="chart" viewBox="0 0 900 380"></svg>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h3>Heat Map: Price × Time</h3>
+      <div class="note" style="margin:0 0 8px">P/L ($) at each BTC price (columns) and days remaining (rows), using the IV change set above.</div>
+      <table class="heat" id="heat"></table>
+    </div>
+    <div class="card">
+      <h3>Reading the Result</h3>
+      <div id="read" class="note" style="margin:0;font-size:14px;color:var(--txt)"></div>
+    </div>
+  </div>
+
+  <div class="foot">Educational simulator, not financial advice and not an offer to trade. Prices come from a Black-Scholes model (no interest rate, one IV for all strikes), so real Derive quotes will differ because of skew, spreads and liquidity. Fees are charged on open only and are editable; funding, liquidation mechanics, settlement and Derive's portfolio margin rules are not modeled. Perp liquidation is an approximation. Check every number against the live Derive order screen.</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const money=(n,d=0)=>{if(!isFinite(n))return'—';const s=Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});return(n<0?'-$':'$')+s};
+const cls=n=>n>0.005?'pos':n<-0.005?'neg':'';
+const num=i=>{const v=parseFloat($(i).value);return isNaN(v)?0:v};
+
+/* ---------- pricing ---------- */
+function erf(x){const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y}
+const N=x=>0.5*(1+erf(x/Math.SQRT2));
+function bs(type,S,K,T,sig){
+  if(T<=1e-9||sig<=1e-9||S<=0){return type==='call'?Math.max(S-K,0):Math.max(K-S,0)}
+  const v=sig*Math.sqrt(T),d1=(Math.log(S/K)+0.5*v*v)/v,d2=d1-v;
+  return type==='call'?S*N(d1)-K*N(d2):K*N(-d2)-S*N(-d1);
+}
+
+/* ---------- legs state ---------- */
+let legs=[],uid=1;
+const r500=x=>Math.round(x/500)*500;
+function mk(side,type,K,q,iv='',entry=''){return{id:uid++,side,type,K,q,iv,entry}}
+const STRATS=[
+ ['Long put',S=>[mk('buy','put',r500(S*.98),1)]],
+ ['Long call',S=>[mk('buy','call',r500(S*1.02),1)]],
+ ['Bear put spread',S=>[mk('buy','put',r500(S*.99),1),mk('sell','put',r500(S*.89),1)]],
+ ['Bull put spread',S=>[mk('sell','put',r500(S*.95),1),mk('buy','put',r500(S*.88),1)]],
+ ['Bull call spread',S=>[mk('buy','call',r500(S),1),mk('sell','call',r500(S*1.1),1)]],
+ ['Bear call spread',S=>[mk('sell','call',r500(S*1.05),1),mk('buy','call',r500(S*1.12),1)]],
+ ['Long straddle',S=>[mk('buy','call',r500(S),1),mk('buy','put',r500(S),1)]],
+ ['Long strangle',S=>[mk('buy','call',r500(S*1.06),1),mk('buy','put',r500(S*.94),1)]],
+ ['Iron condor',S=>[mk('sell','put',r500(S*.92),1),mk('buy','put',r500(S*.85),1),mk('sell','call',r500(S*1.08),1),mk('buy','call',r500(S*1.15),1)]],
+ ['Protective put',S=>[mk('buy','perp',r500(S),1),mk('buy','put',r500(S*.95),1)]],
+ ['Collar',S=>[mk('buy','perp',r500(S),1),mk('buy','put',r500(S*.92),1),mk('sell','call',r500(S*1.1),1)]],
+ ['Cash-secured put',S=>[mk('sell','put',r500(S*.93),1)]],
+ ['Long perp',S=>[mk('buy','perp',r500(S),1)]],
+ ['Short perp',S=>[mk('sell','perp',r500(S),1)]]
+];
+function loadStrat(i){
+  const S=num('spot'),sz=num('size')||1;
+  legs=STRATS[i][1](S);legs.forEach(l=>l.q=sz);
+  renderLegs();run();
+}
+function renderChips(){
+  $('chips').innerHTML=STRATS.map((s,i)=>`<button class="chip" data-i="${i}">${s[0]}</button>`).join('');
+  $('chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>loadStrat(+b.dataset.i));
+}
+
+/* ---------- model ---------- */
+function ctx(){
+  const S=num('spot'),dte=Math.max(num('dte'),0.1),iv=num('iv')/100;
+  return{S,dte,T:dte/365,iv,bps:num('fee'),fmin:num('feeMin'),lev:num('lev')||1};
+}
+function norm(c){
+  return legs.map(l=>{
+    const dir=l.side==='buy'?1:-1,K=parseFloat(l.K)||0,q=parseFloat(l.q)||0;
+    const iv=(parseFloat(l.iv)>0?parseFloat(l.iv):c.iv*100)/100;
+    let model=l.type==='perp'?K:bs(l.type,c.S,K,c.T,iv);
+    const man=parseFloat(l.entry);
+    const entry=l.type==='perp'?K:(isNaN(man)||l.entry===''?model:man);
+    return{id:l.id,dir,type:l.type,K,q,iv,model,entry};
+  });
+}
+function feesOf(L,c){return L.reduce((a,l)=>a+(l.q>0?Math.max(c.S*l.q*c.bps/10000,c.fmin):0),0)}
+function plAt(L,c,fees,P,dLeft,ivShift){
+  const T=Math.max(dLeft,0)/365;
+  let s=0;
+  for(const l of L){
+    const v=l.type==='perp'?P:bs(l.type,P,l.K,T,Math.max(l.iv+ivShift,0.01));
+    s+=l.dir*l.q*(v-l.entry);
+  }
+  return s-fees;
+}
+
+/* ---------- legs table ---------- */
+function renderLegs(){
+  const c=ctx(),L=norm(c);
+  $('legs').innerHTML='<tr><th>Side</th><th>Type</th><th>Strike / perp entry</th><th>Size (BTC)</th><th>IV % (blank = global)</th><th>Entry price</th><th>Model price</th><th></th></tr>'+
+  legs.map((l,i)=>`<tr data-id="${l.id}">
+    <td><select data-f="side"><option value="buy"${l.side==='buy'?' selected':''}>Buy</option><option value="sell"${l.side==='sell'?' selected':''}>Sell</option></select></td>
+    <td><select data-f="type"><option value="call"${l.type==='call'?' selected':''}>Call</option><option value="put"${l.type==='put'?' selected':''}>Put</option><option value="perp"${l.type==='perp'?' selected':''}>Perp</option></select></td>
+    <td><input data-f="K" type="number" step="500" value="${l.K}"></td>
+    <td><input data-f="q" type="number" step="0.1" value="${l.q}"></td>
+    <td><input data-f="iv" type="number" step="1" value="${l.iv}" ${l.type==='perp'?'disabled':''}></td>
+    <td><input data-f="entry" type="number" step="5" value="${l.entry}" placeholder="auto" ${l.type==='perp'?'disabled':''}></td>
+    <td class="mdl">${l.type==='perp'?'—':money(L[i].model,0)}</td>
+    <td><button class="btn sm" data-del="1">✕</button></td></tr>`).join('');
+  $('legs').querySelectorAll('tr[data-id]').forEach(tr=>{
+    const id=+tr.dataset.id;
+    tr.querySelectorAll('[data-f]').forEach(el=>{
+      const h=()=>{const l=legs.find(x=>x.id===id);l[el.dataset.f]=el.value;
+        if(el.dataset.f==='type'||el.dataset.f==='side'){renderLegs()}else{updModel()}
+        run()};
+      el.addEventListener(el.tagName==='SELECT'?'change':'input',h);
+    });
+    tr.querySelector('[data-del]').onclick=()=>{legs=legs.filter(x=>x.id!==id);renderLegs();run()};
+  });
+}
+function updModel(){
+  const c=ctx(),L=norm(c);
+  const rows=$('legs').querySelectorAll('tr[data-id]');
+  rows.forEach((tr,i)=>{tr.children[6].textContent=legs[i].type==='perp'?'—':money(L[i].model,0)});
+}
+
+/* ---------- main run ---------- */
+function run(){
+  const c=ctx(),L=norm(c);
+  if(!L.length){$('stats').innerHTML='<div class="stat"><div class="k">No legs</div><div class="v">Pick a strategy</div></div>';$('scen').innerHTML='';$('chart').innerHTML='';$('heat').innerHTML='';$('read').textContent='Add at least one leg.';return}
+  const fees=feesOf(L,c);
+  const dteMax=Math.max(Math.round(c.dte),1);
+  const dp=$('dp');dp.max=dteMax;if(+dp.value>dteMax)dp.value=dteMax;
+  const days=+dp.value,ivs=+$('ivs').value/100,rg=+$('rg').value/100;
+  $('dpv').textContent=days;$('ivv').textContent=(ivs>=0?'+':'')+Math.round(ivs*100);$('rgv').textContent=Math.round(rg*100);
+  if(!$('tp').value)$('tp').value=r500(c.S*0.92);
+  const tp=num('tp');
+
+  const exp=P=>plAt(L,c,fees,P,0,0);
+  // grid for stats
+  const hi=c.S*3,n=1500,xs=[],ys=[];
+  for(let i=0;i<=n;i++){const P=hi*i/n;xs.push(P);ys.push(exp(P))}
+  let maxP=-Infinity,maxL=Infinity,maxPx=0,maxLx=0;
+  ys.forEach((y,i)=>{if(y>maxP){maxP=y;maxPx=xs[i]}if(y<maxL){maxL=y;maxLx=xs[i]}});
+  const plat=(val)=>{let a=null,b=null;ys.forEach((y,i)=>{if(Math.abs(y-val)<=Math.max(0.5,Math.abs(val)*1e-6)){if(a===null)a=xs[i];b=xs[i]}});
+    if(a===null)return'';const step=hi/n;const sn=x=>{for(const l of L){if(l.type!=='perp'&&Math.abs(l.K-x)<=step*1.01)return l.K}return x};a=sn(a);b=sn(b);if(a<=step)return'BTC ≤ '+money(b);if(b>=hi-step)return'BTC ≥ '+money(a);if(b-a<=step*3)return'at BTC ≈ '+money((a+b)/2);return'BTC '+money(a)+' to '+money(b)};
+  const slope=(exp(hi)-exp(hi*0.9))/(hi*0.1);
+  const unlimProfit=slope>1e-6,unlimLoss=slope<-1e-6;
+  const bes=[];
+  for(let i=1;i<=n;i++){if((ys[i-1]<0&&ys[i]>=0)||(ys[i-1]>0&&ys[i]<=0)){const t=ys[i-1]/(ys[i-1]-ys[i]);bes.push(xs[i-1]+t*(xs[i]-xs[i-1]))}}
+  const cost=L.filter(l=>l.type!=='perp').reduce((a,l)=>a+l.dir*l.q*l.entry,0);
+  const hasPerp=L.some(l=>l.type==='perp');
+
+  // probability of profit, model EV (lognormal, zero drift)
+  let pop=0,ev=0,wsum=0;const sg=c.iv,sT=sg*Math.sqrt(c.T);
+  for(let k=-500;k<=500;k++){const z=k/100,w=Math.exp(-z*z/2);const P=c.S*Math.exp(-sg*sg*c.T/2+sT*z);const v=exp(P);wsum+=w;ev+=w*v;if(v>0)pop+=w}
+  pop/=wsum;ev/=wsum;
+
+  const mpTxt=unlimProfit?'Unlimited':money(maxP);
+  const mlTxt=unlimLoss?'Unlimited':money(maxL);
+  const ror=(!unlimLoss&&maxL<0)?(maxP/Math.abs(maxL)):null;
+  const ptsTxt=bes.length?bes.map(b=>money(b)).join(' / '):'none';
+  $('stats').innerHTML=[
+    [cost>=0?'Net debit':'Net credit',money(Math.abs(cost)),cost>=0?'paid for options (before fees)':'received for options (before fees)','gold'],
+    ['Max profit',mpTxt,unlimProfit?'rises as BTC rises':plat(maxP),'pos'],
+    ['Max loss',mlTxt,unlimLoss?'grows as BTC rises':plat(maxL),'neg'],
+    ['Breakeven(s)',ptsTxt,'at expiry, after fees','acc'],
+    ['Chance of profit',(pop*100).toFixed(0)+'%','model, at '+(c.iv*100).toFixed(0)+'% IV',''],
+    ['Model avg P/L',money(ev),'priced at the global IV above; skewed leg IVs show up here as edge or cost',cls(ev)],
+    ['Reward : risk',ror===null?'—':ror.toFixed(2)+' : 1','max profit ÷ max loss',''],
+    ['Fees (open)',money(fees,2),c.bps+' bps, min '+money(c.fmin,2)+'/leg','']
+  ].map(a=>`<div class="stat"><div class="k">${a[0]}</div><div class="v ${a[3]}">${a[1]}</div><div class="n">${a[2]}</div></div>`).join('');
+
+  const dLeft=Math.max(c.dte-days,0);
+  const sc=plAt(L,c,fees,tp,dLeft,ivs);
+  const val=sc+fees; // gross P/L before fees
+  const basis=Math.abs(cost)>1?Math.abs(cost):(isFinite(maxL)&&!unlimLoss?Math.abs(maxL):0);
+  $('scen').innerHTML=[
+    ['P/L in scenario',money(sc),'BTC '+money(tp)+' after '+days+' day'+(days===1?'':'s')+', IV '+(ivs>=0?'+':'')+Math.round(ivs*100)+' pts',cls(sc)],
+    ['P/L if held to expiry',money(exp(tp)),'BTC at '+money(tp)+' on expiry day',cls(exp(tp))],
+    ['Return on capital',basis>0?(sc/basis*100).toFixed(0)+'%':'—','scenario P/L ÷ '+(Math.abs(cost)>1?'net premium':'max loss'),cls(sc)],
+    ['Days left',dLeft.toFixed(0),'of '+c.dte.toFixed(0)+' to expiry','']
+  ].map(a=>`<div class="stat"><div class="k">${a[0]}</div><div class="v ${a[3]}">${a[1]}</div><div class="n">${a[2]}</div></div>`).join('');
+
+  drawChart(L,c,fees,exp,P=>plAt(L,c,fees,P,dLeft,ivs),rg,tp,bes);
+  drawHeat(L,c,fees,ivs,tp);
+  explain({L,c,cost,maxP,maxL,unlimProfit,unlimLoss,bes,pop,hasPerp,fees,sc,tp,days,ivs,exp});
+}
+
+/* ---------- chart ---------- */
+function drawChart(L,c,fees,exp,scFn,rg,tp,bes){
+  const W=900,H=380,Lm=74,R=16,T=14,B=34;
+  const lo=Math.max(c.S*(1-rg),1),hi=c.S*(1+rg),n=260;
+  const a=[],b=[];
+  for(let i=0;i<=n;i++){const P=lo+(hi-lo)*i/n;a.push([P,exp(P)]);b.push([P,scFn(P)])}
+  const all=a.concat(b).map(p=>p[1]).concat([0]);
+  let yMin=Math.min(...all),yMax=Math.max(...all);const pad=(yMax-yMin)*.1||1;yMin-=pad;yMax+=pad;
+  const X=p=>Lm+(p-lo)/(hi-lo)*(W-Lm-R),Y=v=>T+(yMax-v)/(yMax-yMin)*(H-T-B),y0=Y(0);
+  const path=pts=>pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join('');
+  const area=path(a)+`L${X(hi)} ${y0}L${X(lo)} ${y0}Z`;
+  let g='';
+  for(let i=0;i<=4;i++){const v=yMin+(yMax-yMin)*i/4;g+=`<line x1="${Lm}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#16233e"/><text class="ax" x="${Lm-8}" y="${Y(v)+4}" text-anchor="end">${money(v)}</text>`}
+  for(let i=0;i<=6;i++){const p=lo+(hi-lo)*i/6;g+=`<text class="ax" x="${X(p)}" y="${H-12}" text-anchor="middle">${(p/1000).toFixed(1)}K</text>`}
+  const vl=(p,col,lab)=>p>=lo&&p<=hi?`<line x1="${X(p)}" x2="${X(p)}" y1="${T}" y2="${H-B}" stroke="${col}" stroke-dasharray="4 4"/><text class="ax" x="${X(p)+4}" y="${T+11}" style="fill:${col}">${lab}</text>`:'';
+  let be='';bes.forEach(p=>{be+=vl(p,'#22d3ee','BE')});
+  $('chart').innerHTML=`<defs><clipPath id="cu"><rect x="0" y="0" width="${W}" height="${y0}"/></clipPath><clipPath id="cd"><rect x="0" y="${y0}" width="${W}" height="${H}"/></clipPath></defs>${g}
+   <path d="${area}" fill="#34d399" fill-opacity=".15" clip-path="url(#cu)"/><path d="${area}" fill="#f87171" fill-opacity=".15" clip-path="url(#cd)"/>
+   <line x1="${Lm}" x2="${W-R}" y1="${y0}" y2="${y0}" stroke="#4b5d82"/>
+   ${vl(c.S,'#8a9bbd','spot')}${be}${vl(tp,'#f5b942','scenario')}
+   <path d="${path(a)}" fill="none" stroke="var(--acc)" stroke-width="3"/>
+   <path d="${path(b)}" fill="none" stroke="#f5b942" stroke-width="2.5" stroke-dasharray="7 5"/>
+   <line id="hv" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="#fff" stroke-opacity=".5" style="display:none"/>
+   <text id="ht" class="ax" x="0" y="${T+26}" style="fill:#fff;display:none"></text>`;
+  const svg=$('chart');
+  svg.onmousemove=e=>{const r=svg.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W;if(x<Lm||x>W-R)return;const p=lo+(x-Lm)/(W-Lm-R)*(hi-lo);const hv=$('hv'),ht=$('ht');hv.setAttribute('x1',x);hv.setAttribute('x2',x);hv.style.display='';ht.style.display='';ht.setAttribute('x',Math.min(x+6,W-300));ht.textContent=money(p)+'  expiry '+money(exp(p))+'  scenario '+money(scFn(p))};
+  svg.onmouseleave=()=>{const h=$('hv'),t=$('ht');if(h){h.style.display='none';t.style.display='none'}};
+}
+
+/* ---------- heat map ---------- */
+function drawHeat(L,c,fees,ivs,tp){
+  const cols=[-0.2,-0.12,-0.06,0,0.06,0.12,0.2].map(x=>c.S*(1+x));
+  const rows=[1,0.75,0.5,0.25,0.02].map(f=>c.dte*(1-f)); // days passed fractions -> remaining
+  const remaining=[c.dte,c.dte*0.75,c.dte*0.5,c.dte*0.25,0];
+  let vals=[];
+  remaining.forEach(d=>cols.forEach(P=>vals.push(plAt(L,c,fees,P,d,ivs))));
+  const m=Math.max(...vals.map(Math.abs),1);
+  const cell=v=>{const a=Math.min(Math.abs(v)/m,1)*0.55;const col=v>=0?`rgba(52,211,153,${a})`:`rgba(248,113,113,${a})`;return`<td style="background:${col}" class="${cls(v)}">${Math.abs(v)>=1000?(v/1000).toFixed(1)+'K':v.toFixed(0)}</td>`};
+  $('heat').innerHTML='<tr><th>Days left</th>'+cols.map(P=>`<th>${(P/1000).toFixed(1)}K</th>`).join('')+'</tr>'+
+   remaining.map((d,ri)=>`<tr><td style="color:var(--mut)">${d<1?'expiry':d.toFixed(0)+'d'}</td>${cols.map((P,ci)=>cell(vals[ri*cols.length+ci])).join('')}</tr>`).join('');
+}
+
+/* ---------- plain-English readout ---------- */
+function explain(o){
+  const {L,c,cost,maxP,maxL,unlimProfit,unlimLoss,bes,pop,hasPerp,fees,sc,tp,days,ivs}=o;
+  const desc=L.map(l=>`${l.dir>0?'long':'short'} ${l.q} BTC ${l.type==='perp'?'perp from '+money(l.K):money(l.K)+' '+l.type}`).join(', ');
+  let t=`<p><b>Your trade:</b> ${desc}.</p>`;
+  t+=`<p style="margin-top:8px">${cost>=0?'You pay about <b>'+money(cost)+'</b> in premium':'You collect about <b>'+money(-cost)+'</b> in premium'}${hasPerp?' plus the perp exposure':''}, and about ${money(fees,2)} in opening fees.</p>`;
+  t+=`<p style="margin-top:8px">Best case at expiry: <b class="pos">${unlimProfit?'unlimited':money(maxP)}</b>. Worst case: <b class="neg">${unlimLoss?'unlimited':money(maxL)}</b>.${bes.length?' It breaks even near '+bes.map(b=>'<b>'+money(b)+'</b>').join(' and ')+'.':''}</p>`;
+  t+=`<p style="margin-top:8px">If BTC is at <b>${money(tp)}</b> after ${days} day${days===1?'':'s'}${ivs?' with IV '+(ivs>0?'up ':'down ')+Math.abs(Math.round(ivs*100))+' pts':''}, this trade would be <b class="${cls(sc)}">${money(sc)}</b>. Held to expiry at that price it is <b class="${cls(o.exp(tp))}">${money(o.exp(tp))}</b>.</p>`;
+  t+=`<p style="margin-top:8px">The model puts the chance of finishing in profit at about <b>${(pop*100).toFixed(0)}%</b>. That is a model number from one IV, not a forecast.</p>`;
+  if(unlimLoss)t+=`<p style="margin-top:8px" class="neg">Warning: this has unlimited loss. On Derive your margin is set by its portfolio margin engine and you can be liquidated.</p>`;
+  if(hasPerp){const p=L.find(l=>l.type==='perp');const liq=p.dir>0?p.K*(1-1/c.lev):p.K*(1+1/c.lev);t+=`<p style="margin-top:8px" class="note">Perp at ${c.lev}x: rough liquidation about ${money(liq)} (ignores maintenance margin, funding and other legs).</p>`}
+  $('read').innerHTML=t;
+}
+
+/* ---------- wiring ---------- */
+['spot','dte','iv','fee','feeMin','lev','size'].forEach(i=>$(i).addEventListener('input',()=>{updModel();run()}));
+['tp','dp','ivs','rg'].forEach(i=>$(i).addEventListener('input',run));
+$('addLeg').onclick=()=>{legs.push(mk('buy','call',r500(num('spot')*1.05),num('size')||1));renderLegs();run()};
+$('clearLegs').onclick=()=>{legs=[];renderLegs();run()};
+$('live').onclick=async()=>{
+  const m=$('liveMsg');m.textContent='Fetching BTC price…';
+  try{const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');const j=await r.json();const p=Math.round(j.bitcoin.usd);$('spot').value=p;m.textContent='Live BTC '+money(p)+' loaded (CoinGecko). Strikes in your legs did not change.';updModel();run()}
+  catch(e){m.textContent='Could not reach the price feed from here. Type the spot price in manually.'}
+};
+document.querySelectorAll('.sw i').forEach(e=>e.onclick=()=>{document.documentElement.style.setProperty('--acc',e.dataset.c);try{localStorage.setItem('dd_acc',e.dataset.c)}catch(x){}});
+try{const a=localStorage.getItem('dd_acc');if(a)document.documentElement.style.setProperty('--acc',a)}catch(x){}
+renderChips();
+// start with the trade from the video: long 72.5K put / short 65K put
+legs=[mk('buy','put',72500,20,'30',''),mk('sell','put',65000,20,'43','')]; // lower IV on the 72.5K put, higher on the 65K put (skew) ≈ the $1.4K/BTC debit in the video
+$('tp').value=68000;
+renderLegs();run();
+</script>
+</body>
+</html>

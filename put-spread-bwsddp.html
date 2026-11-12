@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Put Spread Calculator | Block Wall Street Degen Desk</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060a13;--panel:#0c1322;--panel2:#101a2e;--line:#1b2a47;--txt:#e8eefb;--mut:#8a9bbd;--acc:#22d3ee;--gold:#f5b942;--grn:#34d399;--red:#f87171}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 500px at 70% -10%,#0f1d3a 0%,var(--bg) 60%);color:var(--txt);font-family:Barlow,system-ui,sans-serif;min-height:100vh}
+a{color:var(--acc);text-decoration:none}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--line);background:#080e1b;position:sticky;top:0;z-index:5}
+.top .brand{font-family:'Bebas Neue';font-size:26px;letter-spacing:2px;color:var(--gold)}
+.top .brand span{color:var(--acc)}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:7px 13px;border-radius:6px;font:600 13px Barlow;cursor:pointer;letter-spacing:.4px}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.pri{background:var(--acc);color:#04121a;border-color:var(--acc)}
+.sp{flex:1}
+.sw{display:flex;gap:6px;align-items:center;font:12px 'DM Mono';color:var(--mut)}
+.sw i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);cursor:pointer;display:inline-block}
+.wrap{max-width:1200px;margin:0 auto;padding:22px 20px 60px}
+h1{font-family:'Bebas Neue';font-size:44px;letter-spacing:2px;line-height:1}
+h1 span{color:var(--acc)}
+.sub{color:var(--mut);margin:6px 0 20px;max-width:760px;line-height:1.5}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:18px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card h3{font-family:'Bebas Neue';letter-spacing:1.5px;font-size:20px;color:var(--gold);margin-bottom:10px}
+label{display:block;font:500 11px 'DM Mono';color:var(--mut);text-transform:uppercase;letter-spacing:.8px;margin:10px 0 4px}
+input,select{width:100%;background:#080e1b;border:1px solid var(--line);color:var(--txt);padding:9px 10px;border-radius:6px;font:500 15px 'DM Mono'}
+input:focus,select:focus{outline:none;border-color:var(--acc)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:11px 12px}
+.stat .k{font:11px 'DM Mono';color:var(--mut);text-transform:uppercase;letter-spacing:.8px}
+.stat .v{font:500 22px 'DM Mono';margin-top:4px}
+.stat .n{font-size:12px;color:var(--mut);margin-top:2px}
+.pos{color:var(--grn)}.neg{color:var(--red)}.acc{color:var(--acc)}.gold{color:var(--gold)}
+svg{width:100%;height:auto;display:block}
+table{width:100%;border-collapse:collapse;font:13px 'DM Mono'}
+th{color:var(--mut);text-align:right;padding:7px 8px;border-bottom:1px solid var(--line);font-weight:500;text-transform:uppercase;font-size:11px;letter-spacing:.7px}
+td{text-align:right;padding:7px 8px;border-bottom:1px solid #121e36}
+th:first-child,td:first-child{text-align:left}
+tr.key td{background:#0f2036}
+tr.key td:first-child{color:var(--gold)}
+.warn{background:#2a1416;border:1px solid #5a2327;color:#fca5a5;padding:9px 12px;border-radius:6px;font-size:13px;margin-bottom:12px;display:none}
+.foot{color:var(--mut);font-size:12px;line-height:1.55;margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ax{font:11px 'DM Mono';fill:var(--mut)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">DEGEN <span>DESK</span></div>
+  <a class="btn" href="deskbwsddp.html">&#8962; Home</a>
+  <a class="btn" href="derive-simulator-bwsddp.html">Derive Trade Simulator</a>
+  <div class="sp"></div>
+  <div class="sw">accent <i data-c="#22d3ee" style="background:#22d3ee"></i><i data-c="#f5b942" style="background:#f5b942"></i><i data-c="#f87171" style="background:#f87171"></i><i data-c="#ffffff" style="background:#fff"></i></div>
+</div>
+
+<div class="wrap">
+  <h1>Long Put Spread <span>Payoff Calculator</span></h1>
+  <p class="sub">Buy a higher-strike put, sell a lower-strike put, same expiry. You pay a debit, your loss is capped at that debit, and your profit is capped at the strike width minus the debit. Enter live quotes from Derive for the two legs and see the result at expiry.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>The Trade</h3>
+      <div class="row" style="margin:0 0 4px">
+        <button class="btn" id="pDec">Dec spread example</button>
+        <button class="btn" id="pTight">Tighter $5K</button>
+        <button class="btn" id="pWide">Wide $15K</button>
+      </div>
+      <label>BTC spot price ($)</label><input id="spot" type="number" step="50">
+      <div class="two">
+        <div><label>Long put strike (buy)</label><input id="kL" type="number" step="500"></div>
+        <div><label>Short put strike (sell)</label><input id="kS" type="number" step="500"></div>
+      </div>
+      <div class="two">
+        <div><label>Long put price ($/BTC)</label><input id="pL" type="number" step="5"></div>
+        <div><label>Short put price ($/BTC)</label><input id="pS" type="number" step="5"></div>
+      </div>
+      <div class="two">
+        <div><label>Size (BTC)</label><input id="qty" type="number" step="0.1"></div>
+        <div><label>Take-profit target ($)</label><input id="tgt" type="number" step="500"></div>
+      </div>
+      <div class="two">
+        <div><label>Taker fee (bps)</label><input id="fee" type="number" step="0.5"></div>
+        <div><label>Min fee / leg ($)</label><input id="feeMin" type="number" step="0.1"></div>
+      </div>
+      <label>Account size ($) &mdash; optional</label><input id="acct" type="number" step="1000">
+      <p class="foot" style="border:0;padding:8px 0 0;margin:0">Prices here are illustrative. Replace them with the live bids and asks from Derive. Fee inputs are editable; confirm against Derive's current fee schedule.</p>
+    </div>
+
+    <div>
+      <div class="warn" id="warn"></div>
+      <div class="stats" id="stats"></div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Payoff at Expiry</h3>
+        <svg id="chart" viewBox="0 0 800 360"></svg>
+      </div>
+      <div class="card">
+        <h3>Price Ladder</h3>
+        <table id="ladder"></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">Educational tool, not financial advice. Long put spreads are defined risk, but you can lose the entire debit. Results are at expiry only; before expiry the spread's value moves with time and implied volatility. For that, use the <a href="derive-simulator-bwsddp.html">Derive Trade Simulator</a>.</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const money=(n,d=0)=>{if(!isFinite(n))return'—';const s=Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});return(n<0?'-$':'$')+s};
+const cls=n=>n>0.005?'pos':n<-0.005?'neg':'';
+const PRESETS={
+  dec:{spot:73200,kL:72500,kS:65000,pL:2650,pS:1235,qty:20,tgt:68000,fee:3,feeMin:0.5,acct:''},
+  tight:{spot:73200,kL:72500,kS:67500,pL:2650,pS:1650,qty:20,tgt:68000,fee:3,feeMin:0.5,acct:''},
+  wide:{spot:73200,kL:72500,kS:57500,pL:2650,pS:640,qty:20,tgt:62000,fee:3,feeMin:0.5,acct:''}
+};
+const ids=['spot','kL','kS','pL','pS','qty','tgt','fee','feeMin','acct'];
+function load(p){ids.forEach(i=>$(i).value=p[i]);calc()}
+const num=i=>{const v=parseFloat($(i).value);return isNaN(v)?0:v};
+
+function calc(){
+  const S=num('spot'),kL=num('kL'),kS=num('kS'),pL=num('pL'),pS=num('pS'),q=num('qty'),tgt=num('tgt'),bps=num('fee'),fmin=num('feeMin'),acct=num('acct');
+  const w=$('warn');w.style.display='none';
+  if(kL<=kS){w.textContent='For a long put spread the long (bought) strike must be ABOVE the short (sold) strike.';w.style.display='block'}
+  else if(pL<=pS){w.textContent='The long put should cost more than the short put. Check your two prices.';w.style.display='block'}
+  const legFee=Math.max(S*q*bps/10000,fmin);
+  const fees=legFee*2;
+  const debit=(pL-pS)*q;
+  const width=kL-kS;
+  const maxLoss=debit+fees;
+  const maxProfit=width*q-debit-fees;
+  const be=kL-(debit+fees)/(q||1);
+  const pl=P=>q*(Math.max(kL-P,0)-Math.max(kS-P,0))-debit-fees;
+  const rr=maxLoss>0?maxProfit/maxLoss:0;
+  const plT=pl(tgt);
+  const riskPct=acct>0?maxLoss/acct*100:null;
+  const bePct=(be/S-1)*100;
+  const full=(kS-0)>0?kS:0;
+  $('stats').innerHTML=[
+    ['Net debit',money(debit),'paid up front: '+money(pL-pS,0)+'/BTC','gold'],
+    ['Max loss',money(-maxLoss),'if BTC ≥ '+money(kL)+' at expiry (incl. fees)','neg'],
+    ['Max profit',money(maxProfit),'if BTC ≤ '+money(kS)+' at expiry','pos'],
+    ['Breakeven',money(be),bePct.toFixed(1)+'% vs spot','acc'],
+    ['Reward : risk',rr.toFixed(2)+' : 1','max profit ÷ max loss',''],
+    ['P/L at target '+money(tgt),money(plT),'if held to expiry at that price',cls(plT)],
+    ['Fees (open, 2 legs)',money(fees,2),bps+' bps, min '+money(fmin,2)+'/leg',''],
+    riskPct!==null?['Risk of account',riskPct.toFixed(2)+'%','max loss ÷ account size',riskPct>5?'neg':'']:['Debit as % of width',(width>0?debit/(width*q)*100:0).toFixed(1)+'%','cheaper = better odds paid for','']
+  ].map(a=>`<div class="stat"><div class="k">${a[0]}</div><div class="v ${a[3]}">${a[1]}</div><div class="n">${a[2]}</div></div>`).join('');
+  chart(pl,{S,kL,kS,be,tgt,maxLoss,maxProfit});
+  ladder(pl,{S,kL,kS,be,tgt,maxLoss});
+}
+
+function chart(pl,m){
+  const W=800,H=360,L=70,R=16,T=16,B=36;
+  const lo=Math.max(0,m.kS*0.82),hi=m.kL*1.12;
+  const N=240,pts=[];
+  for(let i=0;i<=N;i++){const P=lo+(hi-lo)*i/N;pts.push([P,pl(P)])}
+  let yMin=Math.min(...pts.map(p=>p[1]),0),yMax=Math.max(...pts.map(p=>p[1]),0);
+  const pad=(yMax-yMin)*0.12||1;yMin-=pad;yMax+=pad;
+  const X=p=>L+(p-lo)/(hi-lo)*(W-L-R),Y=v=>T+(yMax-v)/(yMax-yMin)*(H-T-B);
+  const y0=Y(0);
+  const path=pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join('');
+  const area=path+`L${X(hi)} ${y0}L${X(lo)} ${y0}Z`;
+  let g='';
+  for(let i=0;i<=4;i++){const v=yMin+(yMax-yMin)*i/4;g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#16233e"/><text class="ax" x="${L-8}" y="${Y(v)+4}" text-anchor="end">${money(v)}</text>`}
+  for(let i=0;i<=5;i++){const p=lo+(hi-lo)*i/5;g+=`<text class="ax" x="${X(p)}" y="${H-12}" text-anchor="middle">${Math.round(p/100)/10}K</text>`}
+  const vline=(p,c,lab)=>(p>=lo&&p<=hi)?`<line x1="${X(p)}" x2="${X(p)}" y1="${T}" y2="${H-B}" stroke="${c}" stroke-dasharray="4 4"/><text class="ax" x="${X(p)+4}" y="${T+11}" fill="${c}" style="fill:${c}">${lab}</text>`:'';
+  $('chart').innerHTML=`<defs><clipPath id="cu"><rect x="0" y="0" width="${W}" height="${y0}"/></clipPath><clipPath id="cd"><rect x="0" y="${y0}" width="${W}" height="${H}"/></clipPath></defs>
+  ${g}
+  <path d="${area}" fill="#34d399" fill-opacity=".18" clip-path="url(#cu)"/><path d="${area}" fill="#f87171" fill-opacity=".18" clip-path="url(#cd)"/>
+  <line x1="${L}" x2="${W-R}" y1="${y0}" y2="${y0}" stroke="#4b5d82"/>
+  ${vline(m.S,'#8a9bbd','spot')}${vline(m.be,'#22d3ee','breakeven')}${vline(m.tgt,'#f5b942','target')}
+  <path d="${path}" fill="none" stroke="var(--acc)" stroke-width="3"/>
+  <line id="hv" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="#fff" stroke-opacity=".5" style="display:none"/>
+  <text id="ht" class="ax" x="0" y="${T+26}" style="fill:#fff;display:none"></text>`;
+  const svg=$('chart');
+  svg.onmousemove=e=>{const r=svg.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W;if(x<L||x>W-R)return;const p=lo+(x-L)/(W-L-R)*(hi-lo);const hv=$('hv'),ht=$('ht');hv.setAttribute('x1',x);hv.setAttribute('x2',x);hv.style.display='';ht.style.display='';ht.setAttribute('x',Math.min(x+6,W-170));ht.textContent=money(p)+'  →  '+money(pl(p));};
+  svg.onmouseleave=()=>{const a=$('hv'),b=$('ht');if(a){a.style.display='none';b.style.display='none'}};
+}
+
+function ladder(pl,m){
+  const rows=new Map();
+  const add=(p,lab)=>{p=Math.round(p);if(p<=0)return;const o=rows.get(p)||[];if(lab)o.push(lab);rows.set(p,o)};
+  const lo=m.kS*0.88,hi=m.kL*1.08;
+  for(let i=0;i<=10;i++)add(Math.round((lo+(hi-lo)*i/10)/500)*500);
+  add(m.S,'spot');add(m.kL,'long strike');add(m.kS,'short strike');add(m.be,'breakeven');add(m.tgt,'target');
+  const arr=[...rows.entries()].sort((a,b)=>b[0]-a[0]);
+  $('ladder').innerHTML='<tr><th>BTC at expiry</th><th>vs spot</th><th>P/L</th><th>Return on risk</th><th></th></tr>'+arr.map(([p,l])=>{
+    const v=pl(p);const key=l.length?'key':'';
+    return`<tr class="${key}"><td>${money(p)}</td><td>${((p/m.S-1)*100).toFixed(1)}%</td><td class="${cls(v)}">${money(v)}</td><td class="${cls(v)}">${m.maxLoss>0?(v/m.maxLoss*100).toFixed(0)+'%':'—'}</td><td style="color:var(--mut)">${l.join(', ')}</td></tr>`}).join('');
+}
+
+ids.forEach(i=>$(i).addEventListener('input',calc));
+$('pDec').onclick=()=>load(PRESETS.dec);$('pTight').onclick=()=>load(PRESETS.tight);$('pWide').onclick=()=>load(PRESETS.wide);
+document.querySelectorAll('.sw i').forEach(e=>e.onclick=()=>{document.documentElement.style.setProperty('--acc',e.dataset.c);try{localStorage.setItem('dd_acc',e.dataset.c)}catch(x){}});
+try{const a=localStorage.getItem('dd_acc');if(a)document.documentElement.style.setProperty('--acc',a)}catch(x){}
+load(PRESETS.dec);
+</script>
+</body>
+</html>
