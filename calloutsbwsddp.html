@@ -131,6 +131,7 @@ summary{cursor:pointer;font-weight:700;min-height:36px;display:flex;align-items:
 .flt small{display:block;color:var(--muted)}
 .ck{display:flex;gap:8px;font-size:13px;margin:3px 0}
 .ck .y{color:var(--ok)}.ck .n{color:var(--danger)}.ck .u{color:var(--muted)}
+a.clk{font-size:11px;font-weight:700;color:var(--ta,#35f0ff);text-decoration:none;border:1px solid var(--tl,#1f2d52);border-radius:999px;padding:2px 8px;margin-left:6px;white-space:nowrap}a.clk:hover{border-color:var(--ta,#35f0ff)}
 </style>
 </head>
 <body>
@@ -977,7 +978,7 @@ function buildOptions(toks){
   return chain;
 }
 function optHTML(o,i){
-  var b=o.b,h='<div class="co" '+(o.idea?'tabindex="0" data-i="'+i+'"':'')+'><h3>'+esc(o.sym)+' '+(b.dir>0?'<span class="badge g">leans up</span>':b.dir<0?'<span class="badge r">leans down</span>':'<span class="badge">no edge</span>')+'</h3>';
+  var b=o.b,h='<div class="co" '+(o.idea?'tabindex="0" data-i="'+i+'"':'')+'><h3>'+esc(o.sym)+chartLink({sym:o.sym},'1d')+' '+(b.dir>0?'<span class="badge g">leans up</span>':b.dir<0?'<span class="badge r">leans down</span>':'<span class="badge">no edge</span>')+'</h3>';
   if(!o.idea)return h+'<p class="note">'+esc(o.why)+'</p></div>';
   var x=o.idea;
   h+='<div class="sc">'+(x.type==='C'?'Buy CALL':'Buy PUT')+' &middot; '+x.strike.toLocaleString('en-US')+' &middot; '+new Date(x.expMs).toISOString().slice(0,10)+'</div>';
@@ -1066,7 +1067,7 @@ function render(){
   if(!rs.length){box.innerHTML='<div class="empty" style="grid-column:1/-1">No call-outs at this score right now. Lower the score filter or wait for the next closed candle.'+(TAB==='long'?' Long-term setups change slowly.':'')+'</div>';box._rs=[];return}
   box._rs=rs;
   box.innerHTML=rs.map(function(c,i){
-    var l=lbl(c.score),h='<div class="co" tabindex="0" data-i="'+i+'"><h3>'+esc(c.t.label||c.t.sym)+' <span class="badge '+l[1]+'">'+l[0]+'</span>'+(c.dex?' <span class="badge r">DEX &middot; HIGH RISK</span>':'')+(c.t.stock?(c.t.src==='dex'?' <span class="badge y">Tokenized stock &middot; DEX data</span>':' <span class="badge b">Stock</span>'):'')+'</h3>'
+    var l=lbl(c.score),h='<div class="co" tabindex="0" data-i="'+i+'"><h3>'+esc(c.t.label||c.t.sym)+chartLink(c.t,c.tf||'1d')+' <span class="badge '+l[1]+'">'+l[0]+'</span>'+(c.dex?' <span class="badge r">DEX &middot; HIGH RISK</span>':'')+(c.t.stock?(c.t.src==='dex'?' <span class="badge y">Tokenized stock &middot; DEX data</span>':' <span class="badge b">Stock</span>'):'')+'</h3>'
       +'<div class="sc"><span class="bar"><i style="width:'+c.score+'%"></i></span>'+c.score+'</div>';
     if(c.h==='long'){
       var L=c.LL;h+='<div class="lv"><div><small>Price</small>'+fmt(L.price)+'</div><div><small>Scale-in zone</small>'+fmt(L.zoneLow)+' to '+fmt(L.zoneHigh)+'</div><div><small>Trend breaks</small>'+fmt(L.invalid)+'</div></div>';
@@ -1077,13 +1078,14 @@ function render(){
     return h;
   }).join('');
 }
-$('cards').addEventListener('click',function(e){var c=e.target.closest('.co');if(c&&this._rs){var it=this._rs[+c.dataset.i];if(it&&it.idea)openOpt(it);else openCard(it)}});
+$('cards').addEventListener('click',function(e){if(e.target.closest('a.clk'))return;var c=e.target.closest('.co');if(c&&this._rs){var it=this._rs[+c.dataset.i];if(it&&it.idea)openOpt(it);else openCard(it)}});
 $('cards').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){var c=e.target.closest('.co');if(c&&this._rs){e.preventDefault();var it=this._rs[+c.dataset.i];if(it&&it.idea)openOpt(it);else openCard(it)}}});
 Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(b){b.onclick=function(){TAB=b.dataset.h;render()}});
 var NAMES={scalp:'scalp',swing:'swing trade',long:'long-term hold'};
+function chartLink(tok,tf,cls){if(!tok||tok.addr||tok.stock||tok.src==='dex'||tok.dex)return '';var sym=String(tok.sym||tok.label||'').toUpperCase();if(!/^[A-Z0-9]{2,12}$/.test(sym))return '';return ' <a class="clk '+(cls||'')+'" target="_self" href="chart-bwsddp.html?coin='+encodeURIComponent(sym)+'&quote=USD&tf='+encodeURIComponent(tf||'1d')+'" title="Open '+sym+' on the Desk Charts for technical analysis">Chart &#8599;</a>'}
 function openCard(c){
   if(!c)return;var l=lbl(c.score);
-  $('mTitle').textContent=(c.t.label||c.t.sym)+' possible '+NAMES[c.h]+', score '+c.score+' ('+l[0]+')';
+  $('mTitle').innerHTML=esc((c.t.label||c.t.sym)+' possible '+NAMES[c.h]+', score '+c.score+' ('+l[0]+')')+chartLink(c.t,c.tf||'1d','btnlk');
   var h='<p class="mut" style="margin:0">Based on the '+c.tf+' candle that closed '+new Date(c.candle).toLocaleString()+'.'+(c.dex?' DEX token: price data comes from one pool.':'')+'</p>';
   if(c.dex)h+='<div class="warn"><b>High risk.</b> DEX tokens can fall to zero quickly. Even with every safety check passed, a team or insider can still sell or pull liquidity. Use very small size.</div>';
   if(c.h==='long'){
