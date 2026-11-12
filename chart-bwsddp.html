@@ -519,7 +519,7 @@ function drawDivSub(sp,xOf,y){
     const col=d.dir==='bull'?C.up:C.dn;ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=2;ctx.setLineDash(d.hidden?[6,4]:[]);ctx.beginPath();ctx.moveTo(xOf(d.a),y(d.oa));ctx.lineTo(xOf(d.b),y(d.ob));ctx.stroke();ctx.setLineDash([]);
     [[d.a,d.oa],[d.b,d.ob]].forEach(([i,v])=>{ctx.beginPath();ctx.arc(xOf(i),y(v),3.5,0,7);ctx.fill()})}}
 function drawLevels(py){
-  if(!S.aiLevels||!S.ai)return;const pR=G.Lo.pR;
+  return;/* support/resistance lines removed from the chart */const pR=G.Lo.pR;
   [...S.ai.res.map(l=>({...l,r:1})),...S.ai.sup.map(l=>({...l,r:0}))].forEach(l=>{const y=Math.round(py(l.p))+.5;if(y<G.M.y0||y>G.M.y1)return;const col=l.r?'#f0647a':'#2fd5a2';
     ctx.setLineDash([2,5]);ctx.strokeStyle=col+'99';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(pR,y);ctx.stroke();ctx.setLineDash([]);
     drawText((l.r?'R ':'S ')+fmtP(l.p)+'  ×'+l.n,pR-8,y-8,col,'right')})}
@@ -586,7 +586,6 @@ function renderAI(){
    ${S.div?(divs.length?divs.map((d,i)=>`<div class="dv ${d.dir}" data-b="${d.b}"><b>${divName(d)}</b><br><span>${fmtT(S.bars[d.b].t)} · confirmed ${n-1-d.conf} bar${n-1-d.conf===1?'':'s'} ago</span></div>`).join(''):'<div class="note" style="padding:2px 0">None found at this sensitivity.</div>'):'<div class="note" style="padding:2px 0">Divergence detection is off.</div>'}
    <h4>Settings</h4>
    <label class="ck"><input type="checkbox" id="aiDiv" ${S.div?'checked':''}> Detect divergences</label>
-   <label class="ck"><input type="checkbox" id="aiLv" ${S.aiLevels?'checked':''}> Show support / resistance on chart</label>
    <div class="two"><div><span class="lab">Oscillator</span><select id="aiOsc" class="sel"><option value="both">RSI + MACD</option><option value="rsi">RSI only</option><option value="macd">MACD only</option></select></div>
    <div><span class="lab">Sensitivity</span><select id="aiSens" class="sel"><option value="2">Fast (noisy)</option><option value="4">Normal</option><option value="7">Slow (major swings)</option></select></div></div>
    <p class="note" style="padding:6px 0">Solid line = regular divergence (reversal warning). Dashed line = hidden divergence (trend continuation). A divergence is only confirmed after the swing has formed, so it shows a few bars late.</p>
@@ -604,7 +603,6 @@ function renderAI(){
   </div>`;
   $('aiOsc').value=S.divOsc;$('aiSens').value=String(S.divSens);$('scanMode').value=S.scanMode;
   $('aiDiv').onchange=e=>{S.div=e.target.checked;save();computeInd();invalidate();renderPanel()};
-  $('aiLv').onchange=e=>{S.aiLevels=e.target.checked;save();invalidate()};
   $('aiOsc').onchange=e=>{S.divOsc=e.target.value;save();computeInd();invalidate();renderPanel()};
   $('aiSens').onchange=e=>{S.divSens=+e.target.value;save();computeInd();invalidate();renderPanel()};
   $('scanMode').onchange=e=>{S.scanMode=e.target.value};
