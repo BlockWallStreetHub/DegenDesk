@@ -136,7 +136,7 @@ summary{cursor:pointer;font-weight:700;min-height:36px;display:flex;align-items:
 <div id="app" class="hidden">
 <header>
   <h1>Scalp <b>Scanner</b> <span class="tag">PAID MEMBERS</span></h1>
-  <p class="sub">Looks for possible scalp setups on the <b>1-hour, 4-hour and daily</b> charts. Each reading uses volume, volatility (ATR), RSI, MACD and the 5 and 21 EMA, and scores long and short from 0 to 100. Only <b>closed candles</b> are used, so a setup never changes while you are looking at it.</p>
+  <p class="sub">Looks for possible scalp setups on the <b>1-hour, 4-hour and daily</b> charts. Each reading uses volume, volatility (ATR), RSI, MACD and the 5 and 21 EMA, and scores long and short from 0 to 100. Only <b>closed candles</b> are used, so a setup never changes while you are looking at it. It also scans <b>stocks, ETFs and tokenized stocks</b>.</p>
 </header>
 
 <main>
@@ -155,6 +155,14 @@ summary{cursor:pointer;font-weight:700;min-height:36px;display:flex;align-items:
       <label class="f">Show setups scoring at least <span id="minV" class="mono"></span>
         <input type="range" id="minScore" min="40" max="95" step="5" value="65">
       </label>
+      <label class="f">Stocks and tokenized stocks
+        <select id="useStk"><option value="1">On: scan the stock list below</option><option value="0">Off: crypto only</option></select>
+      </label>
+    </div>
+    <div class="grid" style="margin-top:6px">
+      <label class="f">Stock tickers to scan (comma separated, up to 40)
+        <input type="text" id="stkList" placeholder="NVDA, TSLA, AAPL" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      </label>
     </div>
     <div class="acts">
       <label class="chk"><input type="checkbox" id="fAlign"> Only tokens where 2+ timeframes agree</label>
@@ -162,11 +170,11 @@ summary{cursor:pointer;font-weight:700;min-height:36px;display:flex;align-items:
       <label class="chk"><input type="checkbox" id="auto" checked> Re-scan every 5 minutes while this page is open</label>
     </div>
     <div class="grid" style="margin-top:6px">
-      <label class="f">Add to my watchlist (ticker or contract address)
+      <label class="f">Add to my watchlist (crypto or stock ticker, or contract address)
         <input type="text" id="addQ" placeholder="SOL, or 0x... or a Solana mint" autocomplete="off" autocapitalize="off" spellcheck="false">
       </label>
-      <label class="f">Network (contract addresses)
-        <select id="addNet"><option value="auto">Auto</option><option value="eth">Ethereum</option><option value="base">Base</option><option value="solana">Solana</option><option value="bsc">BNB Chain</option><option value="arbitrum">Arbitrum</option><option value="avax">Avalanche</option><option value="polygon_pos">Polygon</option></select>
+      <label class="f">Network (contract addresses) or pick Stock
+        <select id="addNet"><option value="auto">Auto</option><option value="stock">Stock or ETF ticker</option><option value="eth">Ethereum</option><option value="base">Base</option><option value="solana">Solana</option><option value="bsc">BNB Chain</option><option value="arbitrum">Arbitrum</option><option value="avax">Avalanche</option><option value="polygon_pos">Polygon</option></select>
       </label>
       <div class="acts" style="margin:0"><button class="btn sec" id="addBtn" type="button">Add to watchlist</button><button class="btn" id="scan" type="button">Scan now</button></div>
     </div>
@@ -236,7 +244,7 @@ summary{cursor:pointer;font-weight:700;min-height:36px;display:flex;align-items:
         <li><b>History check:</b> the scanner replays the same rule across the candles it loaded and counts how often price reached Target 1 before the stop. A candle that touches both counts as a loss. A short history is a small sample, so treat it as a sanity check, not a promise.</li>
       </ul>
     </details>
-    <div class="note">Prices come from Binance public data, with CryptoCompare as a backup. Contract-address tokens come from GeckoTerminal. Top-100 list from CoinGecko, with stablecoins and wrapped copies left out.</div>
+    <div class="note">Prices come from Binance public data, with CryptoCompare as a backup. Contract-address tokens come from GeckoTerminal. Top-100 list from CoinGecko, with stablecoins and wrapped copies left out. <b>Stocks and ETFs:</b> Yahoo Finance chart data. If Yahoo cannot be reached from your browser, the scanner looks for a tokenized version (such as TSLAx or TSLAon) on a DEX through GeckoTerminal and marks it. Stock candles exist only while the market is open, so on nights and weekends the newest candle is from the last session. 4-hour stock candles join four consecutive 1-hour candles. The daily candle appears the morning after it closes. Prices can be delayed. Tokenized stocks trade thinly, so spreads and slippage can be large.</div>
   </section>
 </main>
 </div>
@@ -445,7 +453,7 @@ var STABLE={USDT:1,USDC:1,DAI:1,TUSD:1,FDUSD:1,USDE:1,USDS:1,PYUSD:1,USDD:1,GUSD
 var WRAPPED={WBTC:1,WETH:1,STETH:1,WSTETH:1,WEETH:1,CBBTC:1,CBETH:1,RETH:1,WBETH:1,WBNB:1,BTCB:1,LBTC:1,SOLVBTC:1,METH:1,EZETH:1,RSETH:1,JITOSOL:1,MSOL:1,BNSOL:1,WTRX:1,WAVAX:1,USDT0:1};
 var FALLBACK=['BTC','ETH','XRP','BNB','SOL','DOGE','TRX','ADA','LINK','AVAX','SUI','XLM','BCH','HBAR','LTC','TON','DOT','UNI','AAVE','NEAR','APT','ICP','ETC','ARB','OP','ATOM','FIL','INJ','TAO','RENDER','SEI','POL','ALGO','TIA','JUP','ONDO','PEPE','SHIB','WLD','ENA','LDO','CRV','FET','STX','IMX','GRT','RUNE','KAS','JASMY','PENDLE'];
 
-var S=load('dd_scalp_v1',{topN:100,minScore:65,alertMin:80,alertTok:'',added:[],alertWatch:false,mailOn:false,practice:true,maxMail:10,seen:null,log:[],sent:{d:'',n:0},auto:true});
+var S=load('dd_scalp_v1',{topN:100,minScore:65,alertMin:80,alertTok:'',added:[],alertWatch:false,mailOn:false,practice:true,maxMail:10,seen:null,log:[],sent:{d:'',n:0},auto:true,useStk:1});
 function load(k,d){try{var v=JSON.parse(localStorage.getItem(k)||'null');if(v&&typeof v==='object')return Object.assign({},d,v)}catch(e){}return d}
 function save(){try{localStorage.setItem('dd_scalp_v1',JSON.stringify(S))}catch(e){}}
 function say(m,c){var e=$('status');e.className='status'+(c?' '+c:'');e.textContent=m||''}
@@ -499,8 +507,69 @@ function gecko(q,net,tf){
   });
 }
 function candles(tok,tf){
+  if(tok.stock)return stockCandles(tok,tf);
   if(tok.addr)return gecko(tok.q,tok.net,tf);
   return binance(tok.sym,tf).catch(function(){return cryptocompare(tok.sym,tf)});
+}
+
+var WARMN=C.WARM+5;
+var GTJ=function(path){return getJ(GT+path)};
+/* ---------- stocks and tokenized stocks ---------- */
+var STK_DEFAULT='NVDA,TSLA,AAPL,MSFT,AMZN,GOOGL,META,COIN,MSTR,HOOD,SPY,QQQ';
+var yahooDown=0;
+function stkSym(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9.\-]/g,'').replace(/\./g,'-')}
+function stkList(){return String(S.stkList==null?STK_DEFAULT:S.stkList).split(/[\s,;]+/).map(stkSym).filter(Boolean).filter(function(s,i,a){return a.indexOf(s)===i}).slice(0,40)}
+function aggN(cs,n){            /* join n consecutive bars into one bar; a short last group is still open, so it is dropped */
+  var out=[];for(var i=0;i+n<=cs.length;i+=n){var g=cs.slice(i,i+n),v=0,h=-Infinity,l=Infinity;g.forEach(function(x){v+=x.v;if(x.h>h)h=x.h;if(x.l<l)l=x.l});out.push({t:g[0].t,o:g[0].o,h:h,l:l,c:g[g.length-1].c,v:v})}
+  return out;
+}
+function yahoo(sym,tf){
+  if(yahooDown&&Date.now()<yahooDown)return Promise.reject(new Error('yahoo skipped'));
+  var spec={'1h':['1h','6mo'],'4h':['1h','1y'],'1d':['1d','2y'],'1w':['1wk','5y']}[tf];
+  return getJ('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval='+spec[0]+'&range='+spec[1]+'&includePrePost=false',15000).then(function(j){
+    var r=j&&j.chart&&j.chart.result&&j.chart.result[0];if(!r||!r.timestamp)throw new Error('no stock data for '+sym);
+    var q=(r.indicators&&r.indicators.quote&&r.indicators.quote[0])||{},cs=[];
+    r.timestamp.forEach(function(t,i){if(q.close&&q.close[i]>0&&q.open[i]>0&&q.high[i]>0&&q.low[i]>0)cs.push({t:t*1000,o:+q.open[i],h:+q.high[i],l:+q.low[i],c:+q.close[i],v:+(q.volume&&q.volume[i]||0)})});
+    if(tf==='4h')cs=aggN(cs,4);
+    else cs=dropOpen(cs,tf);
+    if(cs.length<WARMN)throw new Error('only '+cs.length+' candles for '+sym);
+    return cs.slice(-LIMIT[tf]);
+  },function(e){if(!e.status)yahooDown=Date.now()+600000;throw e});   /* a network or browser block: stop retrying for 10 minutes and use the tokenized fallback */
+}
+var stkPools={};
+function stkPool(sym){
+  if(stkPools[sym])return stkPools[sym];
+  var names=[sym+'x',sym+'on'];
+  var p=names.reduce(function(chain,nm){return chain.then(function(found){
+    if(found)return found;
+    return GTJ('/search/pools?query='+encodeURIComponent(nm)+'&page=1').then(function(j){
+      var best=null;
+      (j.data||[]).forEach(function(p){
+        var rel=p.relationships||{},a=p.attributes||{},b=((rel.base_token||{}).data||{}).id||'',nmx=String(a.name||'').split(' / ')[0].trim().toLowerCase();
+        if(nmx!==nm.toLowerCase()||!b)return;
+        var liq=+a.reserve_in_usd||0;
+        if(!best||liq>best.liq)best={addr:a.address,net:((rel.network||{}).data||{}).id,token:b.slice(b.indexOf('_')+1),liq:liq,tokenSym:nm};
+      });
+      return best;
+    },function(){return null});
+  })},Promise.resolve(null)).then(function(f){if(!f)throw new Error('no tokenized version of '+sym+' found');return f});
+  stkPools[sym]=p;p.catch(function(){delete stkPools[sym]});return p;
+}
+function stkDex(sym,tf){
+  if(tf==='1w')return Promise.reject(new Error('weekly history is too short for a tokenized stock'));
+  return stkPool(sym).then(function(pl){
+    var spec={'1h':['hour',1],'4h':['hour',4],'1d':['day',1]}[tf];
+    return GTJ('/networks/'+pl.net+'/pools/'+pl.addr+'/ohlcv/'+spec[0]+'?aggregate='+spec[1]+'&limit='+LIMIT[tf]+'&currency=usd&token='+pl.token).then(function(j){
+      var l=(((j.data||{}).attributes||{}).ohlcv_list)||[];
+      var a=l.map(function(r){return{t:r[0]*1000,o:+r[1],h:+r[2],l:+r[3],c:+r[4],v:+r[5]}}).sort(function(x,y){return x.t-y.t});
+      if(a.length<WARMN)throw new Error('only '+a.length+' candles of tokenized history');
+      return dropOpen(a,tf);
+    });
+  });
+}
+function stockCandles(tok,tf){
+  var s=stkSym(tok.sym);
+  return yahoo(s,tf).then(function(cs){tok.src='stock';return cs},function(){return stkDex(s,tf).then(function(cs){tok.src='dex';return cs})});
 }
 
 /* ---------- universe ---------- */
@@ -538,7 +607,8 @@ function scan(){
   say('Loading the token list...');
   return universe().then(function(list){
     var toks=list.map(function(x){return{key:x.sym,sym:x.sym,label:x.sym}});
-    S.added.forEach(function(a){if(!toks.some(function(t){return t.key===a.key}))toks.push({key:a.key,sym:a.sym,q:a.q,addr:a.addr,net:a.net,label:a.label})});
+    if(S.useStk!==0)stkList().forEach(function(x){toks.push({key:'stk:'+x,sym:x,stock:true,label:x+' (stock)'})});
+    S.added.forEach(function(a){if(!toks.some(function(t){return t.key===a.key}))toks.push({key:a.key,sym:a.sym,q:a.q,addr:a.addr,net:a.net,label:a.label,stock:a.stock})});
     TOK={};toks.forEach(function(t){TOK[t.key]=t;t.data={};t.fail={}});
     var tasks=[];
     toks.forEach(function(t){TFS.forEach(function(tf){tasks.push(function(){
@@ -585,7 +655,7 @@ function render(){
   tb.innerHTML=rs.slice(0,300).map(function(r,i){
     var e=r.e,rd=e.read,cls=e.side>0?'L':'S',lab=e.side>0?'LONG':'SHORT',lb=e.label==='Strong'?'g':e.label==='Setup'?'b':'y';
     var macd=(rd.hist>0?'+':'-')+(rd.hist>rd.histPrev?' rising':' falling');
-    return '<tr tabindex="0" data-i="'+i+'"><td class="l"><button type="button" class="star'+(watched(r.tok.key)?' on':'')+'" data-star="'+esc(r.tok.key)+'" aria-label="'+(watched(r.tok.key)?'Remove ':'Add ')+esc(r.tok.label)+(watched(r.tok.key)?' from':' to')+' watchlist" aria-pressed="'+(watched(r.tok.key)?'true':'false')+'">'+(watched(r.tok.key)?'\u2605':'\u2606')+'</button><b>'+esc(r.tok.label)+'</b></td><td>'+r.tf+'</td><td class="sd '+cls+'">'+lab+'</td>'
+    return '<tr tabindex="0" data-i="'+i+'"><td class="l"><button type="button" class="star'+(watched(r.tok.key)?' on':'')+'" data-star="'+esc(r.tok.key)+'" aria-label="'+(watched(r.tok.key)?'Remove ':'Add ')+esc(r.tok.label)+(watched(r.tok.key)?' from':' to')+' watchlist" aria-pressed="'+(watched(r.tok.key)?'true':'false')+'">'+(watched(r.tok.key)?'\u2605':'\u2606')+'</button><b>'+esc(r.tok.label)+'</b>'+(r.tok.src==='dex'?' <span class="badge y">tokenized, DEX data</span>':'')+'</td><td>'+r.tf+'</td><td class="sd '+cls+'">'+lab+'</td>'
       +'<td><span class="bar"><i style="width:'+e.score+'%"></i></span>'+e.score+' <span class="badge '+lb+'">'+e.label+'</span></td>'
       +'<td class="mono">'+fmt(r.L.entry)+'</td><td class="mono">'+fmt(r.L.stop)+'</td><td class="mono">'+fmt(r.L.t1)+'</td><td class="mono">'+fmt(r.L.t2)+'</td>'
       +'<td>'+rd.rsi.toFixed(0)+'</td><td>'+macd+'</td><td>'+rd.relVol.toFixed(1)+'x</td><td>'+rd.atrPct.toFixed(2)+'</td>'
@@ -671,7 +741,7 @@ function watched(key){return S.added.some(function(a){return a.key===key})}
 function toggleWatch(key){
   var i=S.added.findIndex(function(a){return a.key===key});
   if(i>=0)S.added.splice(i,1);
-  else{var t=TOK[key];if(!t)return;S.added.push(t.addr?{key:t.key,sym:t.sym,q:t.q,addr:true,net:t.net,label:t.label}:{key:t.key,sym:t.sym,label:t.label})}
+  else{var t=TOK[key];if(!t)return;S.added.push(t.addr?{key:t.key,sym:t.sym,q:t.q,addr:true,net:t.net,label:t.label}:{key:t.key,sym:t.sym,label:t.label,stock:t.stock||undefined})}
   save();renderWatch();render();
 }
 function rowFor(key,tf){for(var i=0;i<ROWS.length;i++)if(ROWS[i].tok.key===key&&ROWS[i].tf===tf)return ROWS[i];return null}
@@ -701,7 +771,8 @@ function drawAdded(){renderWatch()}
 $('addBtn').onclick=function(){
   var q=($('addQ').value||'').trim();if(!q)return;
   var addr=/^0x[a-fA-F0-9]{40}$/.test(q)||(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(q)&&!/^[A-Za-z]{2,10}$/.test(q));
-  var item=addr?{key:q.toLowerCase(),sym:q,q:q,addr:true,net:$('addNet').value,label:q.slice(0,6)+'...'+q.slice(-4)}
+  var isStk=!addr&&$('addNet').value==='stock';
+  var item=isStk?{key:'stk:'+stkSym(q),sym:stkSym(q),stock:true,label:stkSym(q)+' (stock)'}:addr?{key:q.toLowerCase(),sym:q,q:q,addr:true,net:$('addNet').value,label:q.slice(0,6)+'...'+q.slice(-4)}
               :{key:q.toUpperCase(),sym:q.toUpperCase().replace(/[^A-Z0-9]/g,''),label:q.toUpperCase().replace(/[^A-Z0-9]/g,'')};
   if(!item.sym){return}
   if(S.added.some(function(a){return a.key===item.key})){say('Already added.');return}
@@ -712,6 +783,9 @@ function paintV(){$('minV').textContent=S.minScore;$('alV').textContent=S.alertM
 $('topN').value=String(S.topN);$('minScore').value=S.minScore;$('alertMin').value=S.alertMin;$('alertTok').value=S.alertTok;$('alertWatch').checked=!!S.alertWatch;$('mailOn').checked=!!S.mailOn;$('practice').checked=S.practice!==false;$('maxMail').value=S.maxMail;$('auto').checked=S.auto!==false;
 bind('minScore','minScore',true);bind('alertMin','alertMin',true);bind('alertTok','alertTok');bind('maxMail','maxMail',true);
 $('topN').onchange=function(){S.topN=+$('topN').value;save()};
+$('useStk').value=String(S.useStk===0?0:1);$('stkList').value=S.stkList==null?STK_DEFAULT:S.stkList;
+$('useStk').onchange=function(){S.useStk=+$('useStk').value;save()};
+$('stkList').onchange=function(){S.stkList=$('stkList').value;save()};
 $('alertWatch').onchange=function(){S.alertWatch=$('alertWatch').checked;save()};
 $('mailOn').onchange=function(){S.mailOn=$('mailOn').checked;save()};
 $('practice').onchange=function(){S.practice=$('practice').checked;save();if(!S.practice&&S.mailOn&&!confirm('Practice mode off: real emails will be sent to the Block Wall Street inbox. Continue?')){S.practice=true;$('practice').checked=true;save()}};
