@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Degen Desk Stripe Code Setup</title>
+<style>
+:root{--bg:#070D1B;--panel:#0B1429;--line:#1F2D52;--text:#E6ECFA;--muted:#8E9BC0;--gold:#35F0FF;--warn:#F5B84B}
+body{margin:0;background:#000;color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;line-height:1.6;padding:24px 16px}
+main{max-width:820px;margin:0 auto}
+h1{color:var(--gold);margin:0 0 4px}h2{margin-top:34px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+code,pre{font-family:Consolas,monospace;background:#101B38;border:1px solid var(--line);border-radius:6px}
+code{padding:1px 6px}pre{padding:12px;overflow-x:auto;white-space:pre;font-size:13px;position:relative}
+.tip{border-left:3px solid var(--warn);padding:8px 12px;background:rgba(245,184,75,.08);border-radius:0 8px 8px 0}
+p.muted{color:var(--muted)}
+button.cp{float:right;background:var(--gold);color:#04101c;border:0;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body><main>
+<h1>Degen Desk: Unique Code After Stripe Payment</h1>
+<p class="muted">Setup steps for Block Wall Street LLC. About 20 minutes. Follow them in order.</p>
+
+<h2>How it works</h2>
+<div class="step">Customer pays on the Stripe link → Stripe sends them to <code>codebwsddp.html</code> → that page shows their own code (like <code>DD-7K4P-Q2MX</code>) and you get a Web3Forms email saying who paid and which code they got → they enter it with their email on the Desk front page → they get 30 days from the day they first enter it. Each new payment makes a new code. The code only works with the email they paid with.</div>
+
+<h2>Step 1: Make a Stripe key that can only read payments</h2>
+<div class="step">
+1. In Stripe go to <b>Developers → API keys → Create restricted key</b>.<br>
+2. Name it <code>dd-pay</code>. Set <b>Checkout Sessions</b> to <b>Read</b>. Leave everything else as None.<br>
+3. Click Create and copy the key (starts with <code>rk_live_</code>). Keep it private: don't paste it into any web page.
+</div>
+
+<h2>Step 2: Create the Cloudflare Worker</h2>
+<div class="step">
+1. Cloudflare dashboard → <b>Workers &amp; Pages → Create → Create Worker</b>. Name it exactly <code>dd-pay</code> and click Deploy.<br>
+2. Click <b>Edit code</b>, delete everything, paste all of <code>dd-pay-worker.js</code>, then click <b>Deploy</b>.<br>
+3. Go to <b>Storage &amp; Databases → KV → Create namespace</b> and name it <code>DD_CODES</code>.<br>
+4. Back in the dd-pay Worker: <b>Settings → Bindings → Add → KV namespace</b>. Variable name <code>DD_CODES</code>, pick the namespace you just made.<br>
+5. <b>Settings → Variables and Secrets → Add</b>: type <b>Secret</b>, name <code>STRIPE_SECRET_KEY</code>, value = the rk_live key from Step 1. Deploy.<br>
+6. Open <code>https://dd-pay.blockwallstreet638.workers.dev/</code> in your browser. If it says <code>"ok":true</code>, the Worker is running.
+<p class="tip">If Cloudflare gives the Worker a different web address, tell Claude so the code page can be updated to match.</p>
+</div>
+
+<h2>Step 3: Upload the code page</h2>
+<div class="step">Upload <code>codebwsddp.html</code> to the DegenDesk GitHub repo, in the same folder as <code>deskbwsddp.html</code>. GitHub: <b>Add file → Upload files</b> → Commit.</div>
+
+<h2>Step 4: Point the Stripe Payment Link at the code page</h2>
+<div class="step">
+1. Stripe → <b>Payment Links</b> → open the Degen Desk link → <b>Edit</b> → <b>After payment</b> tab.<br>
+2. Choose <b>Don't show confirmation page</b> and set the redirect to:
+<pre><button class="cp">Copy</button>https://degendesk.blockwallstreet.biz/codebwsddp.html?session_id={CHECKOUT_SESSION_ID}</pre>
+Type <code>{CHECKOUT_SESSION_ID}</code> exactly like that. Stripe fills in the real payment number for each buyer.<br>
+3. Save the link.
+</div>
+
+<h2>Step 5: Two small edits to the Desk front page</h2>
+<div class="step">
+Open the front page file in the DegenDesk repo on GitHub, click the pencil icon to edit it, and use <b>Ctrl+F</b> to find each spot.
+<p><b>Edit A.</b> Find this line:</p>
+<pre>var CODES = {</pre>
+<p>Click at the end of that line, press <b>Enter</b>, and paste this new line under it:</p>
+<pre><button class="cp">Copy</button>  "stripe-member": {until:"2099-12-31", paid:true},   // codes bought on Stripe (checked by the dd-pay Worker). Do not remove.</pre>
+<p><b>Edit B.</b> Find this line:</p>
+<pre>if(!c){$('err').textContent='Enter your member access code.';$('code').focus();return}</pre>
+<p>Click at the end of that line, press <b>Enter</b>, and paste this whole block under it:</p>
+<pre><button class="cp">Copy</button>  /* Stripe-bought code (DD-XXXX-XXXX): checked by the dd-pay Worker, 30 days from first use */
+  if(/^DD-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(c)){
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){$('err').textContent='Enter the email you paid with, then your code.';$('email').focus();return}
+    $('err').textContent='Checking your code...';
+    fetch('https://dd-pay.blockwallstreet638.workers.dev/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:c,email:em})})
+    .then(function(r){return r.json()}).then(function(r){
+      if(!r.ok){$('err').textContent=r.error||'That code is not right. Check it and try again.';return}
+      $('err').textContent='';
+      ls('dd_access',JSON.stringify({h:'stripe-member',exp:r.exp,tier:'paid',code:c}));
+      logSignup(em,c);
+      $('code').value='';ringBell(true);setIn();showTrial();
+      playIntro(function(){location.href=target});
+    }).catch(function(){$('err').textContent='Could not reach the code server. Check your connection and try again.'});
+    return;
+  }</pre>
+<p>Click <b>Commit changes</b>. Your other codes (DDPM, BCDD, DD26, BREW3, LLDD, owner code) keep working the same.</p>
+</div>
+
+<h2>Step 6: Test it</h2>
+<div class="step">
+Easiest test: in Stripe make a 100% off promo code just for yourself (or a $1 test price), buy through the link, and check that:<br>
+✔ you land on the code page and see a DD- code<br>
+✔ "Open the Degen Desk" takes you into the desk, with Scalp Scanner and Call-Outs open (paid tier)<br>
+✔ you get the Web3Forms "Degen Desk PAID member" email<br>
+✔ entering the code with a different email is refused
+<p class="tip">The code page only gives a code for payments that are actually <b>paid</b>. A $0 checkout with a 100% coupon also counts as paid in Stripe, so delete your test coupon afterwards.</p>
+</div>
+
+<h2>Optional: email the code to the buyer too</h2>
+<div class="step">
+This is a backup in case someone closes the page before saving their code.<br>
+1. Make a free account at resend.com, add <code>blockwallstreet.biz</code> as a domain, and add the DNS records it gives you in Wix. Then create an API key.<br>
+2. In the dd-pay Worker, add Secret <code>RESEND_API_KEY</code> and Text <code>MAIL_FROM</code> = <code>Degen Desk &lt;desk@blockwallstreet.biz&gt;</code>.<br>
+3. Stripe → <b>Developers → Webhooks → Add endpoint</b>: URL <code>https://dd-pay.blockwallstreet638.workers.dev/webhook</code>, event <code>checkout.session.completed</code>. Copy its signing secret (whsec_...) into Worker Secret <code>STRIPE_WEBHOOK_SECRET</code>.<br>
+Now every buyer gets an email with their code, even if they never see the code page.
+</div>
+
+<h2>Optional: only accept the Degen Desk link</h2>
+<div class="step">If you use the same Stripe account for other classes, add Worker Text variable <code>PAYMENT_LINK_ID</code> with the Degen Desk link's ID (starts with <code>plink_</code>, shown in the Payment Link's details). Then payments for other products can't be used to get a Desk code.</div>
+
+<h2>Looking up who has which code</h2>
+<div class="step">Cloudflare → KV → DD_CODES → <b>View</b>. Each <code>c:DD-...</code> entry shows the buyer's email, name, amount and when they first used it. Delete an entry to cancel that code.</div>
+</main>
+<script>
+document.querySelectorAll('button.cp').forEach(function(b){b.onclick=function(){var t=b.parentNode.textContent.replace(/^Copy/,'').replace(/^Copied/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='Copied'})}});
+</script>
+</body></html>

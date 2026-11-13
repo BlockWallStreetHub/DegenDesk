@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Member Code | Degen Desk</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070D1B; --panel:#0B1429; --panel2:#101B38; --line:#1F2D52; --text:#E6ECFA; --muted:#8E9BC0; --gold:#35F0FF; --link:#8CF7FF;
+  --ok:#5FD39A; --warn:#F5B84B; --danger:#FF6B7D;
+  --mono:"DM Mono",Consolas,"Cascadia Mono","Courier New",monospace;
+  --sans:"Inter","Segoe UI Variable","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:#000;color:var(--text);font-family:var(--sans);display:flex;align-items:center;justify-content:center;padding:24px 16px;
+  background-image:radial-gradient(ellipse at 50% -10%,rgba(53,240,255,.12),transparent 60%),linear-gradient(#000,#070D1B)}
+.card{width:100%;max-width:560px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:30px 26px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+h1{font-size:26px;margin:0 0 8px;font-weight:800}
+p{color:var(--muted);line-height:1.55;margin:10px 0}
+.code{font-family:var(--mono);font-size:34px;letter-spacing:.12em;color:#fff;background:var(--panel2);border:1px solid var(--gold);border-radius:10px;padding:18px 14px;text-align:center;margin:18px 0 10px;word-break:break-all;box-shadow:0 0 24px rgba(53,240,255,.18)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.btn{flex:1 1 180px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;border-radius:9px;border:1px solid var(--gold);background:var(--gold);color:#04101c;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer;font-family:var(--sans)}
+.btn.ghost{background:transparent;color:var(--gold)}
+.btn:disabled{opacity:.5;cursor:default}
+.email{font-family:var(--mono);color:var(--text)}
+.steps{margin:16px 0 4px;padding-left:20px;color:var(--muted);line-height:1.7}
+.steps b{color:var(--text)}
+.note{font-size:13px;border-left:3px solid var(--warn);padding:8px 12px;background:rgba(245,184,75,.07);border-radius:0 8px 8px 0;color:#f3dcae}
+.err{color:var(--danger)}
+.ok{color:var(--ok)}
+.spin{width:38px;height:38px;border:3px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:s 1s linear infinite;margin:20px auto}
+@keyframes s{to{transform:rotate(360deg)}}
+.foot{font-size:12px;color:var(--muted);margin-top:20px;text-align:center}
+a{color:var(--link)}
+[hidden]{display:none!important}
+@media (max-width:420px){.code{font-size:26px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="brand">Block Wall Street &middot; Degen Desk</div>
+
+  <section id="loading">
+    <h1>Getting your member code&hellip;</h1>
+    <p>We're checking your payment with Stripe. This takes a few seconds.</p>
+    <div class="spin"></div>
+  </section>
+
+  <section id="done" hidden>
+    <h1>You're in. Welcome to the Desk.</h1>
+    <p>Thank you for your payment. This is your personal 30-day member code:</p>
+    <div class="code" id="code">DD-XXXX-XXXX</div>
+    <div class="row">
+      <button class="btn ghost" id="copy" type="button">Copy code</button>
+      <button class="btn" id="open" type="button">Open the Degen Desk</button>
+    </div>
+    <ol class="steps">
+      <li>Go to <a href="https://degendesk.blockwallstreet.biz/">degendesk.blockwallstreet.biz</a></li>
+      <li>Enter your email: <b class="email" id="email"></b></li>
+      <li>Enter the code above and press Enter.</li>
+    </ol>
+    <p class="note">Save this code. It only works with the email you paid with, and your 30 days start the first time you enter it. Start with the <b>Degen Desk course</b>: it walks you through every tool on the desk.</p>
+    <p id="openMsg"></p>
+  </section>
+
+  <section id="fail" hidden>
+    <h1>We couldn't get your code yet</h1>
+    <p class="err" id="failMsg"></p>
+    <div class="row">
+      <button class="btn" id="retry" type="button">Try again</button>
+      <a class="btn ghost" href="https://degendesk.blockwallstreet.biz/">Back to the Desk</a>
+    </div>
+    <p>If you paid and this keeps happening, email <a href="mailto:blockwallstreet638@gmail.com">blockwallstreet638@gmail.com</a> with your Stripe receipt and we'll send your code.</p>
+  </section>
+
+  <div class="foot">&copy; Block Wall Street LLC &middot; Chicago</div>
+</main>
+
+<script>
+var API = "https://dd-pay.blockwallstreet638.workers.dev";
+var W3F_KEY = "cbde23f6-f617-4b16-953f-7b0aab0e9f58";
+var $ = function(i){return document.getElementById(i)};
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){return null}}
+function show(id){['loading','done','fail'].forEach(function(s){$(s).hidden=(s!==id)})}
+var sid = (new URLSearchParams(location.search)).get('session_id') || '';
+var got = null;
+
+function notifyOwner(r){
+  var k='dd_paid_sent_'+r.code;
+  if(ls(k))return;
+  try{
+    fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},keepalive:true,
+      body:JSON.stringify({access_key:W3F_KEY,subject:'Degen Desk PAID member: '+r.code,from_name:'Degen Desk',email:r.email,code_issued:r.code,issued_at:new Date().toLocaleString()})})
+    .then(function(x){if(x.ok)ls(k,'1')}).catch(function(){});
+  }catch(e){}
+}
+
+function load(){
+  show('loading');
+  if(!sid){fail('This page needs the link Stripe opens after you pay. If you paid, check your email or contact us.');return}
+  var tries=0;
+  (function go(){
+    fetch(API+'/claim?session_id='+encodeURIComponent(sid)).then(function(r){return r.json()}).then(function(r){
+      if(r.ok){
+        got=r;
+        $('code').textContent=r.code;$('email').textContent=r.email||'the email you paid with';
+        ls('dd_email',r.email||'');
+        notifyOwner(r);
+        show('done');
+      }else if(/not gone through/.test(r.error||'')&&tries++<5){setTimeout(go,4000)}
+      else fail(r.error||'Something went wrong.');
+    }).catch(function(){ if(tries++<3)setTimeout(go,3000); else fail('We could not reach the code server. Check your connection and try again.')});
+  })();
+}
+function fail(m){$('failMsg').textContent=m;show('fail')}
+
+$('retry').onclick=load;
+$('copy').onclick=function(){
+  if(!got)return;var b=this;
+  (navigator.clipboard?navigator.clipboard.writeText(got.code):Promise.reject()).then(function(){b.textContent='Copied'},function(){
+    var r=document.createRange();r.selectNodeContents($('code'));var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected: press Ctrl+C'});
+};
+/* signs this browser in right away with the new code, then opens the desk */
+$('open').onclick=function(){
+  if(!got)return;var b=this;b.disabled=true;$('openMsg').textContent='Opening the desk...';$('openMsg').className='';
+  fetch(API+'/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:got.code,email:got.email})})
+  .then(function(r){return r.json()}).then(function(r){
+    if(!r.ok){b.disabled=false;$('openMsg').textContent=r.error;$('openMsg').className='err';return}
+    ls('dd_access',JSON.stringify({h:'stripe-member',exp:r.exp,tier:'paid',code:got.code}));
+    location.href='https://degendesk.blockwallstreet.biz/deskbwsddp.html';
+  }).catch(function(){b.disabled=false;$('openMsg').textContent='Could not reach the server. Use the steps below instead.';$('openMsg').className='err'});
+};
+load();
+</script>
+</body>
+</html>
